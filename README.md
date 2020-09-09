@@ -13,9 +13,9 @@ Data is collected by [recfluence](https://github.com/markledwich2/Recfluence).
 
 
 Readme TODO:
-[] downloads
-[] link to Sam's Project
-[] FAQ
+- data download links for channels, recent views, top videos
+- descirption & link to Sam's predictions
+- FAQ
 
 
 
