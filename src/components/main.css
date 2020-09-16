@@ -7,7 +7,7 @@
 html,
 body,
 input {
-    font-size: 14px;
+    font-size: 18px;
 }
 
 body,
@@ -17,19 +17,21 @@ input {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-    body,
-    select,
-    input {
-        background-color: black;
-        color: #eee;
-    }
-}
-
 select {
     background-color: transparent;
     border: none;
     outline: none;
+    display: inline-block;
+}
+
+@media (prefers-color-scheme: dark) {
+    body,
+    select,
+    input {
+        background: black;
+        color: #eee;
+        content: none;
+    }
 }
 
 html,
@@ -47,6 +49,10 @@ h4,
 p {
     margin: 0px;
     padding: 0px;
+}
+
+h1 {
+    font-size: 1.6em;
 }
 
 h2 {

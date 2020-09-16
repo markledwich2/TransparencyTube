@@ -8,7 +8,6 @@ import { ViewsByTagPage } from '../components/ViewsByTag'
 const IndexPage = () => (
   <Layout>
     <SEO title="Home" />
-    <p>Channel views in the last week</p>
     <ViewsByTagPage />
 
   </Layout>
