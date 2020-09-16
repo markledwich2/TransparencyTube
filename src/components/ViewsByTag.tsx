@@ -1,34 +1,16 @@
 import * as d3 from 'd3'
 import { Uri } from '../common/Uri'
 import _ from 'lodash'
-import { parseISO } from "date-fns"
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import React from 'react'
 import { compactInteger } from 'humanize-plus'
 import { getJsonl, preloadImages } from '../common/Utils'
-import styled from 'styled-components'
 import { InlineSelect } from './InlineSelect'
+import ReactTooltip from 'react-tooltip'
+import { ChannelData, ChannelMeasures, TagMd, tagsMd } from '../common/Data'
+import { ChannelInfo } from './ChannelTip'
 
 
-
-interface ChannelMeasures {
-  subs: number
-  channelViews: number
-  views7: number
-  viewsP7: number
-  views30: number
-  viewsP30: number
-  views365: number
-  viewsP365: number
-}
-
-interface ChannelData extends ChannelMeasures {
-  channelId: string
-  channelTitle: string
-  tags: string[]
-  logoUrl: string
-  date_to: string
-}
 
 interface ChannelNode {
   type: 'root' | 'tag' | 'channel'
@@ -46,23 +28,6 @@ interface Graph<N, L> {
   links: L
 }
 
-interface TagMd { value: string, label?: string, color?: string }
-const tagsMd: TagMd[] = [
-  { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
-  { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
-  { value: 'Conspiracy', color: '#e0990b' },
-  { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
-  { value: 'Libertarian', color: '#ccc' },
-  { value: 'MRA', color: '#003e78' },
-  { value: 'Mainstream News', label: 'MSM', color: '#aa557f' },
-  { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },
-  { value: 'PartisanRight', label: 'Partisan Right', color: '#e0393e' },
-  { value: 'QAnon', color: '#e55e5e' },
-  { value: 'ReligiousConservative', label: 'Religious Con.', color: '#41afa5' },
-  { value: 'SocialJustice', label: 'Social Justice', color: '#56b881' },
-  { value: 'Socialist', color: '#6ec9e0' },
-  { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500' },
-]
 
 async function getChannels(): Promise<ChannelData[]> {
   const path = new Uri('https://pyt.blob.core.windows.net/data/results')
@@ -87,6 +52,8 @@ export const ViewsByTagPage = () => {
 const TagsChart = ({ channels }: { channels: ChannelData[] }) => {
   const [measure, setMeasure] = useState<keyof ChannelMeasures>('views7')
   const [imgLoaded, setImgLoaded] = useState(false)
+
+  const chanById = useMemo(() => _.keyBy(channels, c => c.channelId), [channels])
 
   const val = (c: ChannelData) => {
     return c[measure] ?? 0
@@ -175,8 +142,16 @@ const TagsChart = ({ channels }: { channels: ChannelData[] }) => {
           <TagPack {...t} {...{ zoom, packSize, imgLoaded }} />
         </div>
       )}
-    </div></>
+    </div>
+    {imgLoaded && <ReactTooltip
+      place='right' effect='solid'
+      backgroundColor='var(--bg1)'
+      border
+      borderColor='var(--bg2)'
+      getContent={(id: string) => id ? <ChannelInfo channel={chanById[id]} measure={measure} /> : <></>} />}
+  </>
 }
+
 
 interface TagNodes {
   tag: TagMd
@@ -197,7 +172,6 @@ interface TagPackExtra {
   zoom: number, packSize: number, imgLoaded: boolean
 }
 
-
 const TagPack = ({ nodes, dim, zoom, imgLoaded }: {} & TagNodes & TagPackExtra) => {
 
   const size = dim.size * zoom
@@ -212,13 +186,20 @@ const TagPack = ({ nodes, dim, zoom, imgLoaded }: {} & TagNodes & TagPackExtra) 
         const y = (n.y + dy) * zoom
         const r = n.r * zoom
         return <g key={n.data.key}>
-          <circle cx={x} cy={y} r={r} fill={n.data.color} />
-          {imgLoaded && n.data.img && <image x={x - r} y={y - r} width={r * 2} href={n.data.img} style={{ clipPath: 'circle()' }} />}
+          <circle cx={x} cy={y} r={r} fill={n.data.color} data-tip={n.data.channel.channelId} />
+          {imgLoaded && n.data.img &&
+            <image x={x - r} y={y - r} width={r * 2}
+              href={n.data.img} data-tip={n.data.channel.channelId} style={{ clipPath: 'circle()' }} />}
         </g>
       }
       )}
     </g>
   </svg>
 }
+
+
+
+
+
 
 
