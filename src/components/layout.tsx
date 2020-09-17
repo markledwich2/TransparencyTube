@@ -13,6 +13,11 @@ import Header from "./header"
 import "./main.css"
 import { createGlobalStyle, css } from 'styled-components'
 
+export interface StyleProps {
+  style?: React.CSSProperties
+  className?: string
+}
+
 const lightValues = css`
   --fg: #111;
   --fg1: #333;

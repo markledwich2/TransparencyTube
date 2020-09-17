@@ -1,3 +1,5 @@
+import { resetWarningCache } from 'prop-types'
+
 function splitStream(splitOn: string): TransformStream {
   let buffer = ''
   return new TransformStream({
@@ -23,6 +25,7 @@ function parseJSON<T>(): TransformStream<string, T> {
 
 export async function getJsonl<T>(url: RequestInfo, cfg?: RequestInit): Promise<T[]> {
   const res = await fetch(url, Object.assign({ method: 'GET' }, cfg))
+  if (!res.ok) throw res
   const reader = res.body
     .pipeThrough(new TextDecoderStream())
     .pipeThrough(splitStream('\n'))
@@ -49,9 +52,11 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
   urls.forEach(url => {
     preloadImage(url).then(() => {
       n++
-      console.log('Number of loaded images: ' + n)
       if (n == urls.length)
         resolve()
     })
   })
 })
+
+/** like Object.assign, but doesn't mutate a */
+export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)

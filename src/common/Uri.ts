@@ -24,8 +24,8 @@ export class Uri {
     const p = new URL(url)
 
     const q: { [key: string]: string } = {}
-    for (const [key, value] of p.searchParams.entries())
-      q[key] = value
+
+    p.searchParams.forEach((v, k) => q[k] = v)
 
     return {
       protocol: p.protocol,

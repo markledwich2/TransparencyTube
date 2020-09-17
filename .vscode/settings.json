@@ -8,7 +8,9 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "Identitarian",
-    "ngraph"
+    "ngraph",
+    "purry",
+    "remeda"
   ],
   "typescript.preferences.quoteStyle": "single",
   "javascript.format.semicolons": "remove",
