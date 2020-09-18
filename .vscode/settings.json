@@ -10,7 +10,8 @@
     "Identitarian",
     "ngraph",
     "purry",
-    "remeda"
+    "remeda",
+    "vids"
   ],
   "typescript.preferences.quoteStyle": "single",
   "javascript.format.semicolons": "remove",

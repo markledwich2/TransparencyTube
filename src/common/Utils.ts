@@ -60,3 +60,14 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 
 /** like Object.assign, but doesn't mutate a */
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
+
+
+function extract<T>(properties: Record<keyof T, true>){
+  return function<TActual extends T>(value: TActual){
+      let result = {} as T;
+      for (const property of Object.keys(properties) as Array<keyof T>) {
+          result[property] = value[property];
+      }
+      return result;
+  }
+}

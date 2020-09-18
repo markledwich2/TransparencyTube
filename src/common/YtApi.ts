@@ -2,6 +2,8 @@ import base64 from 'base-64'
 import camelKeys from 'camelcase-keys'
 import { ChannelCommon } from './Channel'
 import { Uri } from './Uri'
+import { SearchBody, QueryData } from 'elastic-ts'
+import { snakeCase } from 'change-case'
 
 export interface EsCfg {
   url: string
@@ -10,39 +12,8 @@ export interface EsCfg {
   indexes: EsIndexes
 }
 
-export const esCfg = {
-  url: 'https://8999c551b92b4fb09a4df602eca47fbc.westus2.azure.elastic-cloud.com:9243',
-  creds: 'public:5&54ZPnh!hCg',
-  indexes: {
-    caption: `caption`,
-    channel: `channel`,
-    channelTitle: `channel_title`,
-    video: `video`
-  }
-}
-
 export interface EsChannel extends ChannelCommon {
   description?: string
-}
-
-export async function getChannel(channelId: string) {
-  const res = await esDoc(esCfg.indexes.channel, channelId)
-  return camelKeys(res._source) as EsChannel
-}
-
-export const esHeaders = {
-  "Authorization": `Basic ${base64.encode(esCfg.creds)}`
-}
-
-export async function esDoc(index: string, id: string) {
-  {
-    var res = await fetch(
-      new Uri(esCfg.url).addPath(index, '_doc', id).url, {
-      headers: new Headers(esHeaders)
-    })
-    var j = await res.json() as EsDocRes<any>
-    return j
-  }
 }
 
 export interface EsIndexes {
@@ -64,4 +35,101 @@ export interface EsDocRes<T> {
 export interface EsDocsRes<T> {
   docs: EsDocRes<T>[]
 }
+
+export const esCfg = {
+  url: 'https://8999c551b92b4fb09a4df602eca47fbc.westus2.azure.elastic-cloud.com:9243',
+  creds: 'public:5&54ZPnh!hCg',
+  indexes: {
+    caption: `caption`,
+    channel: `channel`,
+    channelTitle: `channel_title`,
+    video: `video`
+  }
+}
+
+export interface EsVideo {
+  videoId: string
+  videoTitle: string
+  uploadDate?: string
+  updated?: string
+  views?: number,
+  description?: string
+}
+
+
+export async function getChannel(channelId: string) {
+  const res = await esDoc(esCfg.indexes.channel, channelId)
+  return camelKeys(res._source) as EsChannel
+}
+
+export async function getChannelVideos(channelId: string, from: Date, props?: (keyof EsVideo)[], size?: number) {
+  const q: SearchBody = {
+    query: {
+      bool: {
+        must: {
+          term: {
+            channel_id: channelId
+          }
+        },
+        filter: from ? {
+          range: {
+            upload_date: {
+              gte: from.toISOString()
+            }
+          }
+        } : null
+      }
+    },
+    sort: [
+      {
+        views: {
+          order: 'desc'
+        }
+      }
+    ],
+    size,
+    _source: props.map(p => snakeCase(p))
+  }
+
+  const res = await esSearch(esCfg.indexes.video, q)
+  return res.map(r => camelKeys(r) as EsVideo)
+}
+
+export const esHeaders = {
+  "Authorization": `Basic ${base64.encode(esCfg.creds)}`
+}
+
+export async function esDoc(index: string, id: string) {
+  {
+    var res = await fetch(
+      new Uri(esCfg.url).addPath(index, '_doc', id).url, {
+      headers: new Headers(esHeaders)
+    })
+    var j = await res.json() as EsDocRes<any>
+    return j
+  }
+}
+
+
+export async function esSearch(index: string, search: SearchBody): Promise<any[]> {
+  {
+    let res = await fetch(
+      new Uri(esCfg.url).addPath(index, '_search').url,
+      {
+        method: 'POST',
+        headers: new Headers({ ...esHeaders, 'Content-Type': 'application/json' }),
+        body: JSON.stringify(search)
+      })
+
+    if (!res.ok) {
+      console.log('error with esSearch', res)
+      return []
+    }
+
+    let j = (await res.json()) as EsSearchRes<any>
+    let sources = j.hits.hits.map(h => h._source)
+    return sources
+  }
+}
+
 

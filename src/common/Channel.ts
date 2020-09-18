@@ -1,7 +1,7 @@
 
 import { Uri } from './Uri'
 import { getJsonl } from './Utils'
-import { filter, flatMap, map, pipe } from 'remeda'
+import { filter, flatMap, indexBy, map, pipe } from 'remeda'
 import { sortBy, sumBy } from './Pipe'
 
 
@@ -102,8 +102,9 @@ export const imagesToLoad = (tagNodes: TagNodes[]) => pipe(tagNodes,
   map(n => n.data.img),
   filter(i => i != null))
 
-export const getTagData = (channels: ChannelStats[], val: (c: ChannelStats) => number) =>
-  pipe(channelMd.tag,
+export const getTagData = (channels: ChannelStats[], val: (c: ChannelStats) => number) => {
+  const lr = indexBy(channelMd.lr, i => i.value)
+  return pipe(channelMd.tag,
     map(t => ({
       tag: t,
       channels: channels.filter(c => c.tags.includes(t.value) && val(c) != null)
@@ -111,11 +112,13 @@ export const getTagData = (channels: ChannelStats[], val: (c: ChannelStats) => n
           type: 'channel',
           title: c.channelTitle,
           channel: c,
-          color: t.color,
+          color: lr[c.lr]?.color,
           val: val(c),
           key: `${t.value}|${c.channelId}`
         } as ChannelNode))
     })),
     sortBy(n => sumBy(n.channels, c => c.val), 'desc')
   )
+}
 
+export const videoThumbHigh = (videoId: string) => `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
