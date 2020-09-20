@@ -2,14 +2,14 @@ import styled from 'styled-components'
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
 
-interface Option<T> {
-  label: string
+export interface Option<T> {
+  label?: string
   value: T
 }
 
 interface InlineSelectOptions<T> {
   options: Option<T>[]
-  defaultValue: T
+  value: T
   onChange?: (o: T) => void
 }
 
@@ -19,8 +19,11 @@ const OuterStyle = styled.span`
 `
 
 const InlineStyle = styled.span`
+  padding:0.3em 0.4em;
   :hover {
-    cursor: pointer
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: var(--bg1);
   }
 `
 
@@ -54,8 +57,7 @@ const ChevIcon = styled(ChevronDownOutline)`
       top: -0.05em;
 `
 
-export function InlineSelect<T>({ options, defaultValue, onChange }: InlineSelectOptions<T>) {
-  const [value, setValue] = useState<T>(defaultValue)
+export function InlineSelect<T>({ options, value, onChange }: InlineSelectOptions<T>) {
   const [open, setOpen] = useState(false)
 
   const popupRef = useRef<HTMLDivElement>()
@@ -81,7 +83,6 @@ export function InlineSelect<T>({ options, defaultValue, onChange }: InlineSelec
         {options.map(o => <li
           className={o.value == value ? 'selected' : null}
           onClick={_ => {
-            setValue(o.value)
             setOpen(false)
             onChange && onChange(o.value)
           }}>{o.label}</li>)}

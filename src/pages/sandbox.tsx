@@ -18,7 +18,7 @@ const measureOptions = Object.entries(measures).map(([k, m]) => ({ value: k as m
 const SandboxPage = () => (
   <Layout>
     <SEO title="Home" />
-    <p>Here is an <InlineSelect<measureKey> options={measureOptions} defaultValue='all' /> that can go inside text</p>
+    <p>Here is an <InlineSelect<measureKey> options={measureOptions} value='all' /> that can go inside text</p>
   </Layout>
 )
 

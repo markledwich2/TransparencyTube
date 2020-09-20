@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import { ChannelStats, ChannelMeasures, channelMd, videoThumbHigh } from '../common/Channel'
-import { EsChannel, EsVideo, getChannel, getChannelVideos } from '../common/YtApi'
+import { ChannelStats, ChannelMeasures, channelMd } from '../common/Channel'
+import { numFormat } from '../common/Utils'
+import { EsChannel, getChannel } from '../common/YtApi'
+import { FlexCol, FlexRow } from './layout'
 import { Spinner } from './Spinner'
-import { compactInteger } from 'humanize-plus'
 
-export const FlexRow = styled.div<{ space?: string }>`
-  display:flex;
-  flex-direction: row;
-  > * {
-    padding-right: ${p => p.space ?? '0.6em'};
-  }
-`
+import { Videos } from './Video'
 
 export const Description = styled.div`
-  width:30em;
   max-height:5em;
   overflow: hidden;
+  color:var(--fg2);
 `
 
 export interface ChannelTipProps {
@@ -27,33 +22,30 @@ export interface ChannelTipProps {
 }
 
 export const ChannelInfo = ({ channel, measure, size }: ChannelTipProps) => {
-  const [channelEx, setChannelEx] = useState<{ channel?: EsChannel, videos?: EsVideo[] }>(null)
+  const [channelEx, setChannelEx] = useState<EsChannel>(null)
 
   useEffect(() => {
     if (!channel) return
     let canceled = false //https://medium.com/hackernoon/avoiding-race-conditions-when-fetching-data-with-react-hooks-220d6fd0f663
-    const go = async () => {
-      const cTask = getChannel(channel.channelId)
-      const vTask = size == 'max' ? getChannelVideos(channel.channelId, null, ['videoId', 'videoTitle', 'uploadDate', 'views'], 3) : null
-      setChannelEx({ channel: await cTask, videos: vTask ? await vTask : null })
-    }
-    go()
+    getChannel(channel.channelId, ['channelId', 'description']).then(c => {
+      if (canceled) return
+      setChannelEx(c)
+    })
     return () => (canceled = true)
   }, [channel])
 
   if (!channel) return
   const c = channel
-  const exIsSame = channelEx?.channel?.channelId == c.channelId
-  const e = exIsSame ? channelEx.channel : null
-  const vids = exIsSame ? channelEx?.videos : null
+  const exIsSame = channelEx?.channelId == c.channelId
+  const e = exIsSame ? channelEx : null
   const tags = indexBy(channelMd.tag, t => t.value)
   const lr = channelMd.lr.find(i => i.value == c.lr)
 
   const metrics = (['subs', 'channelViews', 'views7'] as (keyof ChannelMeasures)[])
     .map(d => channelMd.measures.find(m => d == m.value))
 
-  return <div>
-    <FlexRow style={{ minWidth: '30em' }}>
+  return <FlexCol style={{ maxWidth: '45em', width: '100%', maxHeight: '100%' }}>
+    <FlexRow>
       <a href={`https://www.youtube.com/channel/${c.channelId}`} target="blank">
         <img src={c.logoUrl} style={{ height: '7em', marginRight: '1em', clipPath: 'circle()' }} />
       </a>
@@ -64,31 +56,20 @@ export const ChannelInfo = ({ channel, measure, size }: ChannelTipProps) => {
           {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
           {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color ?? 'var(--bg2)'} />)}
         </TagDiv>
-        <Description>
-          {!e
-            ? <Spinner size='4em' />
-            : <p>{e.description}</p>
-          }
-        </Description>
       </div>
     </FlexRow>
-    {vids && <div style={{ paddingTop: '1em' }}>
-      <h3>Top videos {measure == 'channelViews' ? 'since Jan 2019' : 'within the last 7 days'}</h3>
-      {vids?.map(v => <div key={v.videoId}>
-        <FlexRow>
-          <img src={videoThumbHigh(v.videoId)} style={{ width: '200px' }} />
-          <div style={{ paddingTop: '12px' }} >
-            <h3>{v.videoTitle}</h3>
-            <b>{compactInteger(v.views)}</b> views
-          </div>
-        </FlexRow>
-      </div>)}
-    </div>}
-  </div>
+    <Description>
+      {!e
+        ? <Spinner size='4em' />
+        : <p>{e.description}</p>
+      }
+    </Description>
+    {size == 'max' && <Videos channel={c} />}
+  </FlexCol>
 }
 
 const Metric = ({ label: name, value }: { label: string, value: number }) =>
-  <span style={{ marginRight: '1em' }}><b>{compactInteger(value)}</b> {name}</span>
+  <span style={{ marginRight: '1em' }}><b>{numFormat(value)}</b> {name}</span>
 
 const TagDiv = styled.div`
     color: #fff;

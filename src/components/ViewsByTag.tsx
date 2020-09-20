@@ -2,8 +2,7 @@ import { hierarchy, pack } from 'd3'
 import { Uri } from '../common/Uri'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import React from 'react'
-import { compactInteger } from 'humanize-plus'
-import { getJsonl, preloadImages } from '../common/Utils'
+import { getJsonl, numFormat, preloadImages } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { ChannelStats, ChannelMeasures, ChannelNode, getChannels, imagesToLoad, TagNodes, getTagData, channelMd } from '../common/Channel'
@@ -12,22 +11,26 @@ import { max, maxBy, minBy, sumBy } from '../common/Pipe'
 import { flatMap, indexBy } from 'remeda'
 import styled from 'styled-components'
 import Modal from 'react-modal'
+import ContainerDimensions from 'react-container-dimensions'
 
 export const ViewsByTagPage = () => {
   const [channels, setChannels] = useState<ChannelStats[]>()
   useEffect(() => { getChannels().then((channels) => setChannels(channels)) }, [])
-  return channels ? <TagsChart channels={channels} /> : <></>
+  if (!channels) return <></>
+  return <ContainerDimensions >
+    {({ height, width }) => <TagsChart channels={channels} width={width} />}
+  </ContainerDimensions>
 }
-
 
 const TipStyle = styled.div`
   .tip {
     opacity:1;
     padding:1em;
+    font-size:1rem;
   }
 `
 
-const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
+const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: number }) => {
   const [measure, setMeasure] = useState<keyof ChannelMeasures>('views7')
   const [imgLoaded, setImgLoaded] = useState(false)
   const [openChannel, setOpenChannel] = useState<ChannelStats>(null)
@@ -35,7 +38,7 @@ const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
   const chanById = useMemo(() => indexBy(channels, c => c.channelId), [channels])
   const { tagNodes, maxSize, zoom, packSize } = useMemo(() => {
     const tagData = getTagData(channels, c => c[measure] ?? 0)
-    const packSize = 500
+    const packSize = Math.min(width - 20, 800)
     const tagNodes: TagNodes[] = tagData.map(t => {
 
       const root: ChannelNode = {
@@ -79,7 +82,7 @@ const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
     })
 
     return { tagNodes, maxSize, zoom, packSize }
-  }, [channels, measure])
+  }, [channels, measure, width])
 
 
   useEffect(() => {
@@ -89,19 +92,20 @@ const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
   }, [measure])
 
   const channelClick = (c: ChannelStats) => {
+    ReactTooltip.hide()
     setOpenChannel(c)
     console.log('openChannel')
   }
 
   const chart = useMemo(() => <>
-    <span>Channel <InlineSelect options={channelMd.measures} defaultValue={'views7' as keyof ChannelMeasures} onChange={o => setMeasure(o)} /> by tag</span>
+    <span>Channel <InlineSelect options={channelMd.measures} value={measure} onChange={o => setMeasure(o)} /> by tag</span>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap' }}>
       {tagNodes.map(t =>
-        <div key={t.tag.value} style={{ display: 'flex', flexDirection: 'column', padding: '10px 10px 30px', alignItems: 'center' }}>
+        <div key={t.tag.value} style={{ display: 'flex', flexDirection: 'column', padding: '5px 5px 20px', alignItems: 'center' }}>
           <div style={{ padding: '1px 10px 5px' }}>
             <h4>
               {t.tag.label ?? t.tag.value}
-              <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{compactInteger(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
+              <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{numFormat(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
             </h4>
           </div>
           <TagPack {...t} {...{ zoom, packSize, imgLoaded, channelClick }} />
@@ -109,7 +113,7 @@ const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
       )}
     </div>
   </>,
-    [measure, imgLoaded, channels])
+    [measure, imgLoaded, channels, zoom])
 
   return <div id='page'>
     {chart}
@@ -137,17 +141,20 @@ const TagsChart = ({ channels }: { channels: ChannelStats[] }) => {
           },
           content: {
             backgroundColor: 'var(--bg)',
-            padding: '2em',
+            opacity: 0.85,
+            padding: '0.5em',
             border: 'solid 1px var(--bg2)',
             borderRadius: '10px',
-            maxWidth: '90vw',
+            maxWidth: '95vw',
             minWidth: "300px",
+            height: '90vh',
             top: '50%',
             left: '50%',
             right: 'auto',
             bottom: 'auto',
             marginRight: '-50%',
-            transform: 'translate(-50%, -50%)'
+            transform: 'translate(-50%, -50%)',
+            overflow: 'hidden'
           }
         }}
       >

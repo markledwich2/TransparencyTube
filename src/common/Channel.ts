@@ -3,8 +3,7 @@ import { Uri } from './Uri'
 import { getJsonl } from './Utils'
 import { filter, flatMap, indexBy, map, pipe } from 'remeda'
 import { sortBy, sumBy } from './Pipe'
-
-
+import { Option } from '../components/InlineSelect'
 
 export interface ChannelCommon {
   channelId: string
@@ -30,7 +29,7 @@ export interface ChannelStats extends ChannelMeasures, ChannelCommon {
   date_to: string
 }
 
-export interface ColumnMd { value: string, label?: string, color?: string }
+export interface ColumnMd extends Option<string> { color?: string }
 
 export const channelMd = {
   tag: [
@@ -120,5 +119,3 @@ export const getTagData = (channels: ChannelStats[], val: (c: ChannelStats) => n
     sortBy(n => sumBy(n.channels, c => c.val), 'desc')
   )
 }
-
-export const videoThumbHigh = (videoId: string) => `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`

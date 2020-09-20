@@ -7,9 +7,8 @@ import { ViewsByTagPage } from '../components/ViewsByTag'
 
 const IndexPage = () => (
   <Layout>
-    <SEO title="Home" />
+    <SEO title="transparency.tube" />
     <ViewsByTagPage />
-
   </Layout>
 )
 

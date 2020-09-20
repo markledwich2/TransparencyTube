@@ -11,7 +11,7 @@ import { useStaticQuery, graphql } from "gatsby"
 
 import Header from "./header"
 import "./main.css"
-import { createGlobalStyle, css } from 'styled-components'
+import styled, { createGlobalStyle, css } from 'styled-components'
 
 export interface StyleProps {
   style?: React.CSSProperties
@@ -20,18 +20,24 @@ export interface StyleProps {
 
 const lightValues = css`
   --fg: #111;
-  --fg1: #333;
+  --fg1: #222;
+  --fg2:#444;
+  --fg3:#666;
   --bg: #fff;
   --bg1: #ddd;
-  --bg2: #aaa;
+  --bg2: #bbb;
+  --bg3: #999;
 `
 
 const darkValues = css`
 --fg: #eee;
 --fg1: #ccc;
+--fg2: #bbb;
+--fg3: #999;
 --bg: #000;
 --bg1: #222;
 --bg2: #444;
+--bg3: #666;
 `
 
 const GlobalStyle = createGlobalStyle`
@@ -42,6 +48,23 @@ const GlobalStyle = createGlobalStyle`
   }
 }
 `
+
+export const FlexRow = styled.div<{ space?: string }>`
+  display:flex;
+  flex-direction: row;
+  > * {
+    padding-right: ${p => p.space ?? '0.6em'};
+  }
+`
+
+export const FlexCol = styled.div<{ space?: string }>`
+  display:flex;
+  flex-direction: column;
+  > * {
+    padding-bottom: ${p => p.space ?? '0.6em'};
+  }
+`
+
 
 const Layout: FunctionComponent = ({ children }) => {
   const data = useStaticQuery(graphql`
@@ -59,9 +82,7 @@ query SiteTitleQuery {
       <GlobalStyle />
       <Header siteTitle={data.site.siteMetadata.title} />
       <div
-        style={{
-          padding: `0 1.0875rem 1.45rem`,
-        }}
+        style={{ padding: '0 0.5em' }}
       >
         <main>{children}</main>
         <footer>

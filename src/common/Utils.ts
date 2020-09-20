@@ -1,4 +1,6 @@
+import { format } from 'date-fns'
 import { resetWarningCache } from 'prop-types'
+import numeral from 'numeral'
 
 function splitStream(splitOn: string): TransformStream {
   let buffer = ''
@@ -61,13 +63,10 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 /** like Object.assign, but doesn't mutate a */
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
 
-
-function extract<T>(properties: Record<keyof T, true>){
-  return function<TActual extends T>(value: TActual){
-      let result = {} as T;
-      for (const property of Object.keys(properties) as Array<keyof T>) {
-          result[property] = value[property];
-      }
-      return result;
-  }
+export const dateFormat = (date: Date | number | string) => {
+  if (!date) return
+  const d = (typeof (date) == 'string') ? Date.parse(date) : date
+  return format(d, 'do MMM yyyy')
 }
+
+export const numFormat = (n: number) => n ? numeral(n).format('0[.]0a') : null

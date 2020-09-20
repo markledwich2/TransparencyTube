@@ -57,8 +57,8 @@ export interface EsVideo {
 }
 
 
-export async function getChannel(channelId: string) {
-  const res = await esDoc(esCfg.indexes.channel, channelId)
+export async function getChannel(channelId: string, props?: (keyof EsChannel)[]) {
+  const res = await esDoc(esCfg.indexes.channel, channelId, props?.map(p => snakeCase(p)))
   return camelKeys(res._source) as EsChannel
 }
 
@@ -99,12 +99,11 @@ export const esHeaders = {
   "Authorization": `Basic ${base64.encode(esCfg.creds)}`
 }
 
-export async function esDoc(index: string, id: string) {
+export async function esDoc(index: string, id: string, props?: string[]) {
   {
-    var res = await fetch(
-      new Uri(esCfg.url).addPath(index, '_doc', id).url, {
-      headers: new Headers(esHeaders)
-    })
+    let uri = new Uri(esCfg.url).addPath(index, '_doc', id)
+    if (props) uri = uri.addQuery({ _source_includes: props.join(',') })
+    var res = await fetch(uri.url, { headers: new Headers(esHeaders) })
     var j = await res.json() as EsDocRes<any>
     return j
   }
