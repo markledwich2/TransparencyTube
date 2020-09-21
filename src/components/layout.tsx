@@ -9,7 +9,7 @@ import React, { FunctionComponent } from "react"
 import PropTypes from "prop-types"
 import { useStaticQuery, graphql } from "gatsby"
 
-import Header from "./header"
+import Header from "./Header"
 import "./main.css"
 import styled, { createGlobalStyle, css } from 'styled-components'
 
@@ -19,29 +19,32 @@ export interface StyleProps {
 }
 
 const lightValues = css`
-  --fg: #111;
-  --fg1: #222;
-  --fg2:#444;
-  --fg3:#666;
-  --bg: #fff;
-  --bg1: #ddd;
-  --bg2: #bbb;
-  --bg3: #999;
+--fg: #111;
+--fg1: #222;
+--fg2:#444;
+--fg3:#666;
+--bg: #fff;
+--bg1: #eee;
+--bg2: #bbb;
+--bg3: #999;
 `
 
 const darkValues = css`
+
 --fg: #eee;
 --fg1: #ccc;
 --fg2: #bbb;
 --fg3: #999;
 --bg: #000;
---bg1: #222;
+--bg1: #111;
 --bg2: #444;
 --bg3: #666;
 `
 
 const GlobalStyle = createGlobalStyle`
   :root {
+  --bg-feature:#125C6E;
+  --fg-feature:#1F9FBF;
   ${lightValues}
   @media(prefers-color-scheme: dark) {
     ${darkValues}

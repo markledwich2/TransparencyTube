@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { StyleProps } from './layout'
+import { StyleProps } from './Layout'
 
 const SvgStyle = styled.svg`
     background: none; 

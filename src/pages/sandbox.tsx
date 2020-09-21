@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import React from "react"
 import { InlineSelect } from '../components/InlineSelect'
-import Layout from "../components/layout"
-import SEO from "../components/seo"
-import { ViewsByTagPage } from '../components/ViewsByTag'
+import Layout from "../components/Layout"
+import SEO from "../components/SEO"
+import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
 
 
 const measures = {

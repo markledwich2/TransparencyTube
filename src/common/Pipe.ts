@@ -34,3 +34,4 @@ export const minBy = <T>(items: T[], by: (i: T) => number) => firstBy(items, by,
 export const maxBy = <T>(items: T[], by: (i: T) => number) => firstBy(items, by, 'desc')
 export const min = (items: number[]) => firstBy(items, i => i, 'asc')
 export const max = (items: number[]) => firstBy(items, i => i, 'desc')
+export const values = <V>(o: Record<any, V>): V[] => Object.values(o)

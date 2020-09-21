@@ -51,8 +51,8 @@ export const channelMd = {
   ] as ColumnMd[],
   lr: [
     { value: 'L', label: 'Left', color: '#3887be' },
-    { value: 'C', label: 'Center', color: '#8a8acb' },
-    { value: 'R', label: 'Right', color: '#e0393e' },
+    { value: 'C', label: 'Center', color: '#c060a1' },
+    { value: 'R', label: 'Right', color: '#da2d2d' },
     { value: '', label: 'Unclassified', color: '#555' }
   ] as ColumnMd[],
   measures: [
@@ -87,7 +87,8 @@ export interface TagNodes {
   dim: {
     x: NodeMinMax
     y: NodeMinMax
-    size: number
+    w: number
+    h: number
   }
 }
 

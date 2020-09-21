@@ -7,19 +7,24 @@ import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { ChannelStats, ChannelMeasures, ChannelNode, getChannels, imagesToLoad, TagNodes, getTagData, channelMd } from '../common/Channel'
 import { ChannelInfo } from './Channel'
-import { max, maxBy, minBy, sumBy } from '../common/Pipe'
-import { flatMap, indexBy } from 'remeda'
+import { max, maxBy, minBy, sumBy, values } from '../common/Pipe'
+import { flatMap, indexBy, mapValues } from 'remeda'
 import styled from 'styled-components'
 import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
+import { Videos } from './Video'
 
-export const ViewsByTagPage = () => {
-  const [channels, setChannels] = useState<ChannelStats[]>()
-  useEffect(() => { getChannels().then((channels) => setChannels(channels)) }, [])
+export const ChannelVideoViewsPage = () => {
+  const [channels, setChannels] = useState<Record<string, ChannelStats>>()
+  useEffect(() => { getChannels().then((channels) => setChannels(indexBy(channels, c => c.channelId))) }, [])
+  const videosList = useMemo(() => <><div style={{ height: '1em' }} /><Videos channels={channels} /></>, [channels])
   if (!channels) return <></>
-  return <ContainerDimensions >
-    {({ height, width }) => <TagsChart channels={channels} width={width} />}
-  </ContainerDimensions>
+  return <>
+    <ContainerDimensions >
+      {({ height, width }) => <Bubbles channels={channels} width={width} />}
+    </ContainerDimensions>
+    {videosList}
+  </>
 }
 
 const TipStyle = styled.div`
@@ -27,19 +32,60 @@ const TipStyle = styled.div`
     opacity:1;
     padding:1em;
     font-size:1rem;
+    max-width: 30rem;
+    background-color: var(--bg);
+    color: var(--fg);
+    border-color: var(--bg2);
+    border-radius: 10px;
   }
 `
 
-const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: number }) => {
+const BubbleDiv = styled.div`
+  display:flex;
+  flex-direction:column;
+  margin:5px;
+  align-items:center;
+  padding:5px;
+  background-color: var(--bg1);
+  border: 1px solid var(--bg2);
+  border-radius: 10px;
+`
+
+const modalStyle = {
+  overlay: {
+    backgroundColor: 'none',
+    backdropFilter: 'blur(15px)'
+  },
+  content: {
+    backgroundColor: 'var(--bg)',
+    opacity: 0.85,
+    padding: '0.5em',
+    border: 'solid 1px var(--bg2)',
+    borderRadius: '10px',
+    maxWidth: '95vw',
+    minWidth: "300px",
+    height: '90vh',
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    overflow: 'hidden'
+  }
+}
+
+const Bubbles = ({ channels, width }: { channels: Record<string, ChannelStats>, width: number }) => {
   const [measure, setMeasure] = useState<keyof ChannelMeasures>('views7')
   const [imgLoaded, setImgLoaded] = useState(false)
   const [openChannel, setOpenChannel] = useState<ChannelStats>(null)
 
-  const chanById = useMemo(() => indexBy(channels, c => c.channelId), [channels])
   const { tagNodes, maxSize, zoom, packSize } = useMemo(() => {
-    const tagData = getTagData(channels, c => c[measure] ?? 0)
+    const tagData = getTagData(values(channels), c => c[measure] ?? 0)
     const packSize = Math.min(width - 20, 800)
     const tagNodes: TagNodes[] = tagData.map(t => {
+
+      if (t.channels.length == 0) return null
 
       const root: ChannelNode = {
         type: 'root',
@@ -51,7 +97,8 @@ const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: numbe
         .padding(0)
         .size([packSize, packSize])
         .radius(d => Math.sqrt(d.data.val) * 0.015)
-        (hierarchy(root, n => n.children)).descendants()
+        (hierarchy(root, n => n.children))
+        .descendants()
 
       const pad = 0
       let { x, y } = {
@@ -67,13 +114,14 @@ const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: numbe
 
       let dim = {
         x, y,
-        size: Math.max((x.max.x + x.max.r) - (x.min.x - x.min.r) + pad, (y.max.y + y.max.r) - (y.min.y - y.min.r) + pad, 100)
+        w: (x.max.x + x.max.r) - (x.min.x - x.min.r),
+        h: (y.max.y + y.max.r) - (y.min.y - y.min.r)
       }
 
       return { tag: t.tag, nodes: nodes, dim }
-    })
+    }).filter(t => t != null)
 
-    const maxSize = max(tagNodes.map(t => t.dim.size))
+    const maxSize = max(tagNodes.map(t => Math.max(t.dim.w, t.dim.h))) // max size for all charts
     const zoom = packSize / maxSize
 
     flatMap(tagNodes, t => t.nodes).forEach(n => {
@@ -97,36 +145,35 @@ const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: numbe
     console.log('openChannel')
   }
 
-  const chart = useMemo(() => <>
-    <span>Channel <InlineSelect options={channelMd.measures} value={measure} onChange={o => setMeasure(o)} /> by tag</span>
+  const bubblesChart = useMemo(() => <>
+    <h3 style={{ padding: '0.5em 1em' }}>Channels <InlineSelect options={channelMd.measures} value={measure} onChange={o => setMeasure(o)} /> grouped by tag</h3>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap' }}>
       {tagNodes.map(t =>
-        <div key={t.tag.value} style={{ display: 'flex', flexDirection: 'column', padding: '5px 5px 20px', alignItems: 'center' }}>
-          <div style={{ padding: '1px 10px 5px' }}>
+        <BubbleDiv key={t.tag.value}>
+          <div style={{ padding: '2px' }}>
             <h4>
-              {t.tag.label ?? t.tag.value}
+              <span style={{ color: 'var(--fg2)' }}>{t.tag.label ?? t.tag.value}</span>
               <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{numFormat(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
             </h4>
           </div>
-          <TagPack {...t} {...{ zoom, packSize, imgLoaded, channelClick }} />
-        </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}><TagPack {...t} {...{ zoom, packSize, imgLoaded, channelClick }} /></div>
+        </BubbleDiv>
       )}
     </div>
   </>,
     [measure, imgLoaded, channels, zoom])
 
+
   return <div id='page'>
-    {chart}
+    {bubblesChart}
     {imgLoaded &&
       <TipStyle>
         <ReactTooltip
           effect='solid'
-          backgroundColor='var(--bg)'
           border
-          textColor='var(--fg)'
-          borderColor='var(--bg2)'
           className='tip'
-          getContent={(id: string) => id ? <ChannelInfo channel={chanById[id]} measure={measure} size='min' /> : <></>} />
+          borderColor='var(--bg2)'
+          getContent={(id: string) => id ? <ChannelInfo channel={channels[id]} measure={measure} size='min' /> : <></>} />
       </TipStyle>}
     {openChannel &&
       <Modal
@@ -134,29 +181,7 @@ const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: numbe
         ariaHideApp={false}
         parentSelector={() => document.querySelector('#page')}
         onRequestClose={() => setOpenChannel(null)}
-        style={{
-          overlay: {
-            backgroundColor: 'none',
-            backdropFilter: 'blur(15px)'
-          },
-          content: {
-            backgroundColor: 'var(--bg)',
-            opacity: 0.85,
-            padding: '0.5em',
-            border: 'solid 1px var(--bg2)',
-            borderRadius: '10px',
-            maxWidth: '95vw',
-            minWidth: "300px",
-            height: '90vh',
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-            overflow: 'hidden'
-          }
-        }}
+        style={modalStyle}
       >
         <ChannelInfo channel={openChannel} measure={measure} size='max' />
       </Modal>}
@@ -167,12 +192,11 @@ const TagsChart = ({ channels, width }: { channels: ChannelStats[], width: numbe
 interface TagPackExtra { zoom: number, packSize: number, imgLoaded: boolean, channelClick: (c: ChannelStats) => void }
 
 const TagPack = ({ nodes, dim, zoom, imgLoaded, channelClick: onChannelClick }: {} & TagNodes & TagPackExtra) => {
-
-  const size = dim.size * zoom
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
+  const z = zoom
 
-  return <svg width={size} height={size} style={{}}>
+  return <svg width={dim.w * z} height={dim.h * z} style={{}}>
     <g>
       {nodes.filter(n => n.data.type == 'channel').map(n => {
         const x = (n.x + dx) * zoom

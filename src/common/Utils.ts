@@ -69,4 +69,6 @@ export const dateFormat = (date: Date | number | string) => {
   return format(d, 'do MMM yyyy')
 }
 
-export const numFormat = (n: number) => n ? numeral(n).format('0[.]0a') : null
+export const numFormat = (n: number) => {
+  return n ? numeral(n).format(Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
+}

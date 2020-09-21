@@ -4,6 +4,7 @@ import { ChannelCommon } from './Channel'
 import { Uri } from './Uri'
 import { SearchBody, QueryData } from 'elastic-ts'
 import { snakeCase } from 'change-case'
+import { nullFormat } from 'numeral'
 
 export interface EsCfg {
   url: string
@@ -50,6 +51,8 @@ export const esCfg = {
 export interface EsVideo {
   videoId: string
   videoTitle: string
+  channelId: string
+  channelTitle: string
   uploadDate?: string
   updated?: string
   views?: number,
@@ -62,15 +65,15 @@ export async function getChannel(channelId: string, props?: (keyof EsChannel)[])
   return camelKeys(res._source) as EsChannel
 }
 
-export async function getChannelVideos(channelId: string, from: Date, props?: (keyof EsVideo)[], size?: number) {
+export async function getChannelVideos(channelId?: string, from?: Date, props?: (keyof EsVideo)[], size?: number) {
   const q: SearchBody = {
     query: {
       bool: {
-        must: {
+        must: channelId ? {
           term: {
             channel_id: channelId
           }
-        },
+        } : null,
         filter: from ? {
           range: {
             upload_date: {

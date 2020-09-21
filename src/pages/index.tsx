@@ -1,14 +1,13 @@
 import React from "react"
-import { Link } from "gatsby"
 
-import Layout from "../components/layout"
-import SEO from "../components/seo"
-import { ViewsByTagPage } from '../components/ViewsByTag'
+import Layout from "../components/Layout"
+import SEO from "../components/SEO"
+import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
 
 const IndexPage = () => (
   <Layout>
     <SEO title="transparency.tube" />
-    <ViewsByTagPage />
+    <ChannelVideoViewsPage />
   </Layout>
 )
 
