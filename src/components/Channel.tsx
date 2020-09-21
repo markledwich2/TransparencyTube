@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { ChannelStats, ChannelMeasures, channelMd } from '../common/Channel'
 import { numFormat } from '../common/Utils'
 import { EsChannel, getChannel } from '../common/YtApi'
-import { FlexCol } from './Layout'
+import { FlexCol, FlexRow } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
 
