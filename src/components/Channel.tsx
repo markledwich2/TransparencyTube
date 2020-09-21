@@ -16,11 +16,10 @@ export const Description = styled.div`
 
 export interface ChannelTipProps {
   channel: ChannelStats
-  measure: keyof ChannelMeasures
   size: 'min' | 'max'
 }
 
-export const ChannelInfo = ({ channel, measure, size }: ChannelTipProps) => {
+export const ChannelInfo = ({ channel, size }: ChannelTipProps) => {
   const [channelEx, setChannelEx] = useState<EsChannel>(null)
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export const ChannelInfo = ({ channel, measure, size }: ChannelTipProps) => {
     return () => (canceled = true)
   }, [channel])
 
-  if (!channel) return
+  if (!channel) return <></>
   const c = channel
   const exIsSame = channelEx?.channelId == c.channelId
   const e = exIsSame ? channelEx : null
@@ -50,24 +49,40 @@ export const ChannelInfo = ({ channel, measure, size }: ChannelTipProps) => {
   </FlexCol>
 }
 
+
+const ChannelTitleStyle = styled.div`
+  display: flex;
+  > * {
+    padding-right: '5px'
+  }
+  .logo {
+    :hover {
+      cursor: pointer;  
+    }
+  }
+`
+
 export interface ChannelTitleProps {
   c: ChannelStats
   showMetrics?: boolean
   showLr?: boolean
+  tipId?: string
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
+  onLogoClick?: (c: ChannelStats) => void
 }
 
-export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, tipId, onLogoClick }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tag, t => t.value)
   const lr = channelMd.lr.find(i => i.value == c.lr)
   const metrics = (['subs', 'channelViews', 'views7'] as (keyof ChannelMeasures)[])
     .map(d => channelMd.measures.find(m => d == m.value))
 
-  return <FlexRow>
-    <a href={`https://www.youtube.com/channel/${c.channelId}`} target="blank">
-      <img src={c.logoUrl} style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} />
-    </a>
+  return <ChannelTitleStyle>
+    <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
+      onClick={_ => onLogoClick ? onLogoClick(c) : window.open(`https://www.youtube.com/channel/${c.channelId}`, 'yt')}
+      className='logo'
+      style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} /></div>
     <div>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>{c.channelTitle}</h2>
       {showMetrics && <div style={{ marginBottom: '.5em' }}>
@@ -78,7 +93,7 @@ export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle }: 
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color ?? 'var(--bg2)'} />)}
       </TagDiv>
     </div>
-  </FlexRow>
+  </ChannelTitleStyle>
 }
 
 const Metric = ({ label: name, value }: { label: string, value: number }) =>

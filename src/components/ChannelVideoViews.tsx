@@ -1,6 +1,6 @@
 import { hierarchy, pack } from 'd3'
 import { Uri } from '../common/Uri'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, CSSProperties } from 'react'
 import React from 'react'
 import { getJsonl, numFormat, preloadImages } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
@@ -13,32 +13,36 @@ import styled from 'styled-components'
 import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
+import { Tip } from './Tooltip'
 
 export const ChannelVideoViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, ChannelStats>>()
+  const [openChannel, setOpenChannel] = useState<ChannelStats>(null)
   useEffect(() => { getChannels().then((channels) => setChannels(indexBy(channels, c => c.channelId))) }, [])
-  const videosList = useMemo(() => <><div style={{ height: '1em' }} /><Videos channels={channels} /></>, [channels])
+
+  const videosList = useMemo(() => {
+    if (!channels) return <></>
+    return <><div style={{ height: '1em' }} /><Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} /></>
+  }, [channels])
+
   if (!channels) return <></>
-  return <>
+  return <div id='page'>
     <ContainerDimensions >
-      {({ height, width }) => <Bubbles channels={channels} width={width} />}
+      {({ height, width }) => <Bubbles channels={channels} width={width} onOpenChannel={c => setOpenChannel(c)} />}
     </ContainerDimensions>
     {videosList}
-  </>
+    {openChannel &&
+      <Modal
+        isOpen={openChannel != null}
+        ariaHideApp={false}
+        parentSelector={() => document.querySelector('#page')}
+        onRequestClose={() => setOpenChannel(null)}
+        style={modalStyle}
+      >
+        <ChannelInfo channel={openChannel} size='max' />
+      </Modal>}
+  </div>
 }
-
-const TipStyle = styled.div`
-  .tip {
-    opacity:1;
-    padding:1em;
-    font-size:1rem;
-    max-width: 30rem;
-    background-color: var(--bg);
-    color: var(--fg);
-    border-color: var(--bg2);
-    border-radius: 10px;
-  }
-`
 
 const BubbleDiv = styled.div`
   display:flex;
@@ -58,7 +62,7 @@ const modalStyle = {
   },
   content: {
     backgroundColor: 'var(--bg)',
-    opacity: 0.85,
+    opacity: 1,
     padding: '0.5em',
     border: 'solid 1px var(--bg2)',
     borderRadius: '10px',
@@ -75,10 +79,9 @@ const modalStyle = {
   }
 }
 
-const Bubbles = ({ channels, width }: { channels: Record<string, ChannelStats>, width: number }) => {
+const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, ChannelStats>, width: number, onOpenChannel: (c: ChannelStats) => void }) => {
   const [measure, setMeasure] = useState<keyof ChannelMeasures>('views7')
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [openChannel, setOpenChannel] = useState<ChannelStats>(null)
 
   const { tagNodes, maxSize, zoom, packSize } = useMemo(() => {
     const tagData = getTagData(values(channels), c => c[measure] ?? 0)
@@ -100,7 +103,6 @@ const Bubbles = ({ channels, width }: { channels: Record<string, ChannelStats>, 
         (hierarchy(root, n => n.children))
         .descendants()
 
-      const pad = 0
       let { x, y } = {
         x: {
           min: minBy(nodes, n => n.x - n.r),
@@ -141,7 +143,7 @@ const Bubbles = ({ channels, width }: { channels: Record<string, ChannelStats>, 
 
   const channelClick = (c: ChannelStats) => {
     ReactTooltip.hide()
-    setOpenChannel(c)
+    onOpenChannel(c)
     console.log('openChannel')
   }
 
@@ -164,33 +166,24 @@ const Bubbles = ({ channels, width }: { channels: Record<string, ChannelStats>, 
     [measure, imgLoaded, channels, zoom])
 
 
-  return <div id='page'>
+  return <div>
     {bubblesChart}
     {imgLoaded &&
-      <TipStyle>
-        <ReactTooltip
-          effect='solid'
-          border
-          className='tip'
-          borderColor='var(--bg2)'
-          getContent={(id: string) => id ? <ChannelInfo channel={channels[id]} measure={measure} size='min' /> : <></>} />
-      </TipStyle>}
-    {openChannel &&
-      <Modal
-        isOpen={openChannel != null}
-        ariaHideApp={false}
-        parentSelector={() => document.querySelector('#page')}
-        onRequestClose={() => setOpenChannel(null)}
-        style={modalStyle}
-      >
-        <ChannelInfo channel={openChannel} measure={measure} size='max' />
-      </Modal>}
+      <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo channel={channels[id]} size='min' /> : <></>} />
+    }
   </div>
 }
 
 
-interface TagPackExtra { zoom: number, packSize: number, imgLoaded: boolean, channelClick: (c: ChannelStats) => void }
+const GStyle = styled.g`
+  .node {
+    :hover {
+      cursor:pointer;
+    }
+  }
+`
 
+interface TagPackExtra { zoom: number, packSize: number, imgLoaded: boolean, channelClick: (c: ChannelStats) => void }
 const TagPack = ({ nodes, dim, zoom, imgLoaded, channelClick: onChannelClick }: {} & TagNodes & TagPackExtra) => {
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
@@ -202,13 +195,13 @@ const TagPack = ({ nodes, dim, zoom, imgLoaded, channelClick: onChannelClick }: 
         const x = (n.x + dx) * zoom
         const y = (n.y + dy) * zoom
         const r = n.r * zoom
-
-        return <g key={n.data.key}>
-          <circle cx={x} cy={y} r={r} fill={n.data.color} data-tip={n.data.channel.channelId} onClick={_ => onChannelClick(n.data.channel)} />
+        const props = { 'data-for': 'bubble', 'data-tip': n.data.channel.channelId, onClick: (_) => onChannelClick(n.data.channel), className: 'node' }
+        return <GStyle key={n.data.key}>
+          <circle cx={x} cy={y} r={r} fill={n.data.color} {...props} />
           {imgLoaded && n.data.img &&
             <image x={x - r * 0.9} y={y - r * 0.9} width={r * 0.9 * 2}
-              href={n.data.img} data-tip={n.data.channel.channelId} style={{ clipPath: 'circle()' }} onClick={_ => onChannelClick(n.data.channel)} />}
-        </g>
+              href={n.data.img} style={{ clipPath: 'circle()' }}{...props} />}
+        </GStyle>
       }
       )}
     </g>
