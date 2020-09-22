@@ -39,13 +39,15 @@ export const ChannelInfo = ({ channel, size }: ChannelTipProps) => {
 
   return <FlexCol style={{ maxWidth: '45em', width: '100%', maxHeight: '100%' }}>
     <ChannelTitle c={c} showMetrics showLr />
-    <Description>
-      {!e
-        ? <Spinner size='4em' />
-        : <p>{e.description}</p>
-      }
-    </Description>
-    {size == 'max' && <Videos channel={c} />}
+    <div style={{ overflowY: 'scroll' }}>
+      <Description>
+        {!e
+          ? <Spinner size='4em' />
+          : <p>{e.description}</p>
+        }
+      </Description>
+      {size == 'max' && <Videos channel={c} />}
+    </div>
   </FlexCol>
 }
 
@@ -73,7 +75,7 @@ export interface ChannelTitleProps {
 }
 
 export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, tipId, onLogoClick }: ChannelTitleProps) => {
-  const tags = indexBy(channelMd.tag, t => t.value)
+  const tags = indexBy(channelMd.tags, t => t.value)
   const lr = channelMd.lr.find(i => i.value == c.lr)
   const metrics = (['subs', 'channelViews', 'views7'] as (keyof ChannelMeasures)[])
     .map(d => channelMd.measures.find(m => d == m.value))

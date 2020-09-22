@@ -4,7 +4,7 @@ import { ChannelStats, ChannelMeasures } from '../common/Channel'
 import { dateFormat, numFormat, preloadImages } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { EsVideo, getChannelVideos } from '../common/YtApi'
-import { InlineSelect, Option } from './InlineSelect'
+import { InlineSelect, Opt } from './InlineSelect'
 import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, StyleProps } from './Layout'
 import { ChannelInfo, ChannelTitle } from './Channel'
@@ -12,7 +12,7 @@ import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import ReactTooltip from 'react-tooltip'
 
-const periodOptions: (Option<string> & { from?: Date })[] = [
+const periodOptions: (Opt<string> & { from?: Date })[] = [
   { value: 'all', label: 'of all Time', from: null },
   { value: 'views1', label: 'uploaded within 2 days', from: subDays(Date.now(), 2) },
   { value: 'views7', label: 'uploaded within 7 days', from: subDays(Date.now(), 7) },
@@ -47,22 +47,18 @@ export const Videos = ({ channel, channels, onOpenChannel }: { channel?: Channel
       Top videos {!channel && 'across all channels'} <InlineSelect value={period} options={periodOptions} onChange={v => setPeriod(v)} />
     </h3>
     <div style={{
-      overflowY: 'scroll',
+      minHeight: '300px',
+      filter: loading ? 'blur(3px)' : null,
+      display: 'flex',
+      flexDirection: channel ? 'column' : 'row',
+      flexWrap: channel ? null : 'wrap',
+      alignItems: 'center'
     }}>
-      <div style={{
-        minHeight: '300px',
-        filter: loading ? 'blur(3px)' : null,
-        display: 'flex',
-        flexDirection: channel ? 'column' : 'row',
-        flexWrap: channel ? null : 'wrap',
-        alignItems: 'center'
-      }}>
-        {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
-        {videos && videos.map((v, i) => <Video key={v.videoId} onOpenChannel={onOpenChannel}
-          v={v} rank={i + 1}
-          style={{ width: '700px', maxWidth: '90vw' }}
-          c={!channel && channels && channels[v.channelId]} />)}
-      </div>
+      {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
+      {videos && videos.map((v, i) => <Video key={v.videoId} onOpenChannel={onOpenChannel}
+        v={v} rank={i + 1}
+        style={{ width: '700px', maxWidth: '100%' }}
+        c={!channel && channels && channels[v.channelId]} />)}
     </div>
     {videos && videos.length >= limit && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold' }}><a onClick={_ => setLimit(limit + 20)}>show more</a></div>}
     {channels && <Tip id={tipId} getContent={(id) => <ChannelInfo channel={channels[id]} size='min' />} />}
@@ -82,7 +78,11 @@ const VideoStyle = styled.div`
   }
 `
 
-const Video = ({ v, rank, style, c, onOpenChannel }: { v: EsVideo, rank: number, c?: ChannelStats, onOpenChannel?: (c: ChannelStats) => void } & StyleProps) => <VideoStyle style={style}>
+interface VideoProps extends StyleProps {
+  v: EsVideo, rank: number, c?: ChannelStats, onOpenChannel?: (c: ChannelStats) => void
+}
+
+const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => <VideoStyle style={style}>
   <FlexRow>
     <div className='rank' style={{ minWidth: rank < 100 ? '30px' : null }}>{rank}</div>
     <FlexRow style={{ flexWrap: 'wrap' }}>

@@ -2,13 +2,13 @@ import styled from 'styled-components'
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
 
-export interface Option<T> {
+export interface Opt<T> {
   label?: string
   value: T
 }
 
 interface InlineSelectOptions<T> {
-  options: Option<T>[]
+  options: Opt<T>[]
   value: T
   onChange?: (o: T) => void
 }
@@ -81,6 +81,7 @@ export function InlineSelect<T>({ options, value, onChange }: InlineSelectOption
     {open && <PopupStyle ref={popupRef}>
       <ul>
         {options.map(o => <li
+          key={o.value.toString()}
           className={o.value == value ? 'selected' : null}
           onClick={_ => {
             setOpen(false)

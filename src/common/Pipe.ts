@@ -2,11 +2,11 @@ import { purry } from 'remeda'
 
 export type Dir = 'asc' | 'desc'
 
-export function sortBy<T>(array: readonly T[], fn: (item: T) => any, dir?: Dir): T[]
-export function sortBy<T>(fn: (item: T) => any, dir?: Dir): (array: readonly T[]) => T[]
+export function sortBy<T>(array: readonly T[], fn: (item: T) => any, dir: Dir): T[]
+export function sortBy<T>(fn: (item: T) => any, dir: Dir): (array: readonly T[]) => T[]
 export function sortBy() { return purry(_sortBy, arguments) }
 
-function _sortBy<T>(array: T[], fn: (item: T) => any, dir?: Dir): T[] {
+function _sortBy<T>(array: T[], fn: (item: T) => any, dir: Dir): T[] {
   const copied = [...array]
   return copied.sort((a, b) => {
     const aa = fn(a)
