@@ -93,15 +93,17 @@ const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, 
   }, [channels, display, width])
 
   useEffect(() => {
-    const images = imagesToLoad(groupedNodes, imagesLoaded)
-    if (images.length > 0) {
+    const existingLoaded = new Set([...imagesLoaded])
+    setImagesLoaded(new Set([])) // clear this so that bubble images are removed then added toi avoid artifacts that occur
+    const images = imagesToLoad(groupedNodes, existingLoaded)
+    const go = async () => {
+      await preloadImages(images)
       console.log('loaded images', images.length)
-      preloadImages(images)
-        .then(() => {
-          return setImagesLoaded(new Set([...imagesLoaded, ...images]))
-        })
+      setImagesLoaded(new Set([...existingLoaded, ...images]))
+      ReactTooltip.rebuild()
     }
-  }, [display])
+    go()
+  }, [display.measure, display.groupBy])
 
   const channelClick = (c: ChannelStats) => {
     ReactTooltip.hide()
@@ -111,7 +113,6 @@ const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, 
 
   const bubblesChart = useMemo(() => {
     console.log('bubble chart render')
-    useEffect(() => { ReactTooltip.rebuild() })
     return <>
       <h3 style={{ padding: '0.5em 1em' }}>Political YouTube channel's
         <InlineSelect options={channelMd.measures} value={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
