@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import React, { useState, useEffect, useRef } from 'react'
 import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
+import { jsonEquals } from '../common/Utils'
 
 export interface Opt<T> {
   label?: string
@@ -32,6 +33,9 @@ const PopupStyle = styled.div`
     padding:0;
     line-height:2.5em;
     border: solid 1px var(--bg2);
+    z-index:10;
+    overflow-y: auto;
+    max-height: 25vh;
 
     ul {
       list-style-type: none;
@@ -76,12 +80,12 @@ export function InlineSelect<T>({ options, value, onChange }: InlineSelectOption
     <InlineStyle onClick={e => {
       if (!open) setOpen(true)
     }}>
-      {options.find(o => o.value == value)?.label}<ChevIcon />
+      {options.find(o => o.value == value || jsonEquals(o.value, value))?.label}<ChevIcon />
     </InlineStyle>
     {open && <PopupStyle ref={popupRef}>
       <ul>
         {options.map(o => <li
-          key={o.value.toString()}
+          key={JSON.stringify(o.value)}
           className={o.value == value ? 'selected' : null}
           onClick={_ => {
             setOpen(false)

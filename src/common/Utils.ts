@@ -1,6 +1,16 @@
 import { format } from 'date-fns'
 import { resetWarningCache } from 'prop-types'
 import numeral from 'numeral'
+import humanizeDuration from 'humanize-duration'
+import { compact, reverse } from 'remeda'
+
+
+/** GET a json object and deserialize it */
+export async function getJson<T>(url: RequestInfo, cfg?: RequestInit): Promise<T> {
+  const res = await fetch(url, Object.assign({ method: 'GET' }, cfg))
+  let json = await res.json()
+  return json as T
+}
 
 function splitStream(splitOn: string): TransformStream {
   let buffer = ''
@@ -24,6 +34,8 @@ function parseJSON<T>(): TransformStream<string, T> {
     }
   })
 }
+
+export const jsonEquals = (a: any, b: any) => JSON.stringify(a) == JSON.stringify(b)
 
 export async function getJsonl<T>(url: RequestInfo, cfg?: RequestInit): Promise<T[]> {
   const res = await fetch(url, Object.assign({ method: 'GET' }, cfg))
@@ -75,3 +87,51 @@ export const numFormat = (n: number) =>
 
 export const delay = <T>(ms: number, value?: T): Promise<T> =>
   new Promise((resolve) => setTimeout(resolve(value), 100))
+
+// export const shortEnglishHumanizer = humanizeDuration.humanizer({
+//   language: "shortEn",
+//   languages: {
+//     shortEn: {
+//       y: () => "y",
+//       mo: () => "m",
+//       w: () => "w",
+//       d: () => "d",
+//       h: () => "h",
+//       m: () => "m",
+//       s: () => "s",
+//       ms: () => "ms",
+//     },
+//   },
+// })
+
+const daySeconds = 24 * 60 * 60 * 60
+const timeUnits = {
+  sec: 1,
+  min: 60 * 60,
+  hr: 60 * 60 * 60,
+  day: daySeconds,
+  week: 7 * daySeconds,
+  month: 365 / 12.0 * daySeconds,
+  year: 365 * daySeconds
+}
+
+const pluralUnit = (u: string, v: number) => {
+  if (v > 1) return u == 'century' ? 'centuries' : `${u}s`
+  return u
+}
+
+export const hoursFormat = (hours: number) => {
+  let remainingSecs = hours * timeUnits.hr
+  const units = reverse(Object.entries(timeUnits)).map(v => {
+    const [unit, unitSecs] = v
+    if (remainingSecs - unitSecs > 0) {
+      const val = Math.floor(remainingSecs / unitSecs)
+      remainingSecs = remainingSecs - val * unitSecs
+      return { unit, val: val }
+    }
+    return { unit, val: 0 }
+  })
+  const r = units.filter(u => u.val).slice(0, 2)
+    .map(u => `${numFormat(u.val)} ${pluralUnit(u.unit, u.val)}`).join(' ')
+  return r
+}

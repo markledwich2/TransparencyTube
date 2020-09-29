@@ -10,9 +10,11 @@
     "Identitarian",
     "Jsonl",
     "Vals",
+    "camelcase",
     "ngraph",
     "purry",
     "remeda",
+    "ttube",
     "vids"
   ],
   "typescript.preferences.quoteStyle": "single",

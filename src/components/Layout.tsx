@@ -30,7 +30,6 @@ const lightValues = css`
 `
 
 const darkValues = css`
-
 --fg: #eee;
 --fg1: #ccc;
 --fg2: #bbb;

@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import React from 'react'
-import { numFormat, preloadImages } from '../common/Utils'
+import { hoursFormat, numFormat, preloadImages } from '../common/Utils'
 import { InlineSelect, Opt } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { ChannelStats, getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg } from '../common/Channel'
+import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, periodOptions, measureFormat } from '../common/Channel'
 import { ChannelInfo } from './Channel'
 import { sumBy } from '../common/Pipe'
-import { indexBy } from 'remeda'
+import { first, indexBy } from 'remeda'
 import styled, { AnyStyledComponent } from 'styled-components'
 import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
 import { Tip } from './Tooltip'
-
+import { ChannelStats, ChannelWithStats, getViewsIndexes, StatsPeriod, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
+import { periodLabel } from '../common/Video'
 
 const modalStyle = {
   overlay: {
@@ -39,21 +40,32 @@ const modalStyle = {
 }
 
 export const ChannelVideoViewsPage = () => {
-  const [channels, setChannels] = useState<Record<string, ChannelStats>>()
-  const [openChannel, setOpenChannel] = useState<ChannelStats>(null)
-  useEffect(() => { getChannels().then((channels) => setChannels(indexBy(channels, c => c.channelId))) }, [])
+  const [channels, setChannels] = useState<Record<string, Channel>>()
+  const [openChannel, setOpenChannel] = useState<ChannelWithStats>(null)
+  const [indexes, setIndexes] = useState<ViewsIndexes>(null)
 
-  const videosList = useMemo(() => {
-    if (!channels) return <></>
-    return <><div style={{ height: '1em' }} /><Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} /></>
-  }, [channels])
+  useEffect(() => {
+    const go = async () => {
+      const channelsTask = getChannels()
+      try {
+        setIndexes(await getViewsIndexes())
+      }
+      catch (e) {
+        console.log('error getting view indexes', e)
+      }
+      const channels = indexBy(await channelsTask, c => c.channelId)
+      setChannels(channels)
+    }
+    go()
+  }, [])
 
   if (!channels) return <></>
   return <div id='page'>
     <ContainerDimensions >
-      {({ width }) => <Bubbles channels={channels} width={width} onOpenChannel={c => setOpenChannel(c)} />}
+      {({ width }) => <Bubbles channels={channels} width={width} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} />}
     </ContainerDimensions>
-    {videosList}
+    <div style={{ height: '1em' }} />
+    <Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} />
     {openChannel &&
       <Modal
         isOpen={openChannel != null}
@@ -62,7 +74,7 @@ export const ChannelVideoViewsPage = () => {
         onRequestClose={() => setOpenChannel(null)}
         style={modalStyle}
       >
-        <ChannelInfo channel={openChannel} size='max' />
+        <ChannelInfo channel={openChannel} size='max' indexes={indexes} />
       </Modal>}
   </div>
 }
@@ -78,44 +90,63 @@ const BubbleDiv = styled.div`
   border-radius: 10px;
 `
 
-const groupOptions: Opt<keyof ChannelStats>[] = [
+const groupOptions: Opt<keyof Channel>[] = [
   { value: 'tags', label: 'tag' },
   { value: 'lr', label: 'left/right' },
   { value: 'media', label: 'media' }
 ]
 
-const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, ChannelStats>, width: number, onOpenChannel: (c: ChannelStats) => void }) => {
-  const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views7', groupBy: 'tags', colorBy: 'lr' })
+interface BubblesProps { channels: Record<string, Channel>, width: number, onOpenChannel: (c: ChannelWithStats) => void, indexes: ViewsIndexes }
+
+const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
+  const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr', period: first(indexes.periods) })
   const [imagesLoaded, setImagesLoaded] = useState(new Set<string>([]))
+  const [stats, setStats] = useState<Record<string, ChannelWithStats>>(null)
 
   const { groupedNodes, zoom, packSize } = useMemo(() => {
-    return buildTagNodes(channels, display, width)
-  }, [channels, display, width])
+    return stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
+  }, [stats, display, width])
 
   useEffect(() => {
+    const go = async () => {
+      if (!['views', 'watchHours'].includes(display.measure)) return Object.values(channels)
+      const rawStats = await indexes.channelStats.getRows(display.period)
+      const stats = indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId)
+      setStats(stats)
+    }
+    go()
+  }, [display.period, display.measure, indexes, channels])
+
+  useEffect(() => {
+    if (!groupedNodes) return
     const existingLoaded = new Set([...imagesLoaded])
     setImagesLoaded(new Set([])) // clear this so that bubble images are removed then added toi avoid artifacts that occur
     const images = imagesToLoad(groupedNodes, existingLoaded)
     const go = async () => {
       await preloadImages(images)
-      console.log('loaded images', images.length)
       setImagesLoaded(new Set([...existingLoaded, ...images]))
       ReactTooltip.rebuild()
     }
     go()
-  }, [display.measure, display.groupBy])
+  }, [stats, display.groupBy, groupedNodes])
 
-  const channelClick = (c: ChannelStats) => {
+  const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
     onOpenChannel(c)
-    console.log('openChannel')
   }
 
+  const measureFmt = measureFormat(display.measure)
+
   const bubblesChart = useMemo(() => {
-    console.log('bubble chart render')
     return <>
       <h3 style={{ padding: '0.5em 1em' }}>Political YouTube channel's
         <InlineSelect options={channelMd.measures} value={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
+
+        {['views', 'watchHours'].includes(display.measure) && <InlineSelect
+          options={periodOptions(indexes.periods)}
+          value={display.period}
+          onChange={o => setDisplay({ ...display, period: o as any })} />
+        }
         by
         <InlineSelect options={groupOptions} value={display.groupBy} onChange={o => {
           const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
@@ -125,11 +156,11 @@ const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, 
         <InlineSelect options={groupOptions} value={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
       </h3>
       <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap' }}>
-        {groupedNodes.map(t => <BubbleDiv key={t.group.value}>
+        {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
           <div style={{ padding: '2px' }}>
             <h4>
               <span style={{ color: 'var(--fg2)' }}>{t.group.label ?? t.group.value}</span>
-              <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{numFormat(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
+              <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
             </h4>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -139,11 +170,11 @@ const Bubbles = ({ channels, width, onOpenChannel }: { channels: Record<string, 
       </div>
     </>
   },
-    [display, imagesLoaded, channels, zoom])
+    [display, imagesLoaded, groupedNodes, zoom])
 
 
   return <div>
-    <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo channel={channels[id]} size='min' /> : <></>} />
+    <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo channel={stats[id]} size='min' indexes={indexes} /> : <></>} />
     {bubblesChart}
   </div>
 }

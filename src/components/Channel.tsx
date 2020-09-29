@@ -1,12 +1,13 @@
 import React, { CSSProperties, useEffect, useState } from 'react'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import { ChannelStats, ChannelMeasures, channelMd } from '../common/Channel'
+import { Channel, channelMd, ColumnMd, measureFormat } from '../common/Channel'
 import { numFormat } from '../common/Utils'
-import { EsChannel, getChannel } from '../common/YtApi'
-import { FlexCol, FlexRow } from './Layout'
+import { EsChannel, getChannel } from '../common/EsApi'
+import { FlexCol } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
+import { ChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 
 export const Description = styled.div`
   max-height:5em;
@@ -15,11 +16,12 @@ export const Description = styled.div`
 `
 
 export interface ChannelTipProps {
-  channel: ChannelStats
+  channel: ChannelWithStats
   size: 'min' | 'max'
+  indexes: ViewsIndexes
 }
 
-export const ChannelInfo = ({ channel, size }: ChannelTipProps) => {
+export const ChannelInfo = ({ channel, size, indexes }: ChannelTipProps) => {
   const [channelEx, setChannelEx] = useState<EsChannel>(null)
 
   useEffect(() => {
@@ -38,15 +40,15 @@ export const ChannelInfo = ({ channel, size }: ChannelTipProps) => {
   const e = exIsSame ? channelEx : null
 
   return <FlexCol style={{ maxWidth: '45em', width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={c} showMetrics showLr />
+    <ChannelTitle c={c} showMetrics={['channelViews', 'subs', 'views', 'watchHours']} showLr />
     <div style={{ overflowY: 'scroll' }}>
       <Description>
         {!e
-          ? <Spinner size='4em' />
+          ? <Spinner />
           : <p>{e.description}</p>
         }
       </Description>
-      {size == 'max' && <Videos channel={c} />}
+      {size == 'max' && <Videos channel={c} indexes={indexes} />}
     </div>
   </FlexCol>
 }
@@ -65,20 +67,19 @@ const ChannelTitleStyle = styled.div`
 `
 
 export interface ChannelTitleProps {
-  c: ChannelStats
-  showMetrics?: boolean
+  c: ChannelWithStats
+  showMetrics?: (keyof ChannelWithStats)[]
   showLr?: boolean
   tipId?: string
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
-  onLogoClick?: (c: ChannelStats) => void
+  onLogoClick?: (c: Channel) => void
 }
 
 export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, tipId, onLogoClick }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags, t => t.value)
   const lr = channelMd.lr.find(i => i.value == c.lr)
-  const metrics = (['subs', 'channelViews', 'views7'] as (keyof ChannelMeasures)[])
-    .map(d => channelMd.measures.find(m => d == m.value))
+  const metrics = showMetrics?.map(d => channelMd.measures.find(m => d == m.value)) ?? []
 
   return <ChannelTitleStyle>
     <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
@@ -88,7 +89,7 @@ export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, ti
     <div>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>{c.channelTitle}</h2>
       {showMetrics && <div style={{ marginBottom: '.5em' }}>
-        {metrics.map(m => <Metric key={m.value} label={m.label} value={c[m.value]} />)}
+        {metrics.map(m => <Metric key={m.value} col={m} value={c[m.value]} />)}
       </div>}
       <TagDiv style={{ marginBottom: '1em' }} >
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
@@ -98,8 +99,10 @@ export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, ti
   </ChannelTitleStyle>
 }
 
-const Metric = ({ label: name, value }: { label: string, value: number }) =>
-  <span style={{ marginRight: '1em' }}><b>{numFormat(value)}</b> {name}</span>
+const Metric = ({ col, value }: { col: ColumnMd<string>, value: number }) => {
+  const fmt = col.format ?? numFormat
+  return <span style={{ marginRight: '1em' }}><b>{fmt(value)}</b> {col.label ?? col.value}</span>
+}
 
 const TagDiv = styled.div`
     color: #eee;

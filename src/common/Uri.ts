@@ -47,7 +47,8 @@ export class Uri {
     if (p.path?.length ?? 0 > 0) u.pathname = p.path!.join('/')
     if (p.hash) u.hash = p.hash
     if (p.query)
-      for (const [key, value] of Object.entries(p.query))
+      for (const [key, value] of Object.entries(p.query)
+        .filter(kv => kv[1] != null && kv[1] != undefined)) // filter out entries without values
         u.searchParams.append(key, value)
     return u
   };
@@ -55,7 +56,7 @@ export class Uri {
   with = (parts: UriParts) => new Uri(Object.assign({}, this.parts, parts))
 
   /** appends the given query string values to the existing, returns the new Uri */
-  addQuery = (q: { [key: string]: string }) => this.with({ query: Object.assign({}, this.parts.query, q) })
+  addQuery = (q: { [key: string]: any }) => this.with({ query: Object.assign({}, this.parts.query, q) })
 
   /** appends a path part to the existing one. returns a new Uri */
   addPath = (...path: string[]) => this.with({ path: (this.parts.path ?? []).concat(path) })
