@@ -18,8 +18,8 @@ export const daysTillLabel = (p: string, days: number) => {
 
 export const labelFuncs = {
   d: daysTillLabel,
-  m: (p: string) => `${format(Date.parse(p), 'yyyy MMM')}`,
-  y: (p: string) => `${format(Date.parse(p), 'yyyy')}`
+  m: (p: string) => `${format(parseISO(p), 'yyyy MMM')}`,
+  y: (p: string) => `${format(parseISO(p), 'yyyy')}`
 }
 
 export const periodLabel = (type: string, period: string) => {

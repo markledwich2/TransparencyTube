@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from 'react'
+import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel, channelMd, ColumnMd, measureFormat } from '../common/Channel'
@@ -81,9 +81,17 @@ export const ChannelTitle = ({ c, showMetrics, showLr, logoStyle, titleStyle, ti
   const lr = channelMd.lr.find(i => i.value == c.lr)
   const metrics = showMetrics?.map(d => channelMd.measures.find(m => d == m.value)) ?? []
 
-  return <ChannelTitleStyle>
+
+  //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
+  //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
+  //console.log('faded', faded)
+  //style={{ opacity: faded ? 0.5 : null }}
+  return <ChannelTitleStyle >
     <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
       onClick={_ => onLogoClick ? onLogoClick(c) : window.open(`https://www.youtube.com/channel/${c.channelId}`, 'yt')}
+      // onMouseOver={_ => {
+      //   inter.hover = { col: 'lr', value: c.lr }
+      // }}
       className='logo'
       style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} /></div>
     <div>

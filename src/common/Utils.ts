@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { resetWarningCache } from 'prop-types'
 import numeral from 'numeral'
 import humanizeDuration from 'humanize-duration'
@@ -77,7 +77,7 @@ export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a,
 
 export const dateFormat = (date: Date | number | string) => {
   if (!date) return
-  const d = (typeof (date) == 'string') ? Date.parse(date) : date
+  const d = (typeof (date) == 'string') ? parseISO(date) : date
   return format(d, 'do MMM yyyy')
 }
 

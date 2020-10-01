@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FunctionComponent } from 'react'
+import React, { useState, useEffect, FunctionComponent, useContext } from 'react'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { periodLabel, videoThumb, videoUrl } from '../common/Video'
 import { InlineSelect } from './InlineSelect'
@@ -16,8 +16,9 @@ import { Channel, periodOptions } from '../common/Channel'
 const tipId = 'video-tip'
 
 interface VideosProps {
-  channel?: Channel,
-  channels?: Record<string, Channel>, onOpenChannel?: (c: Channel) => void,
+  channel?: ChannelWithStats,
+  channels?: Record<string, Channel>,
+  onOpenChannel?: (c: ChannelWithStats) => void,
   indexes?: ViewsIndexes
 }
 export const Videos = ({ channel, channels, onOpenChannel, indexes }: VideosProps) => {
@@ -104,7 +105,11 @@ const VideoStyle = styled.div`
 `
 
 interface VideoProps extends StyleProps {
-  v: VideoWithStats, rank: number, c?: Channel, onOpenChannel?: (c: Channel) => void
+  v: VideoWithStats,
+  rank: number,
+  c?: Channel,
+  onOpenChannel?: (c: Channel) => void,
+  //onHover?: (hover: VideoHover) => void
 }
 
 const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
@@ -131,7 +136,8 @@ const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
           </FlexRow>
           <span><b>{hoursFormat(v.watchHours)}</b> watched</span>
           {c && <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
-            <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }} tipId={tipId} onLogoClick={onOpenChannel} showLr />
+            <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }}
+              tipId={tipId} onLogoClick={onOpenChannel} showLr />
           </div>}
         </FlexCol>
       </FlexRow>
