@@ -36,8 +36,9 @@ const darkValues = css`
 --fg3: #999;
 --bg: #000;
 --bg1: #111;
---bg2: #444;
---bg3: #666;
+--bg2: #222;
+--bg3: #444;
+--bg4: #666;
 `
 
 const GlobalStyle = createGlobalStyle`

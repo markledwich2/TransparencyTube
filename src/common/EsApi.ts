@@ -47,7 +47,7 @@ export interface EsVideo {
   updated?: string
   views?: number,
   description?: string
-  duration_secs?: number
+  durationSecs?: number
 }
 
 export async function getChannel(channelId: string, props?: (keyof EsChannel)[]) {

@@ -38,7 +38,7 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes }: VideosProp
       if (period) {
         const filter = channel ? { channelId: channel.channelId, ...period } : period
         const videoViews = await getVideoViews(index, filter,
-          ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views'], limit)
+          ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views', 'durationSecs'], limit)
         setVideos(videoViews)
       }
       setLoading(false)
@@ -95,12 +95,11 @@ const VideoStyle = styled.div`
     box-shadow: 0px 1px 6px 2px #444;
   }
   .duration {
-    right:0px;
-    bottom:0px;
-    position:absolute;
+    position:relative;
+    top:-15px;
+    text-align:right;
     font-weight:bold;
-    background-color: rgba(0,0,0,0.7);
-    color:var(--fg1);
+    color:var(--fg2);
   }
 `
 
@@ -122,13 +121,13 @@ const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
         <div style={{ position: 'relative' }}>
           <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px' }} /></VideoA>
           <div className='rank'>{rank}</div>
-          {v.duration_secs && <div className='duration'>{hoursFormat(v.duration_secs * 60)}</div>}
+          {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         </div>
         <FlexCol style={{ width: '28em', color: 'var(--fg1)' }} space='0.2em'>
           <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>{v.videoTitle}</h4></VideoA>
           <FlexRow space='0.7em' style={{ alignItems: 'baseline' }}>
             <div>
-              <span><b style={{ fontSize: '1.3em' }}>{fPeriodViews}</b></span>
+              <span><b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b></span>
               {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.views)}</span>}
               &nbsp;views
             </div>

@@ -89,50 +89,35 @@ export const numFormat = (n: number) =>
 export const delay = <T>(ms: number, value?: T): Promise<T> =>
   new Promise((resolve) => setTimeout(resolve(value), 100))
 
-// export const shortEnglishHumanizer = humanizeDuration.humanizer({
-//   language: "shortEn",
-//   languages: {
-//     shortEn: {
-//       y: () => "y",
-//       mo: () => "m",
-//       w: () => "w",
-//       d: () => "d",
-//       h: () => "h",
-//       m: () => "m",
-//       s: () => "s",
-//       ms: () => "ms",
-//     },
-//   },
-// })
 
-const daySeconds = 24 * 60 * 60 * 60
-const timeUnits = {
-  sec: 1,
-  min: 60 * 60,
-  hr: 60 * 60 * 60,
-  day: daySeconds,
-  week: 7 * daySeconds,
-  month: 365 / 12.0 * daySeconds,
-  year: 365 * daySeconds
+const daySeconds = 24 * 60 * 60
+const timeUnits: { [key: string]: TimeUnit } = {
+  s: { s: 1 },
+  m: { s: 60 },
+  hr: { s: 60 * 60, plural: 'hrs' },
+  day: { s: daySeconds, plural: 'days' },
+  year: { s: 365 * daySeconds, plural: 'years' }
 }
 
-const pluralUnit = (u: string, v: number) => {
-  if (v > 1) return u == 'century' ? 'centuries' : `${u}s`
-  return u
+interface TimeUnit { s: number, plural?: string }
+
+const labelUnit = (u: string, v: number) => {
+  const space = u.length > 2 ? ' ' : ''
+  return space + ((v == 1) ? u : (timeUnits[u].plural ?? u))
 }
 
 export const hoursFormat = (hours: number) => {
-  let remainingSecs = hours * timeUnits.hr
+  let remainingSecs = hours * timeUnits.hr.s
   const units = reverse(Object.entries(timeUnits)).map(v => {
-    const [unit, unitSecs] = v
-    if (remainingSecs - unitSecs > 0) {
-      const val = Math.floor(remainingSecs / unitSecs)
-      remainingSecs = remainingSecs - val * unitSecs
+    const [unit, { s, plural }] = v
+    if (remainingSecs - s > 0) {
+      const val = Math.floor(remainingSecs / s)
+      remainingSecs = remainingSecs - val * s
       return { unit, val: val }
     }
     return { unit, val: 0 }
   })
   const r = units.filter(u => u.val).slice(0, 2)
-    .map(u => `${numFormat(u.val)} ${pluralUnit(u.unit, u.val)}`).join(' ')
+    .map(u => `${numFormat(u.val)}${labelUnit(u.unit, u.val)}`).join(' ')
   return r
 }

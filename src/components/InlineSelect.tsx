@@ -20,11 +20,13 @@ const OuterStyle = styled.span`
 `
 
 const InlineStyle = styled.span`
-  padding:0.3em 0.4em;
+  margin:0 0.4em;
+  padding:0.2em 0.1em 0.2em 0.4em;
+  border-radius: 5px;
+  background-color: var(--bg2);
   :hover {
     cursor: pointer;
-    border-radius: 5px;
-    background-color: var(--bg1);
+    background-color: var(--bg3);
   }
 `
 
