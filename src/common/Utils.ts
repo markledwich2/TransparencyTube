@@ -3,6 +3,7 @@ import { resetWarningCache } from 'prop-types'
 import numeral from 'numeral'
 import humanizeDuration from 'humanize-duration'
 import { compact, reverse } from 'remeda'
+import '@stardazed/streams-polyfill'
 
 
 /** GET a json object and deserialize it */

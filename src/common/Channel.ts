@@ -145,7 +145,7 @@ export const getGroupData = (channels: ChannelWithStats[], display: DisplayCfg) 
           channel: c,
           color: colorMd[colorVal]?.color,
           val: val(c),
-          key: `${g.value}|${c.channelId}`
+          key: c.channelId
         }
       })
     return { group: g, nodes }
@@ -178,7 +178,8 @@ export const buildTagNodes = (channels: ChannelWithStats[], display: DisplayCfg,
     const nodes = pack<ChannelNode>()
       .padding(0)
       .size([packSize, packSize])
-      .radius(d => Math.sqrt(d.data.val) * 0.015)(hierarchy(root, n => n.children))
+      .radius(d => Math.sqrt(d.data.val) * 0.015)
+      (hierarchy(root, n => n.children))
       .descendants()
 
     let { x, y } = {

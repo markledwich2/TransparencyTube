@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "author": "",
   "dependencies": {
+    "@stardazed/streams-polyfill": "^2.2.0",
     "@types/humanize-duration": "^3.18.1",
     "@types/numeral": "0.0.28",
     "@types/react-modal": "^3.10.6",

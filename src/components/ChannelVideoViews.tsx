@@ -193,19 +193,33 @@ const TagPack = ({ nodes, dim, zoom, imagesLoaded, channelClick: onChannelClick 
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
   const z = zoom
-
+  const imgRatio = 0.9
+  const channelNodes = nodes.filter(n => n.data.type == 'channel')
+    .map(n => ({
+      ...n,
+      x: (n.x + dx) * zoom,
+      y: (n.y + dy) * zoom,
+      r: n.r * zoom,
+      id: n.data.key
+    }))
   return <svg width={dim.w * z} height={dim.h * z} style={{}}>
+    <defs>
+      {channelNodes.map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r * imgRatio} /></clipPath >)}
+    </defs>
     <g>
-      {nodes.filter(n => n.data.type == 'channel').map(n => {
-        const x = (n.x + dx) * zoom
-        const y = (n.y + dy) * zoom
-        const r = n.r * zoom
-        const props = { 'data-for': 'bubble', 'data-tip': n.data.channel.channelId, onClick: (_) => onChannelClick(n.data.channel), className: 'node' }
-        return <GStyle key={n.data.key}>
-          <circle cx={x} cy={y} r={r} fill={n.data.color} {...props} />
+      {channelNodes.map(n => {
+        const { id, x, y, r } = n
+        const props = {
+          'data-for': 'bubble',
+          'data-tip': n.data.channel.channelId,
+          onClick: (_) => onChannelClick(n.data.channel),
+          className: 'node'
+        }
+        return <GStyle key={id} transform={`translate(${x}, ${y})`}>
+          <circle r={r} fill={n.data.color} {...props} />
           {n.data.img && imagesLoaded.has(n.data.img) &&
-            <image x={x - r * 0.9} y={y - r * 0.9} width={r * 0.9 * 2}
-              href={n.data.img} style={{ clipPath: 'circle()' }}{...props} />}
+            <image x={- r * imgRatio} y={- r * imgRatio} width={r * imgRatio * 2}
+              href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
         </GStyle>
       }
       )}
