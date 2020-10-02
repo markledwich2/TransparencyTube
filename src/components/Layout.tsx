@@ -25,8 +25,9 @@ const lightValues = css`
 --fg3:#666;
 --bg: #fff;
 --bg1: #eee;
---bg2: #bbb;
---bg3: #999;
+--bg2: #ddd;
+--bg3: #bbb;
+--bg4: #999;
 `
 
 const darkValues = css`
@@ -52,7 +53,7 @@ const GlobalStyle = createGlobalStyle`
 }
 `
 
-export const loadingFilter = 'brightness(0.4)'
+export const loadingFilter = 'opacity(0.4)'
 
 export const FlexRow = styled.div<{ space?: string }>`
   display:flex;

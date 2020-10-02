@@ -67,10 +67,10 @@ export const ChannelVideoViewsPage = () => {
   if (!channels) return <></>
   const videoPeriod = customVideoPeriod ?? period
   return <div id='page'>
-    {/* <ContainerDimensions >
+    <ContainerDimensions >
       {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
         onOpenChannel={c => setOpenChannel(c)} indexes={indexes} period={period} onPeriodChange={p => setPeriod(p)} />}
-    </ContainerDimensions> */}
+    </ContainerDimensions>
     <div style={{ height: '2em' }} />
 
     {channels && <h3 style={{ marginBottom: '2em' }}>Top viewed videos in <InlineSelect
