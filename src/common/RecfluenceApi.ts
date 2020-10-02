@@ -54,6 +54,9 @@ export const getViewsIndexes: () => Promise<ViewsIndexes> = async () => {
   return indexes
 }
 
+export const getChannelStats = async (index: BlobIndex<ChannelStats, StatsPeriod>, filter: StatsPeriod, channelId: string) =>
+  (await index.getRows(filter)).find(c => c.channelId == channelId)
+
 export const getVideoViews = async (index: VideoViewsIndex<StatsPeriod>, filter: StatsPeriod, props?: (keyof EsVideo)[], limit?: number): Promise<VideoWithStats[]> => {
   try {
     const vidViews = (await index.getRows(filter)).slice(0, limit ?? 20)

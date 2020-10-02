@@ -23,7 +23,8 @@
   "typescript.format.semicolons": "remove",
   "editor.tabSize": 2,
   "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.tabSize": 2,
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "vscode.typescript-language-features",
@@ -33,6 +34,9 @@
   },
   "[html]": {
     "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[javascript]": {
+    "editor.tabSize": 2
   },
   "javascript.preferences.quoteStyle": "single",
   "typescript.tsdk": "node_modules\\typescript\\lib",

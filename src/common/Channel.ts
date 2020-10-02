@@ -24,7 +24,6 @@ export interface Channel {
 
 export interface ColumnMd<T> extends Opt<T> { color?: string, format?: (n: number) => string }
 
-
 export const channelMd: { [key: string]: ColumnMd<string>[] } = {
   tags: [
     { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
@@ -55,7 +54,7 @@ export const channelMd: { [key: string]: ColumnMd<string>[] } = {
   measures: [
     { value: 'channelViews', label: 'channel views' },
     { value: 'views', label: 'views' },
-    { value: 'watchHours', label: 'watch time', format: (n: number) => hoursFormat(n) },
+    { value: 'watchHours', label: 'watched', format: (n: number) => hoursFormat(n) },
     { value: 'subs', label: 'subscribers' }
   ]
 }
@@ -116,7 +115,6 @@ export const imagesToLoad = (tagNodes: GroupedNodes[], loaded: Set<string>) => p
 
 export interface DisplayCfg {
   measure: string
-  period: StatsPeriod
   groupBy: keyof Channel
   colorBy: keyof Channel
 }

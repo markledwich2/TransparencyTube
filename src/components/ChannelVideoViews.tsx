@@ -14,11 +14,12 @@ import { Videos } from './Video'
 import { Tip } from './Tooltip'
 import { ChannelStats, ChannelWithStats, getViewsIndexes, StatsPeriod, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
 import { periodLabel } from '../common/Video'
+import { loadingFilter } from './Layout'
 
 const modalStyle = {
   overlay: {
     backgroundColor: 'none',
-    backdropFilter: 'blur(15px)'
+    backdropFilter: 'brightness(0.4)'
   },
   content: {
     backgroundColor: 'var(--bg)',
@@ -43,12 +44,16 @@ export const ChannelVideoViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [openChannel, setOpenChannel] = useState<ChannelWithStats>(null)
   const [indexes, setIndexes] = useState<ViewsIndexes>(null)
+  const [period, setPeriod] = useState<StatsPeriod>(null)
+  const [customVideoPeriod, setCustomVideoPeriod] = useState<StatsPeriod>(null)
 
   useEffect(() => {
     const go = async () => {
       const channelsTask = getChannels()
       try {
-        setIndexes(await getViewsIndexes())
+        const idx = await getViewsIndexes()
+        setIndexes(idx)
+        setPeriod(idx?.periods.find(p => p.periodType == 'd7'))
       }
       catch (e) {
         console.log('error getting view indexes', e)
@@ -60,13 +65,20 @@ export const ChannelVideoViewsPage = () => {
   }, [])
 
   if (!channels) return <></>
+  const videoPeriod = customVideoPeriod ?? period
   return <div id='page'>
+    {/* <ContainerDimensions >
+      {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
+        onOpenChannel={c => setOpenChannel(c)} indexes={indexes} period={period} onPeriodChange={p => setPeriod(p)} />}
+    </ContainerDimensions> */}
+    <div style={{ height: '2em' }} />
 
-    <ContainerDimensions >
-      {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} />}
-    </ContainerDimensions>
-    <div style={{ height: '1em' }} />
-    <Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} />
+    {channels && <h3 style={{ marginBottom: '2em' }}>Top viewed videos in <InlineSelect
+      options={periodOptions(indexes.periods)}
+      value={videoPeriod}
+      onChange={p => setCustomVideoPeriod(p == period ? null : p)} /></h3>}
+    <Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} period={videoPeriod} />
+
     {openChannel &&
       <Modal
         isOpen={openChannel != null}
@@ -75,7 +87,7 @@ export const ChannelVideoViewsPage = () => {
         onRequestClose={() => setOpenChannel(null)}
         style={modalStyle}
       >
-        <ChannelInfo channel={openChannel} size='max' indexes={indexes} />
+        <ChannelInfo channel={openChannel} size='max' indexes={indexes} defaultPeriod={period} />
       </Modal>}
   </div>
 }
@@ -97,10 +109,16 @@ const groupOptions: Opt<keyof Channel>[] = [
   { value: 'media', label: 'media' }
 ]
 
-interface BubblesProps { channels: Record<string, Channel>, width: number, onOpenChannel: (c: ChannelWithStats) => void, indexes: ViewsIndexes }
+interface BubblesProps {
+  channels: Record<string, Channel>,
+  width: number, onOpenChannel: (c: ChannelWithStats) => void,
+  indexes: ViewsIndexes,
+  period: StatsPeriod
+  onPeriodChange?: (p: StatsPeriod) => void
+}
 
-const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
-  const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr', period: first(indexes.periods) })
+const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChange }: BubblesProps) => {
+  const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr' })
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [showImg, setShowImg] = useState(false) // always render sans image first
@@ -114,19 +132,14 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
   useEffect(() => {
     const go = async () => {
       setLoading(true)
-      let start = new Date().getTime()
-      const rawStats = await indexes.channelStats.getRows(display.period)
-      console.log('getrows took', new Date().getTime() - start)
+      const rawStats = await indexes.channelStats.getRows(period)
       setShowImg(false)
-      start = new Date().getTime()
       setRawStats(rawStats)
-      console.log('setStats took', new Date().getTime() - start)
-      //await delay(100)
       setShowImg(true)
       setLoading(false)
     }
     go()
-  }, [display.period, indexes, channels])
+  }, [period, indexes, channels])
 
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
@@ -136,13 +149,19 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
   const measureFmt = measureFormat(display.measure)
 
   return <div>
-    <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo channel={stats[id]} size='min' indexes={indexes} /> : <></>} />
+    <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo
+      channel={stats[id]} size='min'
+      indexes={indexes}
+      defaultPeriod={period} /> : <></>} />
+
     <h3 style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect options={channelMd.measures} value={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
       {['views', 'watchHours'].includes(display.measure) && <InlineSelect
         options={periodOptions(indexes.periods)}
-        value={display.period}
-        onChange={o => setDisplay({ ...display, period: o as any })} />
+        value={period}
+        onChange={o => {
+          onPeriodChange && onPeriodChange(o as any)
+        }} />
       }
         by
         <InlineSelect options={groupOptions} value={display.groupBy} onChange={o => {
@@ -152,7 +171,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
         and colored by
         <InlineSelect options={groupOptions} value={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
     </h3>
-    <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? 'blur(3px)' : null }}>
+    <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
       {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
         <div style={{ padding: '2px' }}>
           <h4>
@@ -167,7 +186,6 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes }: BubblesProps) => {
     </div>
   </div>
 }
-
 
 const SVGStyle = styled.svg`
   .node {

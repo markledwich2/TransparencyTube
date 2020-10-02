@@ -19,10 +19,11 @@ interface IndexFile<TKey> {
 }
 
 export const noCacheReq = { headers: { 'Cache-Control': 'no-cache' } }
-const enableLocalCache = true
+const enableLocalCache = false
 
 export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRow, TKey>> => {
   const baseUri = blobCfg.indexUri.addPath(path)
+  const baseUriCdn = blobCfg.indexCdnUri.addPath(path)
   const fileRowsCache = {}
   const index = await getJson<BlobIndex<TRow, TKey>>(baseUri.addPath('index.json.gz').url, noCacheReq)
 
@@ -39,7 +40,7 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
   const fileRows = async (file: string) => {
     const cache = enableLocalCache ? fileRowsCache[file] : null
     if (cache) return cache
-    const rows = await getJsonl<TRow>(baseUri.addPath(file).url, noCacheReq)
+    const rows = await getJsonl<TRow>(baseUriCdn.addPath(file).url)
     fileRowsCache[file] = rows
     return rows
   }

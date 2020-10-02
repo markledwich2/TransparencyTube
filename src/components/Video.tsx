@@ -1,17 +1,14 @@
-import React, { useState, useEffect, FunctionComponent, useContext } from 'react'
+import React, { useState, useEffect, FunctionComponent } from 'react'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
-import { periodLabel, videoThumb, videoUrl } from '../common/Video'
-import { InlineSelect } from './InlineSelect'
+import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
-import { FlexCol, FlexRow, StyleProps } from './Layout'
+import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { ChannelInfo, ChannelTitle } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import ReactTooltip from 'react-tooltip'
-import { ChannelWithStats, getVideoViews, StatsPeriod, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
-import { first, map, pipe } from 'remeda'
-import { sortBy } from '../common/Pipe'
-import { Channel, periodOptions } from '../common/Channel'
+import { ChannelStats, ChannelWithStats, getChannelStats, getVideoViews, StatsPeriod, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { Channel } from '../common/Channel'
 
 const tipId = 'video-tip'
 
@@ -20,43 +17,39 @@ interface VideosProps {
   channels?: Record<string, Channel>,
   onOpenChannel?: (c: ChannelWithStats) => void,
   indexes?: ViewsIndexes
+  period: StatsPeriod
 }
-export const Videos = ({ channel, channels, onOpenChannel, indexes }: VideosProps) => {
-  const [period, setPeriod] = useState<StatsPeriod>(null)
+export const Videos = ({ channel, channels, onOpenChannel, indexes, period }: VideosProps) => {
+
   const [videos, setVideos] = useState<VideoWithStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [limit, setLimit] = useState<number>(20)
 
+
   const index = channel ? indexes?.channelVideo : indexes?.video
 
   useEffect(() => {
-    const go = async () => {
-      if (!index) return
-      if (!period)
-        setPeriod(first(indexes.periods))
+    if (!index) return
+    if (period) {
       setLoading(true)
-      if (period) {
-        const filter = channel ? { channelId: channel.channelId, ...period } : period
-        const videoViews = await getVideoViews(index, filter,
-          ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views', 'durationSecs'], limit)
-        setVideos(videoViews)
-      }
-      setLoading(false)
-      ReactTooltip.rebuild()
+      const filter = channel ? { channelId: channel.channelId, ...period } : period
+      getVideoViews(index, filter,
+        ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views', 'durationSecs'], limit)
+        .then(v => {
+          setVideos(v)
+          setLoading(false)
+          ReactTooltip.rebuild()
+        })
     }
-    go()
   }, [channel, period, limit, index])
 
+  const showMore = !loading && videos && videos.length >= limit
 
-  return <>
-    <h3 style={{ padding: '1em 0' }}>
-      Top videos by views {!channel && 'across all channels'}
-      <InlineSelect value={period} options={periodOptions(indexes.periods)} onChange={v => setPeriod(v)} />
-    </h3>
+  return <div>
     {loading && videos == null && <Spinner />}
     <div style={{
       minHeight: '300px',
-      filter: loading ? 'blur(2px)' : null,
+      filter: loading ? loadingFilter : null,
       display: 'flex',
       flexDirection: channel ? 'column' : 'row',
       flexWrap: channel ? null : 'wrap',
@@ -68,11 +61,16 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes }: VideosProp
         style={{ maxWidth: '100%' }}
         c={!channel && channels && channels[v.channelId]} />)}
     </div>
-    {!loading && videos && videos.length >= limit && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold' }}>
+    <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: showMore ? null : 'hidden' }}>
       <a onClick={_ => setLimit(limit + 20)}>show more</a>
-    </div>}
-    {channels && <Tip id={tipId} getContent={(id) => <ChannelInfo channel={channels[id] as ChannelWithStats} size='min' indexes={indexes} />} />}
-  </>
+    </div>
+    {channels && <Tip id={tipId} getContent={(id) => <ChannelInfo
+      channel={channels[id] as ChannelWithStats}
+      size='min'
+      indexes={indexes}
+      defaultPeriod={period}
+    />} />}
+  </div>
 }
 
 const VideoStyle = styled.div`
@@ -119,7 +117,7 @@ const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
     <FlexRow>
       <FlexRow style={{ flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
-          <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px' }} /></VideoA>
+          <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px' }} /></VideoA>
           <div className='rank'>{rank}</div>
           {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         </div>

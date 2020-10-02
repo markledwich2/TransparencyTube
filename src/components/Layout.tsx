@@ -52,6 +52,8 @@ const GlobalStyle = createGlobalStyle`
 }
 `
 
+export const loadingFilter = 'brightness(0.4)'
+
 export const FlexRow = styled.div<{ space?: string }>`
   display:flex;
   flex-direction: row;

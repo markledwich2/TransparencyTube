@@ -7,7 +7,6 @@ const TipStyle = styled.div`
     opacity:1;
     padding:1em;
     font-size:1rem;
-    max-width: 30rem;
     background-color: var(--bg);
     color: var(--fg);
     border-color: var(--bg2);
