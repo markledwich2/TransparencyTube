@@ -18,7 +18,15 @@ export interface VideoViews extends StatsPeriod {
   watchHours: number
 }
 
+
+export const parsePeriod = (s: string) => {
+  if (!s) return null
+  const p = s.split('|')
+  return { periodType: p[0], periodValue: p[1] }
+}
+export const periodString = (p: StatsPeriod) => `${p.periodType}|${p.periodValue}`
 export type StatsPeriod = { periodType: string, periodValue: string }
+
 export type ChannelVideoIndexKeys = { channelId: string } & StatsPeriod
 export type VideoViewsIndex<TKey> = BlobIndex<VideoViews, TKey>
 export type VideoWithStats = EsVideo & { periodViews: number, watchHours: number }

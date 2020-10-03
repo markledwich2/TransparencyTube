@@ -12,7 +12,7 @@ import { InlineSelect } from './InlineSelect'
 
 
 export interface ChannelTipProps {
-  channel: ChannelWithStats
+  channel: Channel
   size: 'min' | 'max'
   indexes: ViewsIndexes
   defaultPeriod: StatsPeriod
@@ -22,7 +22,7 @@ export const ChannelInfo = ({ channel, size, indexes, defaultPeriod }: ChannelTi
   const [channelEx, setChannelEx] = useState<EsChannel>(null)
   const [period, setPeriod] = useState(defaultPeriod)
   const [showDesc, setShowDesc] = useState(false)
-  const [stats, setStats] = useState<ChannelStats>(channel)
+  const [stats, setStats] = useState<ChannelStats>(null)
   const [statsLoading, setStatsLoading] = useState(false)
 
   useEffect(() => {

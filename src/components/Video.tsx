@@ -13,7 +13,7 @@ import { Channel } from '../common/Channel'
 const tipId = 'video-tip'
 
 interface VideosProps {
-  channel?: ChannelWithStats,
+  channel?: Channel,
   channels?: Record<string, Channel>,
   onOpenChannel?: (c: ChannelWithStats) => void,
   indexes?: ViewsIndexes

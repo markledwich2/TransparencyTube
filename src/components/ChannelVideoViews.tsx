@@ -12,9 +12,11 @@ import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
 import { Tip } from './Tooltip'
-import { ChannelStats, ChannelWithStats, getViewsIndexes, StatsPeriod, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, getViewsIndexes, parsePeriod, periodString, StatsPeriod, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
 import { periodLabel } from '../common/Video'
 import { loadingFilter } from './Layout'
+import { useQuery } from '../common/QueryString'
+import { useLocation } from '@reach/router'
 
 const modalStyle = {
   overlay: {
@@ -40,12 +42,22 @@ const modalStyle = {
   }
 }
 
+interface QueryState extends Record<string, string> {
+  period: string,
+  videoPeriod: string
+  openChannelId: string
+}
+
+const navigate = (to: string) => history.replaceState({}, '', to)
+
 export const ChannelVideoViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
-  const [openChannel, setOpenChannel] = useState<ChannelWithStats>(null)
+  //const [openChannel, setOpenChannel] = useState<ChannelWithStats>(null)
   const [indexes, setIndexes] = useState<ViewsIndexes>(null)
-  const [period, setPeriod] = useState<StatsPeriod>(null)
-  const [customVideoPeriod, setCustomVideoPeriod] = useState<StatsPeriod>(null)
+  const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
+  // const [customVideoPeriod, setCustomVideoPeriod] = useState<StatsPeriod>(null)
+
+  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigate)
 
   useEffect(() => {
     const go = async () => {
@@ -53,7 +65,7 @@ export const ChannelVideoViewsPage = () => {
       try {
         const idx = await getViewsIndexes()
         setIndexes(idx)
-        setPeriod(idx?.periods.find(p => p.periodType == 'd7'))
+        setDefaultPeriod(idx?.periods.find(p => p.periodType == 'd7'))
       }
       catch (e) {
         console.log('error getting view indexes', e)
@@ -63,31 +75,48 @@ export const ChannelVideoViewsPage = () => {
     }
     go()
   }, [])
-
   if (!channels) return <></>
-  const videoPeriod = customVideoPeriod ?? period
+
+  const period = parsePeriod(q.period) ?? defaultPeriod
+  const videoPeriod = parsePeriod(q.videoPeriod) ?? period
+  const openChannel = q.openChannelId ? channels[q.openChannelId] : null
+
+  const onOpenChannel = (c: Channel) => {
+    setQuery({ openChannelId: c.channelId })
+  }
+  const onCloseChannel = () => {
+    setQuery({ openChannelId: null })
+  }
+
   return <div id='page'>
     <ContainerDimensions >
       {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
-        onOpenChannel={c => setOpenChannel(c)} indexes={indexes} period={period} onPeriodChange={p => setPeriod(p)} />}
+        onOpenChannel={onOpenChannel} indexes={indexes} period={period}
+        onPeriodChange={p => {
+          setQuery({ period: periodString(p) })
+        }} />}
     </ContainerDimensions>
     <div style={{ height: '2em' }} />
 
     {channels && <h3 style={{ marginBottom: '2em' }}>Top viewed videos in <InlineSelect
       options={periodOptions(indexes.periods)}
       value={videoPeriod}
-      onChange={p => setCustomVideoPeriod(p == period ? null : p)} /></h3>}
-    <Videos channels={channels} onOpenChannel={c => setOpenChannel(c)} indexes={indexes} period={videoPeriod} />
+      onChange={p => {
+        if (p == period) return
+        setQuery({ videoPeriod: periodString(p) })
+      }} /></h3>}
+
+    <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} />
 
     {openChannel &&
       <Modal
         isOpen={openChannel != null}
         ariaHideApp={false}
         parentSelector={() => document.querySelector('#page')}
-        onRequestClose={() => setOpenChannel(null)}
+        onRequestClose={onCloseChannel}
         style={modalStyle}
       >
-        <ChannelInfo channel={openChannel} size='max' indexes={indexes} defaultPeriod={period} />
+        <ChannelInfo channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
       </Modal>}
   </div>
 }
