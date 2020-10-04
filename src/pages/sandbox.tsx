@@ -1,7 +1,14 @@
+import { color } from 'd3'
 import _ from 'lodash'
-import React from "react"
-import { InlineSelect } from '../components/InlineSelect'
-import Layout from '../components/Layout'
+import React, { useState } from "react"
+import { flatMap, indexBy, uniq } from 'remeda'
+import styled from 'styled-components'
+import { Channel, channelMd, ColumnMd } from '../common/Channel'
+import { values } from '../common/Pipe'
+import { Tag } from '../components/Channel'
+import { InlineForm } from '../components/InlineForm'
+import { InlineSelect, Opt, OptionList } from '../components/InlineSelect'
+import Layout, { FlexRow } from '../components/Layout'
 import SEO from '../components/SEO'
 
 
@@ -14,11 +21,19 @@ const measureOptions = Object.entries(measures).map(([k, m]) => ({ value: k as m
 
 
 
-const SandboxPage = () => (
-  <Layout>
-    <SEO title="Home" />
-    <p>Here is an <InlineSelect<measureKey> options={measureOptions} value='all' /> that can go inside text</p>
-  </Layout>
-)
+
+
+
+const SandboxPage = () => {
+  const [measure, setMeasure] = useState<measureKey>('all')
+
+
+  return (
+    <Layout>
+      <h3>Here is an <InlineSelect<measureKey> options={measureOptions} onChange={o => setMeasure(o)} selected={measure} /> that can go inside text</h3>
+
+    </Layout>
+  )
+}
 
 export default SandboxPage

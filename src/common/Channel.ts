@@ -7,8 +7,7 @@ import { Opt } from '../components/InlineSelect'
 import { hierarchy, pack } from 'd3'
 import { StringLiteralLike } from 'typescript'
 import { blobCfg } from './Cfg'
-import { ChannelStats, ChannelWithStats, StatsPeriod } from './RecfluenceApi'
-import { periodLabel } from './Video'
+import { ChannelStats, ChannelWithStats } from './RecfluenceApi'
 
 export interface Channel {
   channelId: string
@@ -210,9 +209,3 @@ export const buildTagNodes = (channels: ChannelWithStats[], display: DisplayCfg,
 
   return { groupedNodes, maxSize, zoom, packSize }
 }
-
-export const periodOptions = (periods: StatsPeriod[]) => periods ? pipe(
-  periods,
-  map(k => ({ value: k, label: periodLabel(k.periodType, k.periodValue) })),
-  sortBy(o => o.value.periodValue, 'desc')
-) : []

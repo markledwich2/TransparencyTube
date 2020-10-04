@@ -1,100 +1,58 @@
 import styled from 'styled-components'
-import React, { useState, useEffect, useRef } from 'react'
-import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
+import React, { useState, useEffect, useRef, CSSProperties } from 'react'
 import { jsonEquals } from '../common/Utils'
+import { InlineForm } from './InlineForm'
+import { StyleProps } from './Layout'
 
+const UlStyled = styled.ul`
+  list-style-type: none;
+
+  li {
+    padding:0em 1em;
+    cursor:pointer;
+    white-space:nowrap;
+    background-color: var(--bg);
+    &.selected {
+      background-color: var(--bg1);
+    }
+    :hover {
+      background-color: var(--bg2);
+    }
+  }
+`
 export interface Opt<T> {
   label?: string
   value: T
 }
 
-interface InlineSelectOptions<T> {
+export interface SelectOptions<T> {
   options: Opt<T>[]
-  value: T
+  selected?: T
   onChange?: (o: T) => void
+  inlineElement?: (o: T) => JSX.Element
 }
 
-const OuterStyle = styled.span`
-  display:inline-block;
-  position:relative;
-`
-
-const InlineStyle = styled.span`
-  margin:0 0.4em;
-  padding:0.2em 0.1em 0.2em 0.4em;
-  border-radius: 5px;
-  background-color: var(--bg2);
-  :hover {
-    cursor: pointer;
-    background-color: var(--bg3);
-  }
-`
-
-const PopupStyle = styled.div`
-    position: absolute;
-    padding:0;
-    line-height:2.5em;
-    border: solid 1px var(--bg2);
-    z-index:10;
-    overflow-y: auto;
-    max-height: 25vh;
-
-    ul {
-      list-style-type: none;
-
-      li {
-        padding:0em 1em;
-        cursor:pointer;
-        white-space:nowrap;
-        background-color: var(--bg);
-        &.selected {
-          background-color: var(--bg1);
-        }
-        :hover {
-          background-color: var(--bg2);
-        }
-      }
-    }
-`
-
-const ChevIcon = styled(ChevronDownOutline)`
-      height: 1.2em;
-      position: relative;
-      top: -0.05em;
-`
-
-export function InlineSelect<T>({ options, value, onChange }: InlineSelectOptions<T>) {
-  const [open, setOpen] = useState(false)
-
-  const popupRef = useRef<HTMLDivElement>()
-
-  const handleClick = ({ target }) => {
-    if (popupRef.current?.contains(target)) return
-    setOpen(false)
-  }
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  return <OuterStyle>
-    <InlineStyle onClick={e => {
-      if (!open) setOpen(true)
-    }}>
-      {options.find(o => o.value == value || jsonEquals(o.value, value))?.label}<ChevIcon />
-    </InlineStyle>
-    {open && <PopupStyle ref={popupRef}>
-      <ul>
-        {options.map(o => <li
-          key={JSON.stringify(o.value)}
-          className={o.value == value ? 'selected' : null}
-          onClick={_ => {
-            setOpen(false)
-            onChange && onChange(o.value)
-          }}>{o.label}</li>)}
-      </ul>
-    </PopupStyle>}
-  </OuterStyle>
+export function InlineSelect<T>({ options, selected, onChange, inlineElement }: SelectOptions<T>) {
+  const el = (o: T) => <>{options.find(o => jsonEquals(o.value, selected))?.label}</>
+  return <InlineForm<T> {...{ value: selected, onChange }} inlineElement={inlineElement ?? el} >
+    <OptionList {...{ options, selected: [selected] }} onChange={o => onChange(o.value)} />
+  </InlineForm>
 }
 
+export interface OptionListProps<TValue, TOption extends Opt<TValue>> extends StyleProps {
+  options: TOption[]
+  onChange?: (o: TOption) => void
+  itemElement?: (o: TOption) => JSX.Element
+}
+
+export const OptionList = <TValue, TOption extends Opt<TValue> & { selected?: boolean }>(
+  { options, onChange, itemElement, style, className }: OptionListProps<TValue, TOption>) => {
+  return <UlStyled style={style} className={className}>
+    {options.map(o => <li
+      key={JSON.stringify(o.value)}
+      className={o.selected ? 'selected' : null}
+      onClick={_ => {
+        onChange && onChange({ ...o, selected: !o.selected })
+      }}>{itemElement ? itemElement(o) : o.label}</li>)}
+  </UlStyled>
+}

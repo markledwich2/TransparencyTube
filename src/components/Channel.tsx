@@ -1,29 +1,30 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelMd, ColumnMd, measureFormat, periodOptions } from '../common/Channel'
+import { Channel, channelMd, ColumnMd, measureFormat } from '../common/Channel'
 import { hoursFormat, numFormat } from '../common/Utils'
 import { EsChannel, getChannel } from '../common/EsApi'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, getChannelStats, StatsPeriod, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, getChannelStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { InlineSelect } from './InlineSelect'
+import { StatsPeriod, periodOptions } from './Period'
 
 
-export interface ChannelTipProps {
+export interface TopVideosProps {
   channel: Channel
   size: 'min' | 'max'
   indexes: ViewsIndexes
   defaultPeriod: StatsPeriod
 }
 
-export const ChannelInfo = ({ channel, size, indexes, defaultPeriod }: ChannelTipProps) => {
+export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVideosProps) => {
   const [channelEx, setChannelEx] = useState<EsChannel>(null)
-  const [period, setPeriod] = useState(defaultPeriod)
   const [showDesc, setShowDesc] = useState(false)
   const [stats, setStats] = useState<ChannelStats>(null)
   const [statsLoading, setStatsLoading] = useState(false)
+  const [period, setPeriod] = useState(defaultPeriod)
 
   useEffect(() => {
     if (!channel) return
@@ -51,22 +52,22 @@ export const ChannelInfo = ({ channel, size, indexes, defaultPeriod }: ChannelTi
   const e = exIsSame ? channelEx : null
   const desc = showDesc ? e?.description : e?.description?.substr(0, 300)
 
-  return <FlexCol style={{ maxWidth: '45em', width: '100%', maxHeight: '100%' }}>
+  return <FlexCol style={{ maxWidth: '70vw', width: '100%', maxHeight: '100%' }}>
     <ChannelTitle c={{ ...c, ...period, ...stats }} showLr statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         {!e
           ? <Spinner />
-          : <p>{desc}
-            {size == 'max' && e.description?.length > 300 && <span>...
-              <a onClick={_ => setShowDesc(!showDesc)}>{showDesc ? 'less' : 'more'}</a>
+          : <p style={{ maxWidth: '50em' }}>{desc}
+            {size == 'max' && <span>{e.description?.length > 300 && !showDesc ? '...' : null}
+              &nbsp;<a onClick={_ => setShowDesc(!showDesc)}>{showDesc ? 'less' : 'more'}</a>
             </span>}
           </p>
         }
       </div>
 
       {size == 'max' && <>
-        <h3>Top videos <InlineSelect value={period} options={periodOptions(indexes.periods)} onChange={v => setPeriod(v)} /></h3>
+        <h3>Top videos <InlineSelect selected={period} options={periodOptions(indexes.periods)} onChange={p => setPeriod(p)} /></h3>
         <Videos channel={c} indexes={indexes} period={period} />
       </>}
     </FlexCol>
@@ -78,11 +79,11 @@ const ChannelTitleStyle = styled.div`
   display: flex;
   max-width: 40em;
   > * {
-    padding-right: '5px'
+      padding-right: '5px'
   }
   .logo {
     :hover {
-      cursor: pointer;  
+      cursor: pointer;
     }
   }
 `
@@ -138,7 +139,7 @@ export const ChannelTitle = ({ c, showLr, logoStyle, titleStyle, tipId, onLogoCl
 const TagDiv = styled.div`
     color: #eee;
     > * {
-        margin-right:0.3em;
+      margin-right:0.3em;
         margin-bottom:0.2em;
     }
 `
@@ -154,5 +155,7 @@ const TagStyle = styled.span`
   white-space:nowrap;
 `
 
-export const Tag = ({ color, label, style }: { color?: string, label: string, style?: React.CSSProperties }) =>
-  <TagStyle style={{ ...style, backgroundColor: color }}>{label}</TagStyle>
+interface TagProps { color?: string, label: string }
+
+export const Tag = ({ color, label, style, className }: TagProps & StyleProps) =>
+  <TagStyle style={{ ...style, backgroundColor: color }} className={className}>{label}</TagStyle>

@@ -3,12 +3,14 @@ import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
-import { ChannelInfo, ChannelTitle } from './Channel'
+import { ChannelDetails, ChannelTitle } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import ReactTooltip from 'react-tooltip'
-import { ChannelStats, ChannelWithStats, getChannelStats, getVideoViews, StatsPeriod, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, getChannelStats, getVideoViews, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { Channel } from '../common/Channel'
+import { StatsPeriod } from './Period'
+import { VideoFilter, videoFilterIncludes } from './VideoFilter'
 
 const tipId = 'video-tip'
 
@@ -18,8 +20,9 @@ interface VideosProps {
   onOpenChannel?: (c: ChannelWithStats) => void,
   indexes?: ViewsIndexes
   period: StatsPeriod
+  videoFilter?: VideoFilter
 }
-export const Videos = ({ channel, channels, onOpenChannel, indexes, period }: VideosProps) => {
+export const Videos = ({ channel, channels, onOpenChannel, indexes, period, videoFilter }: VideosProps) => {
 
   const [videos, setVideos] = useState<VideoWithStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -32,16 +35,16 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period }: Vi
     if (!index) return
     if (period) {
       setLoading(true)
-      const filter = channel ? { channelId: channel.channelId, ...period } : period
-      getVideoViews(index, filter,
+      const periodFilter = channel ? { channelId: channel.channelId, ...period } : period
+      getVideoViews(index, periodFilter, videoFilter, channels,
         ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views', 'durationSecs'], limit)
-        .then(v => {
-          setVideos(v)
+        .then(vids => {
+          setVideos(vids)
           setLoading(false)
           ReactTooltip.rebuild()
         })
     }
-  }, [channel, period, limit, index])
+  }, [channel, period, videoFilter, index])
 
   const showMore = !loading && videos && videos.length >= limit
 
@@ -51,20 +54,20 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period }: Vi
       minHeight: '300px',
       filter: loading ? loadingFilter : null,
       display: 'flex',
-      flexDirection: channel ? 'column' : 'row',
-      flexWrap: channel ? null : 'wrap',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       alignItems: 'center'
     }}>
       {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
       {videos && videos.map((v, i) => <Video key={v.videoId} onOpenChannel={onOpenChannel}
-        v={v} rank={i + 1}
+        v={v}
         style={{ maxWidth: '100%' }}
         c={!channel && channels && channels[v.channelId]} />)}
     </div>
     <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: showMore ? null : 'hidden' }}>
       <a onClick={_ => setLimit(limit + 20)}>show more</a>
     </div>
-    {channels && <Tip id={tipId} getContent={(id) => <ChannelInfo
+    {channels && <Tip id={tipId} getContent={(id) => <ChannelDetails
       channel={channels[id] as ChannelWithStats}
       size='min'
       indexes={indexes}
@@ -103,13 +106,12 @@ const VideoStyle = styled.div`
 
 interface VideoProps extends StyleProps {
   v: VideoWithStats,
-  rank: number,
   c?: Channel,
   onOpenChannel?: (c: Channel) => void,
   //onHover?: (hover: VideoHover) => void
 }
 
-const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
+const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
   const fPeriodViews = numFormat(v.periodViews)
   const fViews = numFormat(v.views)
 
@@ -118,7 +120,7 @@ const Video = ({ v, rank, style, c, onOpenChannel }: VideoProps) => {
       <FlexRow style={{ flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
           <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px' }} /></VideoA>
-          <div className='rank'>{rank}</div>
+          <div className='rank'>{v.rank}</div>
           {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         </div>
         <FlexCol style={{ width: '28em', color: 'var(--fg1)' }} space='0.2em'>

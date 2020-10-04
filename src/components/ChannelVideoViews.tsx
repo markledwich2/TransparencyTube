@@ -3,8 +3,8 @@ import React from 'react'
 import { delay, hoursFormat, numFormat, preloadImages } from '../common/Utils'
 import { InlineSelect, Opt } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, periodOptions, measureFormat } from '../common/Channel'
-import { ChannelInfo } from './Channel'
+import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat } from '../common/Channel'
+import { ChannelDetails } from './Channel'
 import { sumBy } from '../common/Pipe'
 import { first, indexBy } from 'remeda'
 import styled, { AnyStyledComponent } from 'styled-components'
@@ -12,11 +12,13 @@ import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
 import { Tip } from './Tooltip'
-import { ChannelStats, ChannelWithStats, getViewsIndexes, parsePeriod, periodString, StatsPeriod, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
-import { periodLabel } from '../common/Video'
+import { ChannelStats, ChannelWithStats, getViewsIndexes, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
 import { loadingFilter } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
+import { Spinner } from './Spinner'
+import { InlineVideoFilter, VideoFilter } from './VideoFilter'
+import { parsePeriod, periodOptions, PeriodSelect, periodString, StatsPeriod } from './Period'
 
 const modalStyle = {
   overlay: {
@@ -30,7 +32,7 @@ const modalStyle = {
     border: 'solid 1px var(--bg2)',
     borderRadius: '10px',
     maxWidth: '100vw',
-    minWidth: "300px",
+    minWidth: "70vw",
     height: '90vh',
     top: '50%',
     left: '50%',
@@ -48,16 +50,18 @@ interface QueryState extends Record<string, string> {
   openChannelId: string
 }
 
+const FilterHeader = styled.h3`
+  line-height:2em;
+`
+
 const navigate = (to: string) => history.replaceState({}, '', to)
 
 export const ChannelVideoViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
-  //const [openChannel, setOpenChannel] = useState<ChannelWithStats>(null)
   const [indexes, setIndexes] = useState<ViewsIndexes>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
-  // const [customVideoPeriod, setCustomVideoPeriod] = useState<StatsPeriod>(null)
-
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigate)
+  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null })
 
   useEffect(() => {
     const go = async () => {
@@ -80,13 +84,10 @@ export const ChannelVideoViewsPage = () => {
   const period = parsePeriod(q.period) ?? defaultPeriod
   const videoPeriod = parsePeriod(q.videoPeriod) ?? period
   const openChannel = q.openChannelId ? channels[q.openChannelId] : null
+  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
+  const onCloseChannel = () => setQuery({ openChannelId: null })
 
-  const onOpenChannel = (c: Channel) => {
-    setQuery({ openChannelId: c.channelId })
-  }
-  const onCloseChannel = () => {
-    setQuery({ openChannelId: null })
-  }
+  if (!channels) return <Spinner />
 
   return <div id='page'>
     <ContainerDimensions >
@@ -98,15 +99,16 @@ export const ChannelVideoViewsPage = () => {
     </ContainerDimensions>
     <div style={{ height: '2em' }} />
 
-    {channels && <h3 style={{ marginBottom: '2em' }}>Top viewed videos in <InlineSelect
-      options={periodOptions(indexes.periods)}
-      value={videoPeriod}
-      onChange={p => {
+    <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
+    <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
         if (p == period) return
         setQuery({ videoPeriod: periodString(p) })
-      }} /></h3>}
+      }} />
 
-    <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} />
+      filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
+    </FilterHeader>
+
+    <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
 
     {openChannel &&
       <Modal
@@ -116,7 +118,7 @@ export const ChannelVideoViewsPage = () => {
         onRequestClose={onCloseChannel}
         style={modalStyle}
       >
-        <ChannelInfo channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
+        <ChannelDetails channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
       </Modal>}
   </div>
 }
@@ -178,28 +180,29 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
   const measureFmt = measureFormat(display.measure)
 
   return <div>
-    <Tip id='bubble' getContent={(id: string) => id ? <ChannelInfo
+    <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
       channel={stats[id]} size='min'
       indexes={indexes}
-      defaultPeriod={period} /> : <></>} />
+      defaultPeriod={period}
+    /> : <></>} />
 
-    <h3 style={{ padding: '0.5em 1em' }}>Political YouTube channel
-        <InlineSelect options={channelMd.measures} value={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
+    <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
+        <InlineSelect options={channelMd.measures} selected={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
       {['views', 'watchHours'].includes(display.measure) && <InlineSelect
         options={periodOptions(indexes.periods)}
-        value={period}
+        selected={period}
         onChange={o => {
           onPeriodChange && onPeriodChange(o as any)
         }} />
       }
         by
-        <InlineSelect options={groupOptions} value={display.groupBy} onChange={o => {
+        <InlineSelect options={groupOptions} selected={display.groupBy} onChange={o => {
         const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
         setDisplay({ ...display, groupBy: o, colorBy: cb })
       }} />
         and colored by
-        <InlineSelect options={groupOptions} value={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
-    </h3>
+        <InlineSelect options={groupOptions} selected={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
+    </FilterHeader>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
       {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
         <div style={{ padding: '2px' }}>

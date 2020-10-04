@@ -36,7 +36,7 @@ function parseJSON<T>(): TransformStream<string, T> {
   })
 }
 
-export const jsonEquals = (a: any, b: any) => JSON.stringify(a) == JSON.stringify(b)
+export const jsonEquals = (a: any, b: any) => a == b || JSON.stringify(a) == JSON.stringify(b)
 
 export async function getJsonl<T>(url: RequestInfo, cfg?: RequestInit): Promise<T[]> {
   const res = await fetch(url, Object.assign({ method: 'GET' }, cfg))
