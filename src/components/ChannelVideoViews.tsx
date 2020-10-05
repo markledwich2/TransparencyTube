@@ -84,7 +84,6 @@ export const ChannelVideoViewsPage = () => {
     }
     go()
   }, [])
-  if (!channels) return <></>
 
   const period = parsePeriod(q.period) ?? defaultPeriod
   const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
@@ -92,41 +91,43 @@ export const ChannelVideoViewsPage = () => {
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
   const onCloseChannel = () => setQuery({ openChannelId: null })
 
-  return <div id='page'>
-    <ContainerDimensions >
-      {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
-        onOpenChannel={onOpenChannel} indexes={indexes} period={period}
-        onPeriodChange={p => {
-          setQuery({ period: periodString(p) })
-        }} />}
-    </ContainerDimensions>
-    <div style={{ height: '2em' }} />
+  return <div id='page' style={{ minHeight: '100vh' }}>
+    {channels && <>
+      <ContainerDimensions >
+        {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
+          onOpenChannel={onOpenChannel} indexes={indexes} period={period}
+          onPeriodChange={p => {
+            setQuery({ period: periodString(p) })
+          }} />}
+      </ContainerDimensions>
+      <div style={{ height: '2em' }} />
 
+      {indexes && allowVideoLoad && <>
+        <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
+      <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
+            if (p == period) return
+            setQuery({ videoPeriod: periodString(p) })
+          }} />
 
-    {channels && indexes && allowVideoLoad && <>
-      <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-        <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
-          if (p == period) return
-          setQuery({ videoPeriod: periodString(p) })
-        }} />
+        filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
+        </FilterHeader>
+        <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
+      </>
+      }
 
-          filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
-      </FilterHeader>
-      <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
-    </>
-    }
+      {openChannel &&
+        <Modal
+          isOpen={openChannel != null}
+          ariaHideApp={false}
+          parentSelector={() => document.querySelector('#page')}
+          onRequestClose={onCloseChannel}
+          style={modalStyle}
+        >
+          <ChannelDetails channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
+        </Modal>
+      }
+    </>}
 
-    {openChannel &&
-      <Modal
-        isOpen={openChannel != null}
-        ariaHideApp={false}
-        parentSelector={() => document.querySelector('#page')}
-        onRequestClose={onCloseChannel}
-        style={modalStyle}
-      >
-        <ChannelDetails channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
-      </Modal>
-    }
   </div >
 }
 

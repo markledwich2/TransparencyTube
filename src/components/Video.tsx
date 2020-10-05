@@ -81,12 +81,12 @@ const VideoStyle = styled.div`
   margin:0 10px 15px;
   flex-direction:row;
   .rank {
-    font-size:1.2em;
+    font-size:1em;
     left:0px;
     top:0px;
-    padding-top:2px;
-    width:1.7em;
-    height:1.7em;
+    padding-top:0.3em;
+    width:2em;
+    height:2em;
     position:absolute;
     font-weight:bolder;
     background-color: #ddd;
@@ -96,8 +96,6 @@ const VideoStyle = styled.div`
     box-shadow: 0px 1px 6px 2px #444;
   }
   .duration {
-    position:relative;
-    top:-15px;
     text-align:right;
     font-weight:bold;
     color:var(--fg2);

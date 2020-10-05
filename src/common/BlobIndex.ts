@@ -39,10 +39,7 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
 
   const fileRows = async (file: string) => {
     const cache = enableLocalCache ? fileRowsCache[file] : null
-    if (cache) {
-      console.log('cache hit', file)
-      return cache
-    }
+    if (cache) return cache
     const rows = await getJsonl<TRow>(baseUriCdn.addPath(file).url)
     if (enableLocalCache)
       fileRowsCache[file] = rows

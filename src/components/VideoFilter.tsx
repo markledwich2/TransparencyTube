@@ -47,14 +47,14 @@ type FilterColOption = Opt<string> & ColumnValueMd<string> & { selected?: boolea
 
 const channelColOptions = (col: keyof Channel, filter: VideoFilter) => {
   var md = channelMd[col].values
-  var allOption: FilterColOption = { value: '_all', label: `All - ${channelColLabel(col)}`, color: 'var(--bg4)', selected: isSelected(filter, col, '_all') }
+  var allOption: FilterColOption = { value: '_all', label: `All - ${channelColLabel(col)}`, color: '#444', selected: isSelected(filter, col, '_all') }
   var options: FilterColOption[] = md.map(t => ({ ...t, label: t.label ?? t.value, selected: isSelected(filter, col, t.value) }))
   return [allOption].concat(options)
 }
 
 const InlineFilterElement = (f: VideoFilter) => {
-  if (!f.tags && !f.lr) return <Tag label="All" color="var(--bg4)" />
-  if (f.tags?.length == 0 || f.lr?.length == 0) return <Tag label="None" color="var(--bg4)" />
+  if (!f.tags && !f.lr) return <Tag label="All" color="#444" />
+  if (f.tags?.length == 0 || f.lr?.length == 0) return <Tag label="None" color="#444" />
   const inlineOps = flatMap(['tags', 'lr'],
     (c: 'tags' | 'lr') => f[c] == null ? [] : channelColOptions(c, f).filter(t => t.selected))
   return <span >{inlineOps.map(t => <Tag key={t.value} label={t.label} color={t.color} style={{ margin: '0.2em' }} />)}</span>
@@ -70,6 +70,7 @@ const FilterFormStyle = styled.div`
   flex-direction:row;
   font-size:1rem;
   font-weight:normal;
+  background-color: var(--bg);
 
   .item {
     filter:opacity(0.5);

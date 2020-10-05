@@ -45,7 +45,7 @@ export const channelMd: { [key: string]: ColumnMd } = {
       { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
       { value: 'Conspiracy', color: '#e0990b' },
       { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
-      { value: 'Libertarian', color: '#999' },
+      { value: 'Libertarian', color: '#666' },
       { value: 'MRA', color: '#003e78' },
       { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f' },
       { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },

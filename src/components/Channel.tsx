@@ -11,7 +11,7 @@ import { ChannelStats, ChannelWithStats, getChannelStats, ViewsIndexes } from '.
 import { InlineSelect } from './InlineSelect'
 import { StatsPeriod, periodOptions } from './Period'
 import { Bot, User } from '@styled-icons/boxicons-solid'
-import { StyledIconBase } from '@styled-icons/styled-icon'
+
 
 export interface TopVideosProps {
   channel: Channel
@@ -83,15 +83,6 @@ const ChannelTitleStyle = styled.div`
       cursor: pointer;
     }
   }
-
-  ${StyledIconBase} {
-        height: 1.4em;
-        width: 1.4em;
-        position: relative;
-        top: -0.15em;
-        padding-right: 0.2em;
-        color: var(--fg2);
-    }
 `
 
 const MetricsStyle = styled(FlexRow)`
@@ -149,7 +140,7 @@ export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLog
       </MetricsStyle>
       <TagDiv style={{ marginBottom: '1em' }} >
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
-        {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color ?? 'var(--bg2)'} />)}
+        {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>
     </div>
   </ChannelTitleStyle>
@@ -177,4 +168,4 @@ const TagStyle = styled.span`
 interface TagProps { color?: string, label: string }
 
 export const Tag = ({ color, label, style, className }: TagProps & StyleProps) =>
-  <TagStyle style={{ ...style, backgroundColor: color }} className={className}>{label}</TagStyle>
+  <TagStyle style={{ ...style, backgroundColor: color, color: '#fff' }} className={className}>{label}</TagStyle>

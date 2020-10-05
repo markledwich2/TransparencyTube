@@ -89,25 +89,25 @@ export const delay = (ms: number) => new Promise(_ => setTimeout(_, ms))
 
 const daySeconds = 24 * 60 * 60
 const timeUnits: { [key: string]: TimeUnit } = {
-  s: { s: 1 },
-  m: { s: 60 },
-  hr: { s: 60 * 60, plural: 'hrs' },
-  day: { s: daySeconds, plural: 'days' },
-  year: { s: 365 * daySeconds, plural: 'years' }
+  sec: { s: 1 },
+  min: { s: 60 },
+  hr: { s: 60 * 60 },
+  day: { s: daySeconds },
+  year: { s: 365 * daySeconds }
 }
 
 interface TimeUnit { s: number, plural?: string }
 
 const labelUnit = (u: string, v: number) => {
   const space = u.length > 2 ? ' ' : ''
-  return space + ((v == 1) ? u : (timeUnits[u].plural ?? u))
+  return space + ((v == 1) ? u : (timeUnits[u].plural ?? `${u}s`))
 }
 
 export const hoursFormat = (hours: number, numUnits: number = 1) => {
   let remainingSecs = hours * timeUnits.hr.s
   let parts: { unit: string, val: number }[] = []
   reverse(Object.entries(timeUnits)).forEach(v => {
-    const [unit, { s, plural }] = v
+    const [unit, { s }] = v
     if (parts.length <= numUnits && remainingSecs - s > 0) {
       const unitPortion = remainingSecs / s
       const val = parts.length == numUnits - 1 ? unitPortion : Math.floor(unitPortion)

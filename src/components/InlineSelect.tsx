@@ -11,7 +11,6 @@ const UlStyled = styled.ul`
     padding:0em 1em;
     cursor:pointer;
     white-space:nowrap;
-    background-color: var(--bg);
     &.selected {
       background-color: var(--bg1);
     }

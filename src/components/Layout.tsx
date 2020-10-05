@@ -1,10 +1,3 @@
-/**
- * Layout component that queries for data
- * with Gatsby's useStaticQuery component
- *
- * See: https://www.gatsbyjs.org/docs/use-static-query/
- */
-
 import React, { FunctionComponent } from "react"
 import PropTypes from "prop-types"
 import { useStaticQuery, graphql } from "gatsby"
@@ -12,6 +5,7 @@ import { useStaticQuery, graphql } from "gatsby"
 import "./main.css"
 import styled, { createGlobalStyle, css } from 'styled-components'
 import Header from './Header'
+import { StyledIconBase } from '@styled-icons/styled-icon'
 
 export interface StyleProps {
   style?: React.CSSProperties
@@ -49,6 +43,15 @@ const GlobalStyle = createGlobalStyle`
   ${lightValues}
   @media(prefers-color-scheme: dark) {
     ${darkValues}
+  }
+
+  ${StyledIconBase} {
+    height: 1.4em;
+    width: 1.4em;
+    position: relative;
+    top: -0.15em;
+    padding-right: 0.2em;
+    color: var(--fg2);
   }
 }
 `
