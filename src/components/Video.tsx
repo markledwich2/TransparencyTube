@@ -44,7 +44,7 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period, vide
           ReactTooltip.rebuild()
         })
     }
-  }, [channel, period, videoFilter, index])
+  }, [channel, period, videoFilter, index, limit])
 
   const showMore = !loading && videos && videos.length >= limit
 
