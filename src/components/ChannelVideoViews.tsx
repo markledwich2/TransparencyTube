@@ -1,25 +1,26 @@
-import { useState, useEffect, useMemo, memo } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
-import { delay, hoursFormat, numFormat, preloadImages } from '../common/Utils'
-import { InlineSelect, Opt } from './InlineSelect'
+import { delay } from '../common/Utils'
+import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat, channelColOpts } from '../common/Channel'
+import { getChannels, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
 import { ChannelDetails } from './Channel'
 import { sumBy } from '../common/Pipe'
-import { first, indexBy } from 'remeda'
-import styled, { AnyStyledComponent } from 'styled-components'
+import { indexBy } from 'remeda'
+import styled from 'styled-components'
 import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
 import { Tip } from './Tooltip'
-import { ChannelStats, ChannelWithStats, getViewsIndexes, VideoViews, VideoViewsIndex, ViewsIndexes } from '../common/RecfluenceApi'
-import { loadingFilter } from './Layout'
+import { ChannelStats, ChannelWithStats, getViewsIndexes, ViewsIndexes } from '../common/RecfluenceApi'
+import { loadingFilter, NormalFont } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, periodOptions, PeriodSelect, periodString, StatsPeriod } from './Period'
-import { differenceInMilliseconds, differenceInSeconds } from 'date-fns'
+import { differenceInMilliseconds } from 'date-fns'
+import ReactMarkdown from 'react-markdown'
 
 const modalStyle = {
   overlay: {
@@ -148,18 +149,15 @@ interface BubblesProps {
   onPeriodChange?: (p: StatsPeriod) => void
 }
 
+
+
 const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChange }: BubblesProps) => {
   const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr' })
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [showImg, setShowImg] = useState(true) // always render sans image first
+  const [showImg] = useState(true) // always render sans image first
 
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
-
-  // const { groupedNodes, zoom, packSize } = useMemo(() => {
-  //   return stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
-  // }, [stats, display, width])
-
   const { groupedNodes, zoom, packSize } = stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
 
   useEffect(() => {
@@ -198,7 +196,12 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
     /> : <></>} />
 
     <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
-        <InlineSelect options={channelMd.measures} selected={display.measure} onChange={o => setDisplay({ ...display, measure: o as any })} />
+        <InlineSelect
+        options={channelMd.measures.values}
+        selected={display.measure}
+        onChange={o => setDisplay({ ...display, measure: o as any })}
+        itemRender={MeasureOption}
+      />
       {['views', 'watchHours'].includes(display.measure) && <InlineSelect
         options={periodOptions(indexes.periods)}
         selected={period}
@@ -207,18 +210,62 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
         }} />
       }
         by
-        <InlineSelect options={channelColOpts} selected={display.groupBy} onChange={o => {
-        const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
-        setDisplay({ ...display, groupBy: o, colorBy: cb })
-      }} />
+        <InlineSelect
+        options={channelColOpts}
+        selected={display.groupBy} onChange={o => {
+          const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
+          setDisplay({ ...display, groupBy: o, colorBy: cb })
+        }}
+        itemRender={ColOption}
+      />
         and colored by
-        <InlineSelect options={channelColOpts} selected={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
+        <InlineSelect
+        options={channelColOpts}
+        selected={display.colorBy}
+        onChange={o => setDisplay({ ...display, colorBy: o })}
+        itemRender={ColOption}
+      />
     </FilterHeader>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
       <BubbleChart {... { groupedNodes, display, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>
   </div>
 }
+
+const MeasureOptionStyle = styled.div`
+  padding: 0.1em 0 0.2em 0;
+  width:30rem;
+`
+
+const Md = styled(ReactMarkdown)`
+  width: 100%;
+  white-space:normal;
+
+  p {
+    line-height:1.4em;
+    margin: 0.1em 0 0.4em 0
+  }
+
+  ul {
+    padding-left: 1em
+  }
+
+  code, inlineCode  {
+      font-family:monospace;
+      background-color:var(--bg2);
+      padding: 0.1em 0.2em;
+      border: 1px solid var(--bg3);
+      border-radius: 5px;
+  }
+`
+
+const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
+  <b>{o.label}</b><Md source={o.desc} />
+</NormalFont></MeasureOptionStyle>
+
+const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
+  <b>{o.label}</b><Md source={o.desc} />
+</NormalFont></MeasureOptionStyle>
 
 interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], display: DisplayCfg }
 

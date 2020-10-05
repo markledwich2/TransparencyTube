@@ -71,6 +71,12 @@ export const FlexCol = styled.div<{ space?: string }>`
   }
 `
 
+export const NormalFont = styled.span`
+  font-size:1rem;
+  font-weight:normal;
+  line-height: 1.2rem;
+`
+
 
 const Layout: FunctionComponent = ({ children }) => {
   const data = useStaticQuery(graphql`

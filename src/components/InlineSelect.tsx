@@ -25,34 +25,35 @@ export interface Opt<T> {
   value: T
 }
 
-export interface SelectOptions<T> {
-  options: Opt<T>[]
-  selected?: T
-  onChange?: (o: T) => void
-  inlineElement?: (o: T) => JSX.Element
+export interface SelectOptions<TVal, TOpt extends Opt<TVal>> {
+  options: TOpt[]
+  selected?: TVal
+  onChange?: (o: TVal) => void
+  inlineRender?: (o: TVal) => JSX.Element
+  itemRender?: (o: TOpt) => JSX.Element
 }
 
-export function InlineSelect<T>({ options, selected, onChange, inlineElement }: SelectOptions<T>) {
-  const el = (o: T) => <>{options?.find(o => jsonEquals(o.value, selected))?.label}</>
-  return <InlineForm<T> {...{ value: selected, onChange }} inlineElement={inlineElement ?? el} >
-    <OptionList {...{ options, selected: [selected] }} onChange={o => onChange(o.value)} />
+export function InlineSelect<TVal, TOpt extends Opt<TVal>>({ options, selected, onChange, inlineRender, itemRender }: SelectOptions<TVal, TOpt>) {
+  const el = (o: TVal) => <>{options?.find(o => jsonEquals(o.value, selected))?.label}</>
+  return <InlineForm<TVal> {...{ value: selected, onChange }} inlineRender={inlineRender ?? el} >
+    <OptionList {...{ options, selected: [selected], itemRender }} onChange={o => onChange(o.value)} />
   </InlineForm>
 }
 
-export interface OptionListProps<TValue, TOption extends Opt<TValue>> extends StyleProps {
-  options: TOption[]
-  onChange?: (o: TOption) => void
-  itemElement?: (o: TOption) => JSX.Element
+export interface OptionListProps<TVal, TOpt extends Opt<TVal>> extends StyleProps {
+  options: TOpt[]
+  onChange?: (o: TOpt) => void
+  itemRender?: (o: TOpt) => JSX.Element
 }
 
-export const OptionList = <TValue, TOption extends Opt<TValue> & { selected?: boolean }>(
-  { options, onChange, itemElement, style, className }: OptionListProps<TValue, TOption>) => {
+export const OptionList = <TVal, TOpt extends Opt<TVal> & { selected?: boolean }>(
+  { options, onChange, itemRender, style, className }: OptionListProps<TVal, TOpt>) => {
   return <UlStyled style={style} className={className}>
     {options.map(o => <li
       key={JSON.stringify(o.value)}
       className={o.selected ? 'selected' : null}
       onClick={_ => {
         onChange && onChange({ ...o, selected: !o.selected })
-      }}>{itemElement ? itemElement(o) : o.label}</li>)}
+      }}>{itemRender ? itemRender(o) : o.label}</li>)}
   </UlStyled>
 }

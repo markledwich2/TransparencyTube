@@ -1,7 +1,7 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelMd, ColumnMd, measureFormat } from '../common/Channel'
+import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
 import { hoursFormat, numFormat } from '../common/Utils'
 import { EsChannel, getChannel } from '../common/EsApi'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
@@ -115,8 +115,8 @@ export interface ChannelTitleProps {
 }
 
 export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
-  const tags = indexBy(channelMd.tags, t => t.value)
-  const lr = channelMd.lr.find(i => i.value == c.lr)
+  const tags = indexBy(channelMd.tags.values, t => t.value)
+  const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
   const fPeriodViews = c.views ? numFormat(c.views) : null
   const fChannelViews = numFormat(c.channelViews)

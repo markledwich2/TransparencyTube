@@ -39,12 +39,12 @@ const ChevIcon = styled(ChevronDownOutline)`
 interface InlineFormOptions<T> {
   value: T
   onChange?: (v: T) => void
-  inlineElement?: (v: T) => JSX.Element
+  inlineRender?: (v: T) => JSX.Element
   popupStyle?: CSSProperties
   keepOpenOnChange?: boolean
 }
 
-export const InlineForm = <T,>({ value, inlineElement, children, popupStyle, keepOpenOnChange }: PropsWithChildren<InlineFormOptions<T>>) => {
+export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange }: PropsWithChildren<InlineFormOptions<T>>) => {
   const [open, setOpen] = useState<T>(null)
   const popupRef = useRef<HTMLDivElement>()
 
@@ -62,7 +62,7 @@ export const InlineForm = <T,>({ value, inlineElement, children, popupStyle, kee
     <InlineStyle onClick={e => {
       if (!open) setOpen(value)
     }}>
-      {inlineElement ? inlineElement(value) : value?.toString()}
+      {inlineRender ? inlineRender(value) : value?.toString()}
       <ChevIcon />
     </InlineStyle>
     {open && (keepOpenOnChange || jsonEquals(open, value)) && <PopupStyle ref={popupRef} style={popupStyle}>

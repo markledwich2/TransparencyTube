@@ -92,3 +92,7 @@ a {
 a:hover {
     cursor: pointer;
 }
+
+p {
+    color: var(--fg2);
+}

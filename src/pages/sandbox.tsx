@@ -3,7 +3,7 @@ import _ from 'lodash'
 import React, { useState } from "react"
 import { flatMap, indexBy, uniq } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelMd, ColumnMd } from '../common/Channel'
+import { Channel, channelMd, ColumnValueMd } from '../common/Channel'
 import { values } from '../common/Pipe'
 import { Tag } from '../components/Channel'
 import { InlineForm } from '../components/InlineForm'

@@ -21,56 +21,87 @@ export interface Channel {
   media?: string
 }
 
-export interface ColumnMd<T> extends Opt<T> { color?: string, format?: (n: number) => string }
-
-const colLabels = {
-  'tags': 'Tag',
-  'lr': 'Left/Right',
-  'media': 'Media'
+export interface ColumnMd {
+  label?: string
+  desc?: string
+  values: ColumnValueMd<string>[]
 }
 
-export const channelColOpts: Opt<keyof Channel>[] = entries(colLabels).map(([value, label]) => ({ value, label }))
+export interface ColumnValueMd<T> extends Opt<T> { color?: string, format?: (n: number) => string, desc?: string }
 
-export const channelColLabel = (col: keyof Channel) => colLabels[col] ?? col
 
 export const hiddenTags = ['Black', 'LGBT']
 
-export const channelMd: { [key: string]: ColumnMd<string>[] } = {
-  tags: [
-    { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
-    { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
-    { value: 'Conspiracy', color: '#e0990b' },
-    { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
-    { value: 'Libertarian', color: '#999' },
-    { value: 'MRA', color: '#003e78' },
-    { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f' },
-    { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },
-    { value: 'PartisanRight', label: 'Partisan Right', color: '#e0393e' },
-    { value: 'QAnon', color: '#e55e5e' },
-    { value: 'ReligiousConservative', label: 'Religious Con.', color: '#41afa5' },
-    { value: 'SocialJustice', label: 'Social Justice', color: '#56b881' },
-    { value: 'Socialist', color: '#6ec9e0' },
-    { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500' },
-  ],
-  lr: [
-    { value: 'L', label: 'Left', color: '#3887be' },
-    { value: 'C', label: 'Center', color: '#c060a1' },
-    { value: 'R', label: 'Right', color: '#da2d2d' }
-  ],
-  media: [
-    { value: 'Mainstream Media', label: 'Mainstream Media', color: '#aa557f' },
-    { value: 'YouTube', label: 'YouTube', color: '#56b881' }
-  ],
-  measures: [
-    { value: 'channelViews', label: 'channel views' },
-    { value: 'views', label: 'views' },
-    { value: 'watchHours', label: 'watched', format: (n: number) => hoursFormat(n) },
-    { value: 'subs', label: 'subscribers' }
-  ]
+export const channelMd: { [key: string]: ColumnMd } = {
+  tags: {
+    label: 'Tag',
+    desc: `Cultural or political classification for channel (e.g. Libertarian or  Partisan Right).
+    They are tagged by either:
+    - Reviewers using [this method](https://github.com/markledwich2/Recfluence#soft-tags)
+    - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
+\nNote: Each channel can have multiple tags.`,
+    values: [
+      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
+      { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
+      { value: 'Conspiracy', color: '#e0990b' },
+      { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
+      { value: 'Libertarian', color: '#999' },
+      { value: 'MRA', color: '#003e78' },
+      { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f' },
+      { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },
+      { value: 'PartisanRight', label: 'Partisan Right', color: '#e0393e' },
+      { value: 'QAnon', color: '#e55e5e' },
+      { value: 'ReligiousConservative', label: 'Religious Con.', color: '#41afa5' },
+      { value: 'SocialJustice', label: 'Social Justice', color: '#56b881' },
+      { value: 'Socialist', color: '#6ec9e0' },
+      { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500' },
+    ]
+  },
+  lr: {
+    label: 'Left/Right',
+    desc: `Classification as left/center/right by either:
+    - Reviewers using [this method](https://github.com/markledwich2/Recfluence#leftcenterright)
+    - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#chan2vec) `,
+    values: [
+      { value: 'L', label: 'Left', color: '#3887be' },
+      { value: 'C', label: 'Center', color: '#c060a1' },
+      { value: 'R', label: 'Right', color: '#da2d2d' }
+    ]
+  },
+  media: {
+    label: 'Media',
+    desc: `The channel is considered **Mainstream Media** when tagged as \`Mainstream News\`, \`Late night Talk Show\` or \`Missing Link Media\`, the rest are labeled **YouTube**. `,
+    values: [
+      { value: 'Mainstream Media', label: 'Mainstream Media', color: '#aa557f' },
+      { value: 'YouTube', label: 'YouTube', color: '#56b881' }
+    ]
+  },
+  measures: {
+    values: [
+      { value: 'channelViews', label: 'Channel Views', desc: 'The total number of channel views for all time as provided by the YouTube API.' },
+      {
+        value: 'views', label: 'Views', desc: `The number of views within the selected period.
+    *Transparency.tube* records statistics for videos younger than 730 days once per week (each channel has a day). 
+    The top 30% viewed channels (over last 60 days) will have videos younger than 120 days recorded.
+     ` },
+      {
+        value: 'watchHours', label: 'Watched', format: (n: number) => hoursFormat(n), desc: `Estimated hours watch of this video. 
+    This estimate is based on the [data collected](https://github.com/sTechLab/YouTubeDurationData) from [this study from 2017](https://arxiv.org/pdf/1603.08308.pdf). 
+    For each video, we calculate \`*average % of video watch for this videos duration\` x \`video views\`` },
+      { value: 'subs', label: 'Subscribers', desc: 'The number of subscribers to the channel as provided by the YouTube API. Note, a small amount of channels hide this data.' }
+    ]
+  }
 }
 
+export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
+
+export const channelColOpts: ColumnMdOpt[] = entries(channelMd).map(([value, col]) =>
+  ({ value: value as keyof Channel, label: col.label, desc: col.desc }))
+
+export const channelColLabel = (col: keyof Channel) => channelMd[col].label ?? col
+
 export const measureFormat = (measure: string) => {
-  const measureMd = channelMd.measures.find(m => m.value == measure)
+  const measureMd = channelMd.measures.values.find(m => m.value == measure)
   return measureMd.format ?? ((v: number) => numFormat(v))
 }
 
@@ -89,7 +120,7 @@ export async function getChannels(): Promise<Channel[]> {
   const path = blobCfg.resultsUri
   const channels = await getJsonl<Channel>(path.addPath('ttube_channels.jsonl.gz').url, { headers: { cache: "no-store" } })
 
-  let tagViews: { [key: string]: { tag: string, sum: number } } = pipe(channelMd.tags,
+  let tagViews: { [key: string]: { tag: string, sum: number } } = pipe(channelMd.tags.values,
     map(t => ({ tag: t.value, channels: channels.filter(c => c.tags.includes(t.value)) })),
     map(t => ({ tag: t.tag, sum: sumBy(t.channels, c => c.channelViews ?? 0) })),
     indexBy(t => t.tag)
@@ -97,13 +128,13 @@ export async function getChannels(): Promise<Channel[]> {
 
   channels.forEach(c => {
     c.tags = sortBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
-    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
+    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'Other'
   })
   return channels
 }
 
 export interface GroupedNodes {
-  group: ColumnMd<string>
+  group: ColumnValueMd<string>
   nodes: d3.HierarchyCircularNode<ChannelNode>[]
   dim: {
     x: NodeMinMax
@@ -133,8 +164,8 @@ export const getGroupData = (channels: ChannelWithStats[], display: DisplayCfg) 
 
   const { measure, groupBy, colorBy } = display
   const val = (c: ChannelWithStats) => c[measure] ?? 0
-  const groupMd = indexBy(channelMd[groupBy], o => o.value)
-  const colorMd = indexBy(channelMd[colorBy], o => o.value)
+  const groupMd = indexBy(channelMd[groupBy].values, o => o.value)
+  const colorMd = indexBy(channelMd[colorBy].values, o => o.value)
 
   const groups = values(groupMd).map(g => {
     const nodes: ChannelNode[] = channels
