@@ -16,6 +16,7 @@ export interface EsCfg {
 
 export interface EsChannel extends Channel {
   description?: string
+  reviewsHuman?: number
 }
 
 export interface EsIndexes {

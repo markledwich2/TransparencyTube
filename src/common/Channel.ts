@@ -33,13 +33,15 @@ export const channelColOpts: Opt<keyof Channel>[] = entries(colLabels).map(([val
 
 export const channelColLabel = (col: keyof Channel) => colLabels[col] ?? col
 
+export const hiddenTags = ['Black', 'LGBT']
+
 export const channelMd: { [key: string]: ColumnMd<string>[] } = {
   tags: [
     { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
     { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
     { value: 'Conspiracy', color: '#e0990b' },
     { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
-    { value: 'Libertarian', color: '#ccc' },
+    { value: 'Libertarian', color: '#999' },
     { value: 'MRA', color: '#003e78' },
     { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f' },
     { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },
@@ -94,7 +96,7 @@ export async function getChannels(): Promise<Channel[]> {
   )
 
   channels.forEach(c => {
-    c.tags = sortBy(c.tags, t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
+    c.tags = sortBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
     c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
   return channels

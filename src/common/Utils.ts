@@ -103,18 +103,21 @@ const labelUnit = (u: string, v: number) => {
   return space + ((v == 1) ? u : (timeUnits[u].plural ?? u))
 }
 
-export const hoursFormat = (hours: number) => {
+export const hoursFormat = (hours: number, numUnits?: number) => {
+  numUnits = numUnits ?? 1
   let remainingSecs = hours * timeUnits.hr.s
-  const units = reverse(Object.entries(timeUnits)).map(v => {
+  const units = reverse(Object.entries(timeUnits)).map((v, i) => {
     const [unit, { s, plural }] = v
-    if (remainingSecs - s > 0) {
-      const val = Math.floor(remainingSecs / s)
+    if (i < numUnits && remainingSecs - s > 0) {
+      const unitPortion = remainingSecs / s
+      const isLastUnit = i == numUnits - 1
+      const val = isLastUnit ? unitPortion : Math.floor(unitPortion)
       remainingSecs = remainingSecs - val * s
       return { unit, val: val }
     }
     return { unit, val: 0 }
   })
-  const r = units.filter(u => u.val).slice(0, 2)
+  const r = units.filter(u => u.val).slice(0, numUnits)
     .map(u => `${numFormat(u.val)}${labelUnit(u.unit, u.val)}`).join(' ')
   return r
 }

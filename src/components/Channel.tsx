@@ -10,7 +10,8 @@ import { Videos } from './Video'
 import { ChannelStats, ChannelWithStats, getChannelStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { InlineSelect } from './InlineSelect'
 import { StatsPeriod, periodOptions } from './Period'
-
+import { Bot, User } from '@styled-icons/boxicons-solid'
+import { StyledIconBase } from '@styled-icons/styled-icon'
 
 export interface TopVideosProps {
   channel: Channel
@@ -29,7 +30,7 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
   useEffect(() => {
     if (!channel) return
     let canceled = false //https://medium.com/hackernoon/avoiding-race-conditions-when-fetching-data-with-react-hooks-220d6fd0f663
-    getChannel(channel.channelId, ['channelId', 'description']).then(c => {
+    getChannel(channel.channelId, ['channelId', 'description', 'reviewsHuman']).then(c => {
       if (canceled) return
       setChannelEx(c)
     })
@@ -53,7 +54,7 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
   const desc = showDesc ? e?.description : e?.description?.substr(0, 300)
 
   return <FlexCol style={{ maxWidth: '70vw', width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} e={e} showLr statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         {!e
@@ -74,22 +75,37 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
   </FlexCol>
 }
 
-
 const ChannelTitleStyle = styled.div`
   display: flex;
-  max-width: 40em;
-  > * {
-      padding-right: '5px'
-  }
+  max-width: 45em;
   .logo {
     :hover {
       cursor: pointer;
     }
   }
+
+  ${StyledIconBase} {
+        height: 1.4em;
+        width: 1.4em;
+        position: relative;
+        top: -0.15em;
+        padding-right: 0.2em;
+        color: var(--fg2);
+    }
+`
+
+const MetricsStyle = styled(FlexRow)`
+  flex-flow:wrap;
+  align-items:baseline;
+  > * {
+    margin-bottom:0.5em;
+    white-space: nowrap;
+  }
 `
 
 export interface ChannelTitleProps {
   c: ChannelWithStats
+  e?: EsChannel
   statsLoading?: boolean
   showLr?: boolean
   tipId?: string
@@ -98,7 +114,7 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags, t => t.value)
   const lr = channelMd.lr.find(i => i.value == c.lr)
 
@@ -116,18 +132,21 @@ export const ChannelTitle = ({ c, showLr, logoStyle, titleStyle, tipId, onLogoCl
       //   inter.hover = { col: 'lr', value: c.lr }
       // }}
       className='logo'
-      style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} /></div>
-    <div>
+      style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} />
+    </div>
+    <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>{c.channelTitle}</h2>
-      <FlexRow space='2em' style={{ marginBottom: '.5em', flexFlow: 'wrap', alignItems: 'baseline', filter: statsLoading ? loadingFilter : null }}>
+      <MetricsStyle space='2em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
-          <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>
-          {fPeriodViews != fChannelViews && <span style={{ fontSize: '1em' }}>/{fChannelViews}</span>}
-              &nbsp;views
+          {fPeriodViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>}
+          {fPeriodViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fPeriodViews && '/'}{fChannelViews}</span>}&nbsp;views
         </span>
-        <span><b>{hoursFormat(c.watchHours)}</b> watched</span>
-        <span><b>{numFormat(c.subs)}</b> subscribers</span>
-      </FlexRow>
+        {c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
+        {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
+        {e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
+          <p><User /><b>{e.reviewsHuman}</b> manual reviews</p>
+          : <p><Bot /> automatic classification</p>}</span>}
+      </MetricsStyle>
       <TagDiv style={{ marginBottom: '1em' }} >
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color ?? 'var(--bg2)'} />)}
