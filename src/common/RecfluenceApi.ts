@@ -74,7 +74,6 @@ export const getVideoViews = async (index: VideoViewsIndex<StatsPeriod>, periodF
       watchHours: v.watchHours,
       rank: v.rank
     }))
-    console.log('vids2', vids.length)
     return vids
   }
   catch (e) {

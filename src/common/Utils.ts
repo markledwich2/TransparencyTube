@@ -85,10 +85,7 @@ export const dateFormat = (date: Date | number | string) => {
 export const numFormat = (n: number) =>
   n ? numeral(n).format(Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
 
-
-export const delay = <T>(ms: number, value?: T): Promise<T> =>
-  new Promise((resolve) => setTimeout(resolve(value), 100))
-
+export const delay = (ms: number) => new Promise(_ => setTimeout(_, ms))
 
 const daySeconds = 24 * 60 * 60
 const timeUnits: { [key: string]: TimeUnit } = {

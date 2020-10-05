@@ -19,7 +19,7 @@ interface IndexFile<TKey> {
 }
 
 export const noCacheReq = { headers: { 'Cache-Control': 'no-cache' } }
-const enableLocalCache = false
+const enableLocalCache = true
 
 export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRow, TKey>> => {
   const baseUri = blobCfg.indexUri.addPath(path)
@@ -39,9 +39,13 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
 
   const fileRows = async (file: string) => {
     const cache = enableLocalCache ? fileRowsCache[file] : null
-    if (cache) return cache
+    if (cache) {
+      console.log('cache hit', file)
+      return cache
+    }
     const rows = await getJsonl<TRow>(baseUriCdn.addPath(file).url)
-    fileRowsCache[file] = rows
+    if (enableLocalCache)
+      fileRowsCache[file] = rows
     return rows
   }
 

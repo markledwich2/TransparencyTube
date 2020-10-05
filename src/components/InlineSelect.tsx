@@ -33,7 +33,7 @@ export interface SelectOptions<T> {
 }
 
 export function InlineSelect<T>({ options, selected, onChange, inlineElement }: SelectOptions<T>) {
-  const el = (o: T) => <>{options.find(o => jsonEquals(o.value, selected))?.label}</>
+  const el = (o: T) => <>{options?.find(o => jsonEquals(o.value, selected))?.label}</>
   return <InlineForm<T> {...{ value: selected, onChange }} inlineElement={inlineElement ?? el} >
     <OptionList {...{ options, selected: [selected] }} onChange={o => onChange(o.value)} />
   </InlineForm>

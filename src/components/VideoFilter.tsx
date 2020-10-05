@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { uniq, flatMap } from 'remeda'
 import styled from 'styled-components'
-import { Channel, ColumnMd, channelMd } from '../common/Channel'
+import { Channel, ColumnMd, channelMd, channelColLabel } from '../common/Channel'
 import { VideoViews, VideoWithStats } from '../common/RecfluenceApi'
 import { Tag } from './Channel'
 import { InlineForm } from './InlineForm'
@@ -44,9 +44,10 @@ const filterWithSelect = (f: VideoFilter, col: keyof VideoFilter, val: string, s
 
 type FilterColOption = Opt<string> & ColumnMd<string> & { selected?: boolean }
 
+
 const channelColOptions = (col: keyof Channel, filter: VideoFilter) => {
   var md = channelMd[col]
-  var allOption: FilterColOption = { value: '_all', label: 'All', color: 'var(--bg4)', selected: isSelected(filter, col, '_all') }
+  var allOption: FilterColOption = { value: '_all', label: `All - ${channelColLabel(col)}`, color: 'var(--bg4)', selected: isSelected(filter, col, '_all') }
   var options: FilterColOption[] = md.map(t => ({ ...t, label: t.label ?? t.value, selected: isSelected(filter, col, t.value) }))
   return [allOption].concat(options)
 }
@@ -60,7 +61,7 @@ const InlineFilterElement = (f: VideoFilter) => {
 }
 
 export const InlineVideoFilter = (p: FilterFormProps) => <InlineForm<VideoFilter>
-  inlineElement={InlineFilterElement} value={p.filter} onChange={f => p.onFilter(f)}>
+  inlineElement={InlineFilterElement} value={p.filter} onChange={f => p.onFilter(f)} keepOpenOnChange>
   <FilterForm {...p} />
 </InlineForm>
 

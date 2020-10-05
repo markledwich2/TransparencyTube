@@ -2,7 +2,7 @@
 import { Uri } from './Uri'
 import { getJsonl, hoursFormat, numFormat } from './Utils'
 import { filter, first, flatMap, indexBy, map, mapValues, pipe } from 'remeda'
-import { max, maxBy, minBy, sortBy, sumBy, values } from './Pipe'
+import { entries, max, maxBy, minBy, sortBy, sumBy, values } from './Pipe'
 import { Opt } from '../components/InlineSelect'
 import { hierarchy, pack } from 'd3'
 import { StringLiteralLike } from 'typescript'
@@ -23,6 +23,16 @@ export interface Channel {
 
 export interface ColumnMd<T> extends Opt<T> { color?: string, format?: (n: number) => string }
 
+const colLabels = {
+  'tags': 'Tag',
+  'lr': 'Left/Right',
+  'media': 'Media'
+}
+
+export const channelColOpts: Opt<keyof Channel>[] = entries(colLabels).map(([value, label]) => ({ value, label }))
+
+export const channelColLabel = (col: keyof Channel) => colLabels[col] ?? col
+
 export const channelMd: { [key: string]: ColumnMd<string>[] } = {
   tags: [
     { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
@@ -39,7 +49,6 @@ export const channelMd: { [key: string]: ColumnMd<string>[] } = {
     { value: 'SocialJustice', label: 'Social Justice', color: '#56b881' },
     { value: 'Socialist', color: '#6ec9e0' },
     { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500' },
-    // { value: 'OrganizedReligion', label: 'Organized Religion' },
   ],
   lr: [
     { value: 'L', label: 'Left', color: '#3887be' },

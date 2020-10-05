@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import React from 'react'
 import { delay, hoursFormat, numFormat, preloadImages } from '../common/Utils'
 import { InlineSelect, Opt } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat } from '../common/Channel'
+import { getChannels, imagesToLoad, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat, channelColOpts } from '../common/Channel'
 import { ChannelDetails } from './Channel'
 import { sumBy } from '../common/Pipe'
 import { first, indexBy } from 'remeda'
@@ -19,6 +19,7 @@ import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, periodOptions, PeriodSelect, periodString, StatsPeriod } from './Period'
+import { differenceInMilliseconds, differenceInSeconds } from 'date-fns'
 
 const modalStyle = {
   overlay: {
@@ -62,6 +63,7 @@ export const ChannelVideoViewsPage = () => {
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigate)
   const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null })
+  const [allowVideoLoad, setAllowVideoLoad] = useState(false)
 
   useEffect(() => {
     const go = async () => {
@@ -76,18 +78,18 @@ export const ChannelVideoViewsPage = () => {
       }
       const channels = indexBy(await channelsTask, c => c.channelId)
       setChannels(channels)
+
+      delay(1000).then(() => setAllowVideoLoad(true)) // dodgy. But want the first graph to load asap
     }
     go()
   }, [])
   if (!channels) return <></>
 
   const period = parsePeriod(q.period) ?? defaultPeriod
-  const videoPeriod = parsePeriod(q.videoPeriod) ?? period
+  const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
   const openChannel = q.openChannelId ? channels[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
   const onCloseChannel = () => setQuery({ openChannelId: null })
-
-  if (!channels) return <Spinner />
 
   return <div id='page'>
     <ContainerDimensions >
@@ -99,16 +101,19 @@ export const ChannelVideoViewsPage = () => {
     </ContainerDimensions>
     <div style={{ height: '2em' }} />
 
-    <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-    <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
-        if (p == period) return
-        setQuery({ videoPeriod: periodString(p) })
-      }} />
 
-      filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
-    </FilterHeader>
+    {channels && indexes && allowVideoLoad && <>
+      <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
+        <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
+          if (p == period) return
+          setQuery({ videoPeriod: periodString(p) })
+        }} />
 
-    <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
+          filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
+      </FilterHeader>
+      <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
+    </>
+    }
 
     {openChannel &&
       <Modal
@@ -119,8 +124,9 @@ export const ChannelVideoViewsPage = () => {
         style={modalStyle}
       >
         <ChannelDetails channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
-      </Modal>}
-  </div>
+      </Modal>
+    }
+  </div >
 }
 
 const BubbleDiv = styled.div`
@@ -133,12 +139,6 @@ const BubbleDiv = styled.div`
   border: 1px solid var(--bg2);
   border-radius: 10px;
 `
-
-const groupOptions: Opt<keyof Channel>[] = [
-  { value: 'tags', label: 'tag' },
-  { value: 'lr', label: 'left/right' },
-  { value: 'media', label: 'media' }
-]
 
 interface BubblesProps {
   channels: Record<string, Channel>,
@@ -156,28 +156,37 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
 
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
 
-  const { groupedNodes, zoom, packSize } = useMemo(() => {
-    return stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
-  }, [stats, display, width])
+  // const { groupedNodes, zoom, packSize } = useMemo(() => {
+  //   return stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
+  // }, [stats, display, width])
+
+  const { groupedNodes, zoom, packSize } = stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
 
   useEffect(() => {
     const go = async () => {
+      const start = new Date()
       setLoading(true)
+      let start2 = new Date()
       const rawStats = await indexes.channelStats.getRows(period)
-      setShowImg(false)
+      console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
+      //setShowImg(false)
+      start2 = new Date()
       setRawStats(rawStats)
-      setShowImg(true)
+      console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
+      ReactTooltip.rebuild()
       setLoading(false)
+      setShowImg(true)
+      console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
     go()
-  }, [period, indexes, channels])
+  }, [JSON.stringify(period), indexes, channels])
 
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
     onOpenChannel(c)
   }
 
-  const measureFmt = measureFormat(display.measure)
+  if (!rawStats) return <Spinner />
 
   return <div>
     <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
@@ -196,27 +205,36 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
         }} />
       }
         by
-        <InlineSelect options={groupOptions} selected={display.groupBy} onChange={o => {
+        <InlineSelect options={channelColOpts} selected={display.groupBy} onChange={o => {
         const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
         setDisplay({ ...display, groupBy: o, colorBy: cb })
       }} />
         and colored by
-        <InlineSelect options={groupOptions} selected={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
+        <InlineSelect options={channelColOpts} selected={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
     </FilterHeader>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
-        <div style={{ padding: '2px' }}>
-          <h4>
-            <span style={{ color: 'var(--fg2)' }}>{t.group.label ?? t.group.value}</span>
-            <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
-          </h4>
-        </div>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          <TagPack {...t} {...{ zoom, packSize, channelClick, showImg }} /></div>
-      </BubbleDiv>
-      )}
+      <BubbleChart {... { groupedNodes, display, zoom, packSize, channelClick, showImg }} />
     </div>
   </div>
+}
+
+interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], display: DisplayCfg }
+
+const BubbleChart = ({ groupedNodes, display, ...extra }: BubbleChartProps) => {
+  const measureFmt = measureFormat(display.measure)
+  return <>
+    {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
+      <div style={{ padding: '2px' }}>
+        <h4>
+          <span style={{ color: 'var(--fg2)' }}>{t.group.label ?? t.group.value}</span>
+          <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
+        </h4>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+        <TagPack {...t} {...extra} />
+      </div>
+    </BubbleDiv>
+    )}</>
 }
 
 const SVGStyle = styled.svg`
@@ -228,8 +246,7 @@ const SVGStyle = styled.svg`
 `
 
 interface PackExtra { zoom: number, packSize: number, channelClick: (c: ChannelStats) => void, showImg: boolean }
-const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, group, showImg }: {} & GroupedNodes & PackExtra) => {
-
+const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg }: {} & GroupedNodes & PackExtra) => {
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
   const z = zoom
@@ -244,7 +261,7 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, group, showIm
     }))
 
   //return <div key={new Date().getTime()}>{channelNodes.length}</div>
-  return <SVGStyle width={dim.w * z} height={dim.h * z} >
+  return <SVGStyle key={new Date().toISOString()} width={dim.w * z} height={dim.h * z} >
     <defs>
       {showImg && channelNodes.filter(n => n.data.img)
         .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r * imgRatio} /></clipPath >)}
