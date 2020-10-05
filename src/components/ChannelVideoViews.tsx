@@ -152,7 +152,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
   const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr' })
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [showImg, setShowImg] = useState(false) // always render sans image first
+  const [showImg, setShowImg] = useState(true) // always render sans image first
 
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
 
@@ -166,6 +166,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
     const go = async () => {
       const start = new Date()
       setLoading(true)
+      await delay(1)
       let start2 = new Date()
       const rawStats = await indexes.channelStats.getRows(period)
       console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
@@ -173,9 +174,10 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
       start2 = new Date()
       setRawStats(rawStats)
       console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
-      ReactTooltip.rebuild()
       setLoading(false)
-      setShowImg(true)
+      await delay(1000)
+      ReactTooltip.rebuild()
+      //setShowImg(true)
       console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
     go()
@@ -213,7 +215,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
         <InlineSelect options={channelColOpts} selected={display.colorBy} onChange={o => setDisplay({ ...display, colorBy: o })} />
     </FilterHeader>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      <BubbleChart {... { groupedNodes, display, zoom, packSize, channelClick, showImg }} />
+      <BubbleChart {... { groupedNodes, display, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>
   </div>
 }
@@ -245,8 +247,8 @@ const SVGStyle = styled.svg`
   }
 `
 
-interface PackExtra { zoom: number, packSize: number, channelClick: (c: ChannelStats) => void, showImg: boolean }
-const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg }: {} & GroupedNodes & PackExtra) => {
+interface PackExtra { zoom: number, packSize: number, channelClick: (c: ChannelStats) => void, showImg: boolean, key: string }
+const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key }: {} & GroupedNodes & PackExtra) => {
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
   const z = zoom
@@ -261,7 +263,7 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg }: {}
     }))
 
   //return <div key={new Date().getTime()}>{channelNodes.length}</div>
-  return <SVGStyle key={new Date().toISOString()} width={dim.w * z} height={dim.h * z} >
+  return <SVGStyle key={key} width={dim.w * z} height={dim.h * z} >
     <defs>
       {showImg && channelNodes.filter(n => n.data.img)
         .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r * imgRatio} /></clipPath >)}
