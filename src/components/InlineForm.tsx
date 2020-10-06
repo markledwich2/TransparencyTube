@@ -48,6 +48,7 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
   const [open, setOpen] = useState<T>(null)
   const popupRef = useRef<HTMLDivElement>()
 
+
   const handleClick = ({ target }) => {
     if (popupRef.current?.contains(target)) return
     setOpen(null)
@@ -58,6 +59,19 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+
+  useEffect(() => {
+    const c = popupRef.current
+    if (!c) return
+    c.style.visibility = 'visible' // needs to be visible ot measure. But no jiggle if we do this in the effect
+    const br = c.getBoundingClientRect()
+    const view = window.visualViewport
+    const overflowX = br.right - view.offsetLeft - view.width
+    if (overflowX > 0) {
+      c.style.left = `${c.clientLeft - overflowX}px`
+    }
+  })
+
   return <OuterStyle>
     <InlineStyle onClick={e => {
       if (!open) setOpen(value)
@@ -65,7 +79,8 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
       {inlineRender ? inlineRender(value) : value?.toString()}
       <ChevIcon />
     </InlineStyle>
-    {open && (keepOpenOnChange || jsonEquals(open, value)) && <PopupStyle ref={popupRef} style={popupStyle}>
+    {open && (keepOpenOnChange || jsonEquals(open, value)) && <PopupStyle ref={popupRef}
+      style={{ ...popupStyle, visibility: 'hidden' }} className="inline-form">
       {children}
     </PopupStyle>}
   </OuterStyle>

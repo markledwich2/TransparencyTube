@@ -3,7 +3,7 @@ import React from 'react'
 import { delay } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, GroupedNodes, channelMd, buildTagNodes, DisplayCfg, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
+import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
 import { ChannelDetails } from './Channel'
 import { sumBy } from '../common/Pipe'
 import { indexBy } from 'remeda'
@@ -18,7 +18,7 @@ import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { InlineVideoFilter, VideoFilter } from './VideoFilter'
-import { parsePeriod, periodOptions, PeriodSelect, periodString, StatsPeriod } from './Period'
+import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
 import { differenceInMilliseconds } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
 
@@ -46,10 +46,9 @@ const modalStyle = {
   }
 }
 
-interface QueryState extends Record<string, string> {
-  period: string,
-  videoPeriod: string
-  openChannelId: string
+interface QueryState extends Record<string, string>, BubblesSelectionState {
+  videoPeriod?: string
+  openChannelId?: string
 }
 
 const FilterHeader = styled.h3`
@@ -79,32 +78,34 @@ export const ChannelVideoViewsPage = () => {
       }
       const channels = indexBy(await channelsTask, c => c.channelId)
       setChannels(channels)
-
-      delay(1000).then(() => setAllowVideoLoad(true)) // dodgy. But want the first graph to load asap
     }
     go()
   }, [])
 
   const period = parsePeriod(q.period) ?? defaultPeriod
   const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
-  const openChannel = q.openChannelId ? channels[q.openChannelId] : null
+  const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
   const onCloseChannel = () => setQuery({ openChannelId: null })
 
   return <div id='page' style={{ minHeight: '100vh' }}>
-    {channels && <>
+    {channels && defaultPeriod && <>
       <ContainerDimensions >
-        {({ width }) => <Bubbles channels={channels} width={width > 800 ? 800 : 400}
-          onOpenChannel={onOpenChannel} indexes={indexes} period={period}
-          onPeriodChange={p => {
-            setQuery({ period: periodString(p) })
-          }} />}
+        {({ width }) => <Bubbles
+          channels={channels}
+          width={width > 800 ? 800 : 400}
+          onOpenChannel={onOpenChannel}
+          indexes={indexes} selections={q}
+          onSelection={s => setQuery({ ...q, ...s })}
+          defaultPeriod={defaultPeriod}
+          onLoad={() => !allowVideoLoad ? setAllowVideoLoad(true) : null}
+        />}
       </ContainerDimensions>
       <div style={{ height: '2em' }} />
 
       {indexes && allowVideoLoad && <>
         <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-      <PeriodSelect indexes={indexes} period={videoPeriod} onPeriod={(p) => {
+      <PeriodSelect periods={indexes.periods} period={videoPeriod} onPeriod={(p) => {
             if (p == period) return
             setQuery({ videoPeriod: periodString(p) })
           }} />
@@ -143,23 +144,28 @@ const BubbleDiv = styled.div`
 `
 
 interface BubblesProps {
-  channels: Record<string, Channel>,
-  width: number, onOpenChannel: (c: ChannelWithStats) => void,
-  indexes: ViewsIndexes,
-  period: StatsPeriod
-  onPeriodChange?: (p: StatsPeriod) => void
+  channels: Record<string, Channel>
+  width: number, onOpenChannel: (c: ChannelWithStats) => void
+  indexes: ViewsIndexes
+  selections: BubblesSelectionState
+  onSelection?: (d: BubblesSelectionState) => void
+  defaultPeriod?: StatsPeriod
+  onLoad?: () => void
 }
 
-
-
-const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChange }: BubblesProps) => {
-  const [display, setDisplay] = useState<DisplayCfg>({ measure: 'views', groupBy: 'tags', colorBy: 'lr' })
+const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [showImg] = useState(true) // always render sans image first
 
+  const period = parsePeriod(selections.period) ?? defaultPeriod
+  const derivedSelections = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections } as BubblesSelectionState
+  const { measure, colorBy, groupBy } = derivedSelections
+
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
-  const { groupedNodes, zoom, packSize } = stats ? buildTagNodes(Object.values(stats), display, width) : { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
+  const { groupedNodes, zoom, packSize } = stats ?
+    buildTagNodes(Object.values(stats), derivedSelections, width) :
+    { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
 
   useEffect(() => {
     const go = async () => {
@@ -176,6 +182,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
       setLoading(false)
       await delay(1000)
       ReactTooltip.rebuild()
+      onLoad?.()
       //setShowImg(true)
       console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
@@ -199,36 +206,34 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, period, onPeriodChan
     <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
         options={channelMd.measures.values}
-        selected={display.measure}
-        onChange={o => setDisplay({ ...display, measure: o as any })}
+        selected={measure}
+        onChange={o => onSelection({ ...selections, measure: o as any })}
         itemRender={MeasureOption}
       />
-      {['views', 'watchHours'].includes(display.measure) && <InlineSelect
-        options={periodOptions(indexes.periods)}
-        selected={period}
-        onChange={o => {
-          onPeriodChange && onPeriodChange(o as any)
-        }} />
+      {['views', 'watchHours'].includes(measure) && <PeriodSelect
+        periods={indexes.periods}
+        period={period}
+        onPeriod={o => onSelection({ ...selections, period: periodString(o) })} />
       }
         by
         <InlineSelect
         options={channelColOpts}
-        selected={display.groupBy} onChange={o => {
-          const cb = display.colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
-          setDisplay({ ...display, groupBy: o, colorBy: cb })
+        selected={groupBy} onChange={o => {
+          const cb = colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
+          onSelection({ ...selections, groupBy: o, colorBy: cb })
         }}
         itemRender={ColOption}
       />
         and colored by
         <InlineSelect
         options={channelColOpts}
-        selected={display.colorBy}
-        onChange={o => setDisplay({ ...display, colorBy: o })}
+        selected={colorBy}
+        onChange={o => onSelection({ ...selections, colorBy: o })}
         itemRender={ColOption}
       />
     </FilterHeader>
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      <BubbleChart {... { groupedNodes, display, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
+      <BubbleChart {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>
   </div>
 }
@@ -244,11 +249,16 @@ const Md = styled(ReactMarkdown)`
 
   p {
     line-height:1.4em;
-    margin: 0.1em 0 0.4em 0
+    margin: 0.1em 0 0.4em 0;
   }
 
   ul {
-    padding-left: 1em
+    line-height:1.2em;
+    color:var(--fg2);
+    list-style:disc;
+    list-style-position: inside;
+    white-space: normal;
+    word-break: normal;
   }
 
   code, inlineCode  {
@@ -264,14 +274,14 @@ const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
   <b>{o.label}</b><Md source={o.desc} />
 </NormalFont></MeasureOptionStyle>
 
-const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
+export const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
   <b>{o.label}</b><Md source={o.desc} />
 </NormalFont></MeasureOptionStyle>
 
-interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], display: DisplayCfg }
+interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], selections: BubblesSelectionState }
 
-const BubbleChart = ({ groupedNodes, display, ...extra }: BubbleChartProps) => {
-  const measureFmt = measureFormat(display.measure)
+const BubbleChart = ({ groupedNodes, selections, ...extra }: BubbleChartProps) => {
+  const measureFmt = measureFormat(selections.measure)
   return <>
     {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
       <div style={{ padding: '2px' }}>

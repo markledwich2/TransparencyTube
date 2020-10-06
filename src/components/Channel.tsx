@@ -9,7 +9,7 @@ import { Spinner } from './Spinner'
 import { Videos } from './Video'
 import { ChannelStats, ChannelWithStats, getChannelStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { InlineSelect } from './InlineSelect'
-import { StatsPeriod, periodOptions } from './Period'
+import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User } from '@styled-icons/boxicons-solid'
 
 
@@ -68,7 +68,7 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
       </div>
 
       {size == 'max' && <>
-        <h3>Top videos <InlineSelect selected={period} options={periodOptions(indexes.periods)} onChange={p => setPeriod(p)} /></h3>
+        <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
         <Videos channel={c} indexes={indexes} period={period} />
       </>}
     </FlexCol>

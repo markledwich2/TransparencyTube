@@ -1,23 +1,17 @@
 import { purry } from 'remeda'
+import _orderBy from 'lodash.orderby'
 
+type Many<T> = T | readonly T[]
 export type Dir = 'asc' | 'desc'
 
-export function sortBy<T>(array: readonly T[], fn: (item: T) => any, dir: Dir): T[]
-export function sortBy<T>(fn: (item: T) => any, dir: Dir): (array: readonly T[]) => T[]
-export function sortBy() { return purry(_sortBy, arguments) }
+export function orderBy<T>(collection: T[], by?: Many<(item: T) => any>, orders?: Many<Dir>): T[]
+export function orderBy<T>(by?: Many<(item: T) => any>, orders?: Many<Dir>): (array: readonly T[]) => T[]
+export function orderBy() { return purry(innerOrderBy, arguments) }
+const innerOrderBy = <T>(collection: T[], by?: Many<(item: T) => any>, orders?: Many<Dir>): T[] =>
+  _orderBy(collection, by, orders)
 
-function _sortBy<T>(array: T[], fn: (item: T) => any, dir: Dir): T[] {
-  const copied = [...array]
-  return copied.sort((a, b) => {
-    const aa = fn(a)
-    const bb = fn(b)
-    const compare = aa < bb ? -1 : aa > bb ? 1 : 0
-    return dir == 'desc' ? -compare : compare
-  })
-}
 
-/* Below I haven't done the purry yet, so you can't pipe? */
-
+/* Below I haven't done the purry yet, so you can't pipe */
 export const sumBy = <T>(items: T[], by: (i: T) => number) => items.map(by).reduce((p, c) => p + c, 0)
 
 function firstBy<T>(items: T[], by: (i: T) => number, dir: Dir) {

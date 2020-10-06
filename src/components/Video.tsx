@@ -22,6 +22,7 @@ interface VideosProps {
   period: StatsPeriod
   videoFilter?: VideoFilter
 }
+
 export const Videos = ({ channel, channels, onOpenChannel, indexes, period, videoFilter }: VideosProps) => {
 
   const [videos, setVideos] = useState<VideoWithStats[]>(null)
@@ -90,15 +91,22 @@ const VideoStyle = styled.div`
     position:absolute;
     font-weight:bolder;
     background-color: #ddd;
-    color:#000;
+    color:#333;
     text-align:center;
     border-radius: 50%;
     box-shadow: 0px 1px 6px 2px #444;
   }
   .duration {
-    text-align:right;
+    position:absolute;
+    text-align:left;
+    padding:0.1em 0.3em 0.2em 1.5em;
+    background-color: rgba(0,0,0,0.5);
+    color:#ddd;
+    border-radius: 1em;
     font-weight:bold;
-    color:var(--fg2);
+    
+    left:1em;
+    top:0.15em;
   }
 `
 
@@ -109,7 +117,7 @@ interface VideoProps extends StyleProps {
   //onHover?: (hover: VideoHover) => void
 }
 
-const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
+export const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
   const fPeriodViews = numFormat(v.periodViews)
   const fViews = numFormat(v.views)
 
@@ -117,9 +125,9 @@ const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
     <FlexRow>
       <FlexRow style={{ flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
-          <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px' }} /></VideoA>
-          <div className='rank'>{v.rank}</div>
+          <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px', marginTop: '1em' }} /></VideoA>
           {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
+          <div className='rank'>{v.rank}</div>
         </div>
         <FlexCol style={{ width: '28em', color: 'var(--fg1)' }} space='0.2em'>
           <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>{v.videoTitle}</h4></VideoA>

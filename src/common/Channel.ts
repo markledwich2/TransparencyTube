@@ -2,12 +2,13 @@
 import { Uri } from './Uri'
 import { getJsonl, hoursFormat, numFormat } from './Utils'
 import { filter, first, flatMap, indexBy, map, mapValues, pipe } from 'remeda'
-import { entries, max, maxBy, minBy, sortBy, sumBy, values } from './Pipe'
+import { entries, max, maxBy, minBy, orderBy, sumBy, values } from './Pipe'
 import { Opt } from '../components/InlineSelect'
 import { hierarchy, pack } from 'd3'
 import { StringLiteralLike } from 'typescript'
 import { blobCfg } from './Cfg'
 import { ChannelStats, ChannelWithStats } from './RecfluenceApi'
+import { StatsPeriod } from '../components/Period'
 
 export interface Channel {
   channelId: string
@@ -37,8 +38,8 @@ export const channelMd: { [key: string]: ColumnMd } = {
     label: 'Tag',
     desc: `Cultural or political classification for channel (e.g. Libertarian or  Partisan Right).
     They are tagged by either:
-    - Reviewers using [this method](https://github.com/markledwich2/Recfluence#soft-tags)
-    - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
+- Reviewers using [this method](https://github.com/markledwich2/Recfluence#soft-tags)
+- Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
 \nNote: Each channel can have multiple tags.`,
     values: [
       { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
@@ -81,8 +82,9 @@ export const channelMd: { [key: string]: ColumnMd } = {
       { value: 'channelViews', label: 'Channel Views', desc: 'The total number of channel views for all time as provided by the YouTube API.' },
       {
         value: 'views', label: 'Views', desc: `The number of views within the selected period.
-    *Transparency.tube* records statistics for videos younger than 730 days once per week (each channel has a day). 
-    The top 30% viewed channels (over last 60 days) will have videos younger than 120 days recorded.
+    **Transparency.tube** records statistics for:
+- 730 days-young videos once per week (each channel has a day). 
+- 120 days-young videos from the top 30% viewed channels
      ` },
       {
         value: 'watchHours', label: 'Watched', format: (n: number) => hoursFormat(n), desc: `Estimated hours watch of this video. 
@@ -127,8 +129,8 @@ export async function getChannels(): Promise<Channel[]> {
   )
 
   channels.forEach(c => {
-    c.tags = sortBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
-    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'Other'
+    c.tags = orderBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
+    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
   return channels
 }
@@ -154,13 +156,14 @@ export const imagesToLoad = (tagNodes: GroupedNodes[], loaded: Set<string>) => p
   map(n => n.data.img),
   filter(i => i != null && !loaded.has(i)))
 
-export interface DisplayCfg {
-  measure: string
-  groupBy: keyof Channel
-  colorBy: keyof Channel
+export interface BubblesSelectionState {
+  measure?: string
+  groupBy?: keyof Channel
+  colorBy?: keyof Channel
+  period?: string
 }
 
-export const getGroupData = (channels: ChannelWithStats[], display: DisplayCfg) => {
+export const getGroupData = (channels: ChannelWithStats[], display: BubblesSelectionState) => {
 
   const { measure, groupBy, colorBy } = display
   const val = (c: ChannelWithStats) => c[measure] ?? 0
@@ -190,7 +193,7 @@ export const getGroupData = (channels: ChannelWithStats[], display: DisplayCfg) 
     return { group: g, nodes }
   })
 
-  return sortBy(groups, n => sumBy(n.nodes, c => c.val), 'desc')
+  return orderBy(groups, n => sumBy(n.nodes, c => c.val), 'desc')
 }
 
 export interface TagNodes {
@@ -200,7 +203,7 @@ export interface TagNodes {
   packSize: number
 }
 
-export const buildTagNodes = (channels: ChannelWithStats[], display: DisplayCfg, width: number): TagNodes => {
+export const buildTagNodes = (channels: ChannelWithStats[], display: BubblesSelectionState, width: number): TagNodes => {
   const groupData = getGroupData(channels, display)
   const packSize = Math.min(width - 20, 800)
   const groupedNodes: GroupedNodes[] = groupData.map(t => {
