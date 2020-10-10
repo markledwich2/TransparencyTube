@@ -42,27 +42,27 @@ export const channelMd: { [key: string]: ColumnMd } = {
 - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
 \nNote: Each channel can have multiple tags.`,
     values: [
-      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb' },
-      { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3' },
-      { value: 'Conspiracy', color: '#e0990b' },
-      { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8' },
-      { value: 'Libertarian', color: '#666' },
-      { value: 'MRA', color: '#003e78' },
-      { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f' },
-      { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be' },
-      { value: 'PartisanRight', label: 'Partisan Right', color: '#e0393e' },
-      { value: 'QAnon', color: '#e55e5e' },
-      { value: 'ReligiousConservative', label: 'Religious Con.', color: '#41afa5' },
-      { value: 'SocialJustice', label: 'Social Justice', color: '#56b881' },
-      { value: 'Socialist', color: '#6ec9e0' },
-      { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500' },
+      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb', desc: 'Significant focus on criticizing *Social Justice* (see below) with a positive view of the marketplace of ideas and discussing controversial topics. To tag, this should be a common focus in their content.' },
+      { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3', desc: 'Self-identified atheist who are also actively critical of religion. Also called New Atheists or Street Epistemologists. Usually combined with an interest in philosophy.' },
+      { value: 'Conspiracy', color: '#e0990b', desc: 'Regularly promotes a variety of conspiracy theories or wildly unscientific beliefs (except for religious ones). Relevant only when the conspiracy/belief is connected to morality/politics or consequentially-important outcomes. \n\Example conspiracies: [Moon landings were faked](https://en.wikipedia.org/wiki/Moon_landing_conspiracy_theories), [QAnon](https://en.wikipedia.org/wiki/QAnon) & [Pizzagate](https://en.wikipedia.org/wiki/Pizzagate_conspiracy_theory), [Epstein was murdered](https://en.wikipedia.org/wiki/Death_of_Jeffrey_Epstein), [Trump-russia collusion](https://rationalwiki.org/wiki/Trump-Russia_connection).' },
+      { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8', desc: 'Channel with content presented humorous monologues about the day\'s news, guest interviews and comedy sketches.' },
+      { value: 'Libertarian', color: '#666', desc: 'A [political philosophy](https://en.wikipedia.org/wiki/Libertarianism) wth individual liberty as its main principal. Generally skeptical of authority and state power (e.g. regulation, taxes, government programs). Favor free markets and private ownership. To tag, this should be the main driver of their politics. Does not include libertarian socialists who also are anti-state but are anti-capitalist and promote communal living.' },
+      { value: 'MRA', color: '#003e78', desc: '(Men’s Rights Activist): Focus on advocating for rights for men. See men as the oppressed sex and will focus on examples where men are currently.' },
+      { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f', desc: 'Media institutions from TV, Cable or Newspaper that are also creating content for YouTube.' },
+      { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be', desc: 'Mainly focused on politics and exclusively critical of Republicans. Would agree with this statement: “GOP policies are a threat to the well-being of the country“.' },
+      { value: 'PartisanRight', label: 'Partisan Right', color: '#e0393e', desc: ' Mainly focused on politics and exclusively critical of Democrats. Would agree with this statement: “Democratic policies threaten the nation”.' },
+      { value: 'QAnon', color: '#e55e5e', desc: 'A channel focused on [Q-Anon](https://en.wikipedia.org/wiki/QAnon). Q is a handle of someone with access to the "deep state" leaking plots against Trump and his supporters.' },
+      { value: 'ReligiousConservative', label: 'Religious Con.', color: '#41afa5', desc: 'A channel with a focus on promoting traditional major religion (i.e. Christianity, Judaism, Islam) in the context of politics and culture.' },
+      { value: 'SocialJustice', label: 'Social Justice', color: '#56b881', desc: 'Focused on the problems of racism and sexism. Places a particular importance on grievances from historically oppressed identities. Skeptical of the role genetics in human behavior and concerned about speech that might cause harm. Content in reaction to Anti-SJW or conservative content.' },
+      { value: 'Socialist', color: '#6ec9e0', desc: 'Focus on the problems of capitalism. Endorse the view that capitalism is the source of most problems in society. Critiques of aspects of capitalism that are more specific (i.e. promotion of fee healthcare or a large welfare system or public housing) don’t qualify for this tag. Promotes alternatives to capitalism. Usually some form of either  Social Anarchist  (stateless egalitarian communities) or Marxist (nationalized production and a way of viewing society though class relations and social conflict).' },
+      { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500', desc: 'Identifies-with/is-proud-of the superiority of “whites” and western Civilization. An example of identifying with “western heritage”  would be to refer to the sistine chapel, or bach as “our culture”.Promotes or defends: An ethno-state where residence or citizenship would be limited to “whites” OR a type of nationalist that seek to maintain a white national identity (white nationalism), historical narratives focused on the “white” lineage and its superiority, Essentialist concepts of racial differences. Are concerned about whites becoming a minority population in the US.' },
     ]
   },
   lr: {
     label: 'Left/Right',
     desc: `Classification as left/center/right by either:
-    - Reviewers using [this method](https://github.com/markledwich2/Recfluence#leftcenterright)
-    - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#chan2vec) `,
+- Reviewers using [this method](https://github.com/markledwich2/Recfluence#leftcenterright)
+- Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#chan2vec) `,
     values: [
       { value: 'L', label: 'Left', color: '#3887be' },
       { value: 'C', label: 'Center', color: '#c060a1' },

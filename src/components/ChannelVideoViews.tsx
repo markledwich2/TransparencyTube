@@ -5,7 +5,7 @@ import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
 import { ChannelDetails } from './Channel'
-import { sumBy } from '../common/Pipe'
+import { sumBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import Modal from 'react-modal'
@@ -21,6 +21,8 @@ import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
 import { differenceInMilliseconds } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
+import { TagHelp, TagTip } from './TagInfo'
+import { Markdown } from './Markdown'
 
 const modalStyle = {
   overlay: {
@@ -189,6 +191,8 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
     go()
   }, [JSON.stringify(period), indexes, channels])
 
+  useEffect(() => { ReactTooltip.rebuild() }, [groupBy])
+
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
     onOpenChannel(c)
@@ -202,6 +206,8 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       indexes={indexes}
       defaultPeriod={period}
     /> : <></>} />
+
+    <TagTip channels={values(channels)} />
 
     <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
@@ -243,39 +249,12 @@ const MeasureOptionStyle = styled.div`
   width:30rem;
 `
 
-const Md = styled(ReactMarkdown)`
-  width: 100%;
-  white-space:normal;
-
-  p {
-    line-height:1.4em;
-    margin: 0.1em 0 0.4em 0;
-  }
-
-  ul {
-    line-height:1.2em;
-    color:var(--fg2);
-    list-style:disc;
-    list-style-position: inside;
-    white-space: normal;
-    word-break: normal;
-  }
-
-  code, inlineCode  {
-      font-family:monospace;
-      background-color:var(--bg2);
-      padding: 0.1em 0.2em;
-      border: 1px solid var(--bg3);
-      border-radius: 5px;
-  }
-`
-
 const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
-  <b>{o.label}</b><Md source={o.desc} />
+  <b>{o.label}</b><Markdown source={o.desc} />
 </NormalFont></MeasureOptionStyle>
 
 export const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
-  <b>{o.label}</b><Md source={o.desc} />
+  <b>{o.label}</b><Markdown source={o.desc} />
 </NormalFont></MeasureOptionStyle>
 
 interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], selections: BubblesSelectionState }
@@ -287,7 +266,8 @@ const BubbleChart = ({ groupedNodes, selections, ...extra }: BubbleChartProps) =
       <div style={{ padding: '2px' }}>
         <h4>
           <span style={{ color: 'var(--fg2)' }}>{t.group.label ?? t.group.value}</span>
-          <b style={{ paddingLeft: '8px', fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
+          <span style={{ padding: '0 0.5em' }} >{selections.groupBy == 'tags' && <TagHelp tag={t.group.value} />}</span>
+          <b style={{ fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
         </h4>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
