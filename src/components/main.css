@@ -40,7 +40,21 @@ select {
         background: black;
         color: #eee;
         content: none;
+        border: none;
     }
+}
+
+input {
+    background: var(--bg2);
+    font-size: 1.1em;
+    padding: 0.5em 0.6em;
+    border-radius: 0.3em;
+    border: 1px solid var(--bg);
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--bg-feature)
 }
 
 html,

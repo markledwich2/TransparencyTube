@@ -32,6 +32,8 @@ export interface ChannelStats extends StatsPeriod {
 
 export type ChannelWithStats = ChannelStats & Channel
 
+export const isChannelWithStats = (c: any): c is ChannelWithStats => c.views
+
 export interface ViewsIndexes {
   periods: StatsPeriod[]
   video: VideoViewsIndex<StatsPeriod>

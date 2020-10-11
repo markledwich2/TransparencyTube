@@ -4,7 +4,7 @@ import { jsonEquals } from '../common/Utils'
 import { InlineForm } from './InlineForm'
 import { StyleProps } from './Layout'
 
-const UlStyled = styled.ul`
+export const UlStyled = styled.ul`
   list-style-type: none;
 
   li {
@@ -14,7 +14,7 @@ const UlStyled = styled.ul`
     &.selected {
       background-color: var(--bg1);
     }
-    :hover {
+    :hover, &.focused {
       background-color: var(--bg2);
     }
   }

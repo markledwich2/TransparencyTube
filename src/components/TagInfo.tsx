@@ -45,6 +45,7 @@ export const TagInfo = ({ tag, channels }: TagProps & { channels: Channel[] }) =
     <b>{t?.label ?? tag}</b>
     <Markdown>{t?.desc}</Markdown>
     <p style={{ margin: '0.5em 0 0.2em', lineHeight: '2em' }}>Overlaps with:&nbsp;{overlaps.map(o => <Tag
+      key={o.tag.value}
       style={{ marginRight: '0.5em' }}
       color={o.tag.color}
       label={`${o.tag.label ?? o.tag.value} ${numeral(o.pct).format('#%')}`} />)}</p>

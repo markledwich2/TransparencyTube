@@ -7,7 +7,7 @@ import { EsChannel, getChannel } from '../common/EsApi'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, getChannelStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, getChannelStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { InlineSelect } from './InlineSelect'
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User } from '@styled-icons/boxicons-solid'
@@ -95,7 +95,7 @@ const MetricsStyle = styled(FlexRow)`
 `
 
 export interface ChannelTitleProps {
-  c: ChannelWithStats
+  c: ChannelWithStats | Channel
   e?: EsChannel
   statsLoading?: boolean
   showLr?: boolean
@@ -105,11 +105,11 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
-  const fPeriodViews = c.views ? numFormat(c.views) : null
+  const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
 
   //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
@@ -132,7 +132,7 @@ export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLog
           {fPeriodViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>}
           {fPeriodViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fPeriodViews && '/'}{fChannelViews}</span>}&nbsp;views
         </span>
-        {c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
+        {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
         {e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
           <p><User /><b>{e.reviewsHuman}</b> manual reviews</p>

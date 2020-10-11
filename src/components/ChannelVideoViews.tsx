@@ -4,8 +4,8 @@ import { delay } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
-import { ChannelDetails } from './Channel'
-import { sumBy, values } from '../common/Pipe'
+import { ChannelDetails, ChannelTitle } from './Channel'
+import { orderBy, sumBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import Modal from 'react-modal'
@@ -23,6 +23,7 @@ import { differenceInMilliseconds } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
 import { TagHelp, TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
+import { SearchSelect } from './SearchSelect'
 
 const modalStyle = {
   overlay: {
@@ -50,7 +51,6 @@ const modalStyle = {
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
-  openChannelId?: string
 }
 
 const FilterHeader = styled.h3`
@@ -92,10 +92,12 @@ export const ChannelVideoViewsPage = () => {
 
   return <div id='page' style={{ minHeight: '100vh' }}>
     {channels && defaultPeriod && <>
+
+
       <ContainerDimensions >
         {({ width }) => <Bubbles
           channels={channels}
-          width={width > 800 ? 800 : 400}
+          width={width}
           onOpenChannel={onOpenChannel}
           indexes={indexes} selections={q}
           onSelection={s => setQuery({ ...q, ...s })}
@@ -164,29 +166,31 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   const derivedSelections = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections } as BubblesSelectionState
   const { measure, colorBy, groupBy } = derivedSelections
 
+  const bubbleWidth = width > 800 ? 800 : 400
+
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
   const { groupedNodes, zoom, packSize } = stats ?
-    buildTagNodes(Object.values(stats), derivedSelections, width) :
+    buildTagNodes(Object.values(stats), derivedSelections, bubbleWidth) :
     { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
 
   useEffect(() => {
     const go = async () => {
-      const start = new Date()
+      // const start = new Date()
       setLoading(true)
       await delay(1)
-      let start2 = new Date()
+      // let start2 = new Date()
       const rawStats = await indexes.channelStats.getRows(period)
-      console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
+      // console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
       //setShowImg(false)
-      start2 = new Date()
+      // start2 = new Date()
       setRawStats(rawStats)
-      console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
+      // console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
       setLoading(false)
       await delay(1000)
       ReactTooltip.rebuild()
       onLoad?.()
       //setShowImg(true)
-      console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
+      // console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
     go()
   }, [JSON.stringify(period), indexes, channels])
@@ -200,6 +204,8 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
   if (!rawStats) return <Spinner />
 
+  const filterOnRight = width > 800
+
   return <div>
     <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
       channel={stats[id]} size='min'
@@ -209,35 +215,53 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
     <TagTip channels={values(channels)} />
 
-    <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
+
+
+    <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
+      <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
-        options={channelMd.measures.values}
-        selected={measure}
-        onChange={o => onSelection({ ...selections, measure: o as any })}
-        itemRender={MeasureOption}
-      />
-      {['views', 'watchHours'].includes(measure) && <PeriodSelect
-        periods={indexes.periods}
-        period={period}
-        onPeriod={o => onSelection({ ...selections, period: periodString(o) })} />
-      }
+          options={channelMd.measures.values}
+          selected={measure}
+          onChange={o => onSelection({ ...selections, measure: o as any })}
+          itemRender={MeasureOption}
+        />
+        {['views', 'watchHours'].includes(measure) && <PeriodSelect
+          periods={indexes.periods}
+          period={period}
+          onPeriod={o => onSelection({ ...selections, period: periodString(o) })} />
+        }
         by
         <InlineSelect
-        options={channelColOpts}
-        selected={groupBy} onChange={o => {
-          const cb = colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
-          onSelection({ ...selections, groupBy: o, colorBy: cb })
-        }}
-        itemRender={ColOption}
-      />
+          options={channelColOpts}
+          selected={groupBy} onChange={o => {
+            const cb = colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
+            onSelection({ ...selections, groupBy: o, colorBy: cb })
+          }}
+          itemRender={ColOption}
+        />
         and colored by
         <InlineSelect
-        options={channelColOpts}
-        selected={colorBy}
-        onChange={o => onSelection({ ...selections, colorBy: o })}
-        itemRender={ColOption}
+          options={channelColOpts}
+          selected={colorBy}
+          onChange={o => onSelection({ ...selections, colorBy: o })}
+          itemRender={ColOption}
+        />
+      </FilterHeader>
+      <SearchSelect
+        popupStyle={{ right: filterOnRight ? '0px' : null }}
+        onSelect={(c: Channel) => onSelection({ ...selections, openChannelId: c.channelId })}
+        search={(q) => new Promise((resolve) => resolve(
+          orderBy(
+            values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
+            c => c.channelViews, 'desc')
+        ))}
+        itemRender={(c: Channel) => <ChannelTitle c={c} />}
+        getKey={c => c.channelId}
+        getLabel={c => c.channelTitle}
+        placeholder='find channel'
       />
-    </FilterHeader>
+    </div>
+
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
       <BubbleChart {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>

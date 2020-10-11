@@ -42,11 +42,11 @@ export const channelMd: { [key: string]: ColumnMd } = {
 - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
 \nNote: Each channel can have multiple tags.`,
     values: [
-      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb', desc: 'Significant focus on criticizing *Social Justice* (see below) with a positive view of the marketplace of ideas and discussing controversial topics. To tag, this should be a common focus in their content.' },
+      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb', desc: 'Significant focus on criticizing `Social Justice`  with a positive view of the marketplace of ideas and discussing controversial topics.' },
       { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3', desc: 'Self-identified atheist who are also actively critical of religion. Also called New Atheists or Street Epistemologists. Usually combined with an interest in philosophy.' },
       { value: 'Conspiracy', color: '#e0990b', desc: 'Regularly promotes a variety of conspiracy theories or wildly unscientific beliefs (except for religious ones). Relevant only when the conspiracy/belief is connected to morality/politics or consequentially-important outcomes. \n\Example conspiracies: [Moon landings were faked](https://en.wikipedia.org/wiki/Moon_landing_conspiracy_theories), [QAnon](https://en.wikipedia.org/wiki/QAnon) & [Pizzagate](https://en.wikipedia.org/wiki/Pizzagate_conspiracy_theory), [Epstein was murdered](https://en.wikipedia.org/wiki/Death_of_Jeffrey_Epstein), [Trump-russia collusion](https://rationalwiki.org/wiki/Trump-Russia_connection).' },
-      { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8', desc: 'Channel with content presented humorous monologues about the day\'s news, guest interviews and comedy sketches.' },
-      { value: 'Libertarian', color: '#666', desc: 'A [political philosophy](https://en.wikipedia.org/wiki/Libertarianism) wth individual liberty as its main principal. Generally skeptical of authority and state power (e.g. regulation, taxes, government programs). Favor free markets and private ownership. To tag, this should be the main driver of their politics. Does not include libertarian socialists who also are anti-state but are anti-capitalist and promote communal living.' },
+      { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8', desc: 'Entertaining TV/cable talk show with topical news, guest interviews and comedy sketches. Sometimes are more entertainment than political and we are working to only include the videos that are political.' },
+      { value: 'Libertarian', color: '#666', desc: 'A [political philosophy](https://en.wikipedia.org/wiki/Libertarianism) wth individual liberty as its main principal. Generally skeptical of authority and state power (e.g. regulation, taxes, government programs). Favor free markets and private ownership. Does not include libertarian socialists who also are anti-state but are anti-capitalist and promote communal living.' },
       { value: 'MRA', color: '#003e78', desc: '(Men’s Rights Activist): Focus on advocating for rights for men. See men as the oppressed sex and will focus on examples where men are currently.' },
       { value: 'Mainstream News', label: 'Mainstream News', color: '#aa557f', desc: 'Media institutions from TV, Cable or Newspaper that are also creating content for YouTube.' },
       { value: 'PartisanLeft', label: 'Partisan Left', color: '#3887be', desc: 'Mainly focused on politics and exclusively critical of Republicans. Would agree with this statement: “GOP policies are a threat to the well-being of the country“.' },
@@ -161,6 +161,7 @@ export interface BubblesSelectionState {
   groupBy?: keyof Channel
   colorBy?: keyof Channel
   period?: string
+  openChannelId?: string
 }
 
 export const getGroupData = (channels: ChannelWithStats[], display: BubblesSelectionState) => {

@@ -19,7 +19,7 @@ const InlineStyle = styled.span`
     background-color: var(--bg3);
   }
 `
-const PopupStyle = styled.div`
+export const PopupStyle = styled.div`
     background-color: var(--bg);
     position: absolute;
     padding:0;
@@ -35,6 +35,17 @@ const ChevIcon = styled(ChevronDownOutline)`
       position: relative;
       top: -0.05em;
 `
+
+export const keepInView = (e: HTMLElement) => {
+  if (!e) return
+  e.style.visibility = 'visible' // needs to be visible ot measure. But no jiggle if we do this in the effect
+  const br = e.getBoundingClientRect()
+  const view = window.visualViewport
+  const overflowX = br.right - view.offsetLeft - view.width
+  if (overflowX > 0) {
+    e.style.left = `${e.clientLeft - overflowX}px`
+  }
+}
 
 interface InlineFormOptions<T> {
   value: T
@@ -59,17 +70,8 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-
   useEffect(() => {
-    const c = popupRef.current
-    if (!c) return
-    c.style.visibility = 'visible' // needs to be visible ot measure. But no jiggle if we do this in the effect
-    const br = c.getBoundingClientRect()
-    const view = window.visualViewport
-    const overflowX = br.right - view.offsetLeft - view.width
-    if (overflowX > 0) {
-      c.style.left = `${c.clientLeft - overflowX}px`
-    }
+    keepInView(popupRef.current)
   })
 
   return <OuterStyle>
