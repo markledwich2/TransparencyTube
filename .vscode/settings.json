@@ -41,4 +41,5 @@
   },
   "javascript.preferences.quoteStyle": "single",
   "typescript.tsdk": "node_modules\\typescript\\lib",
+  "svg.preview.background": "transparent",
 }

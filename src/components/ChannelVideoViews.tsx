@@ -255,7 +255,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
             c => c.channelViews, 'desc')
         ))}
-        itemRender={(c: Channel) => <ChannelTitle c={c} />}
+        itemRender={(c: Channel) => <ChannelTitle c={c} showLr />}
         getKey={c => c.channelId}
         getLabel={c => c.channelTitle}
         placeholder='find channel'

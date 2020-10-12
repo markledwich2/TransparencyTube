@@ -63,7 +63,7 @@ export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRende
   const keyHandlers: Record<string, () => void> = {
     'ArrowDown': () => setIdxFocused(idxFocused != null ? Math.min(idxFocused + 1, results.length - 1) : 0),
     'ArrowUp': () => setIdxFocused(idxFocused != null ? Math.max(idxFocused - 1, 0) : 0),
-    'Enter': () => idxFocused ? handleSelect(results[idxFocused]) : null
+    'Enter': () => idxFocused != null ? handleSelect(results[idxFocused]) : null
   }
 
   return <div style={{ position: 'relative' }} >
