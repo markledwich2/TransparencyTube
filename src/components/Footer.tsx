@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FlexRow } from './Layout'
+import { FlexRow, styles } from './Layout'
 import { Twitter } from '@styled-icons/boxicons-logos'
 import { Email } from '@styled-icons/entypo'
 
@@ -45,7 +45,7 @@ export const ContactCard = ({ name, email, role, twitter }: ContactInfo) => <div
   <b>{name}</b>
   <ul>
     <li>{role}</li>
-    <li><Email /><a href={`mailto:${email}`}>{email}</a></li>
+    <li><Email style={styles.inlineIcon} /><a href={`mailto:${email}`}>{email}</a></li>
     <li><Twitter /><a href={`https://twitter.com/${twitter}`}>{twitter}</a></li>
   </ul>
 </div>

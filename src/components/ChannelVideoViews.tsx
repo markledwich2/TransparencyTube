@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import React from 'react'
-import { delay } from '../common/Utils'
+import { delay, jsonEquals, shallowEquals } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
+import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt, PageSelectionState } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
 import { orderBy, sumBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import Modal from 'react-modal'
 import ContainerDimensions from 'react-container-dimensions'
 import { Videos } from './Video'
 import { Tip } from './Tooltip'
@@ -19,35 +18,10 @@ import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
-import { differenceInMilliseconds } from 'date-fns'
-import ReactMarkdown from 'react-markdown'
 import { TagHelp, TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
-
-const modalStyle = {
-  overlay: {
-    backgroundColor: 'none',
-    backdropFilter: 'brightness(0.4)'
-  },
-  content: {
-    backgroundColor: 'var(--bg)',
-    opacity: 1,
-    padding: '1em',
-    border: 'solid 1px var(--bg2)',
-    borderRadius: '10px',
-    maxWidth: '100vw',
-    minWidth: "70vw",
-    height: '90vh',
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    overflow: 'hidden'
-  }
-}
+import { Popup } from './Popup'
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
@@ -89,18 +63,18 @@ export const ChannelVideoViewsPage = () => {
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
   const onCloseChannel = () => setQuery({ openChannelId: null })
+  const onQuery = (s: BubblesSelectionState) => setQuery({ ...q, ...s })
 
-  return <div id='page' style={{ minHeight: '100vh' }}>
-    {channels && defaultPeriod && <>
-
-
+  return <div style={{ minHeight: '100vh' }}>
+    {channels && defaultPeriod && indexes && <>
       <ContainerDimensions >
         {({ width }) => <Bubbles
           channels={channels}
           width={width}
           onOpenChannel={onOpenChannel}
-          indexes={indexes} selections={q}
-          onSelection={s => setQuery({ ...q, ...s })}
+          indexes={indexes}
+          selections={q}
+          onSelection={onQuery}
           defaultPeriod={defaultPeriod}
           onLoad={() => !allowVideoLoad ? setAllowVideoLoad(true) : null}
         />}
@@ -120,17 +94,9 @@ export const ChannelVideoViewsPage = () => {
       </>
       }
 
-      {openChannel &&
-        <Modal
-          isOpen={openChannel != null}
-          ariaHideApp={false}
-          parentSelector={() => document.querySelector('#page')}
-          onRequestClose={onCloseChannel}
-          style={modalStyle}
-        >
-          <ChannelDetails channel={openChannel} size='max' indexes={indexes} defaultPeriod={defaultPeriod} />
-        </Modal>
-      }
+      <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
+        <ChannelDetails channel={openChannel} mode='max' indexes={indexes} defaultPeriod={defaultPeriod} />
+      </Popup>
     </>}
 
   </div >
@@ -152,12 +118,12 @@ interface BubblesProps {
   width: number, onOpenChannel: (c: ChannelWithStats) => void
   indexes: ViewsIndexes
   selections: BubblesSelectionState
-  onSelection?: (d: BubblesSelectionState) => void
+  onSelection?: (d: PageSelectionState) => void
   defaultPeriod?: StatsPeriod
   onLoad?: () => void
 }
 
-const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
+const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [showImg] = useState(true) // always render sans image first
@@ -208,14 +174,12 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
   return <div>
     <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
-      channel={stats[id]} size='min'
+      channel={stats[id]} mode='min'
       indexes={indexes}
       defaultPeriod={period}
     /> : <></>} />
 
     <TagTip channels={values(channels)} />
-
-
 
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
       <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
@@ -266,11 +230,27 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       <BubbleChart {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>
   </div>
+}, (a, b) => {
+  return bubbleEquals(a, b)
+})
+
+function bubbleEquals(a: Readonly<BubblesProps>, b: Readonly<BubblesProps>) {
+  const bubbleSelections = ({ colorBy, groupBy, measure, period }: BubblesSelectionState) => ({ colorBy, groupBy, measure, period })
+  const shallowProps = (p: BubblesProps) => {
+    const { selections, onOpenChannel, onLoad, onSelection, ...rest } = p
+    return rest
+  }
+  const res = shallowEquals(shallowProps(a), shallowProps(b))
+    && jsonEquals(bubbleSelections(a.selections), bubbleSelections(b.selections))
+  console.log('bubbles update check 3', res)
+  return res
 }
 
 const MeasureOptionStyle = styled.div`
   padding: 0.1em 0 0.2em 0;
+  min-width:20rem;
   width:30rem;
+  max-width:90vw;
 `
 
 const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
@@ -324,7 +304,6 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key 
       id: n.data.key
     }))
 
-  //return <div key={new Date().getTime()}>{channelNodes.length}</div>
   return <SVGStyle key={key} width={dim.w * z} height={dim.h * z} >
     <defs>
       {showImg && channelNodes.filter(n => n.data.img)
@@ -350,3 +329,4 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key 
     </g>
   </SVGStyle>
 }
+

@@ -78,7 +78,8 @@ export const PeriodSelect = ({ periods, period, onPeriod }: PeriodSelectProps) =
         return <OptionList key={group}
           options={options}
           onChange={p => onPeriod(p.value)}
-          itemRender={p => <div style={{ paddingLeft: p.parent ? '1em' : null }}>{p.label}</div>} />
+          itemRender={p => <div style={{ paddingLeft: p.parent ? '1em' : null, whiteSpace: 'nowrap' }}>{p.label}</div>}
+        />
       })}
     </FlexRow>
   </InlineForm>

@@ -161,6 +161,9 @@ export interface BubblesSelectionState {
   groupBy?: keyof Channel
   colorBy?: keyof Channel
   period?: string
+}
+
+export interface PageSelectionState extends BubblesSelectionState {
   openChannelId?: string
 }
 

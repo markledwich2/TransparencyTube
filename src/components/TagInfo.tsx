@@ -8,7 +8,7 @@ import { Tag } from './Channel'
 import { indexBy, pipe } from 'remeda'
 import { orderBy, values } from '../common/Pipe'
 import numeral from 'numeral'
-import { StyleProps } from './Layout'
+import { StyleProps, styles } from './Layout'
 
 interface TagProps {
   tag: string
@@ -21,7 +21,7 @@ export const TagTip = ({ channels }: { channels: Channel[] }) => <Tip
   getContent={tag => <TagInfo tag={tag} channels={channels} />} />
 
 export const TagHelp = ({ tag, style }: TagProps & StyleProps) => <HelpOutline
-  style={style}
+  style={{ ...styles.inlineIcon, ...style }}
   data-tip={tag}
   data-for={tipId} />
 

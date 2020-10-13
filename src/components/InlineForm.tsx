@@ -19,6 +19,7 @@ const InlineStyle = styled.span`
     background-color: var(--bg3);
   }
 `
+
 export const PopupStyle = styled.div`
     background-color: var(--bg);
     position: absolute;
@@ -28,6 +29,7 @@ export const PopupStyle = styled.div`
     z-index:10;
     overflow-y: auto;
     max-height: 50vh;
+    max-width: 95vw;
 `
 
 const ChevIcon = styled(ChevronDownOutline)`
@@ -40,7 +42,9 @@ export const keepInView = (e: HTMLElement) => {
   if (!e) return
   e.style.visibility = 'visible' // needs to be visible ot measure. But no jiggle if we do this in the effect
   const br = e.getBoundingClientRect()
-  const view = window.visualViewport
+  const bod = document.body
+  // firefox doesn't have visualViewport
+  const view = window.visualViewport ? window.visualViewport : { offsetLeft: bod.scrollLeft, width: bod.clientWidth }
   const overflowX = br.right - view.offsetLeft - view.width
   if (overflowX > 0) {
     e.style.left = `${e.clientLeft - overflowX}px`

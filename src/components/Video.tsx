@@ -70,7 +70,7 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period, vide
     </div>
     {channels && <Tip id={tipId} getContent={(id) => <ChannelDetails
       channel={channels[id] as ChannelWithStats}
-      size='min'
+      mode='min'
       indexes={indexes}
       defaultPeriod={period}
     />} />}

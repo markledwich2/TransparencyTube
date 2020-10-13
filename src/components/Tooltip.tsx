@@ -11,6 +11,7 @@ const TipStyle = styled.div`
     color: var(--fg);
     border-color: var(--bg2);
     border-radius: 10px;
+    max-width: 90vw;
   }
 `
 type GetContentFunc = (toolTipStr: string) => React.ReactNode

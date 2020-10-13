@@ -10,7 +10,6 @@ export const UlStyled = styled.ul`
   li {
     padding:0em 1em;
     cursor:pointer;
-    white-space:nowrap;
     &.selected {
       background-color: var(--bg1);
     }
@@ -30,12 +29,13 @@ export interface SelectOptions<TVal, TOpt extends Opt<TVal>> {
   onChange?: (o: TVal) => void
   inlineRender?: (o: TVal) => JSX.Element
   itemRender?: (o: TOpt) => JSX.Element
+  listStyle?: CSSProperties
 }
 
-export function InlineSelect<TVal, TOpt extends Opt<TVal>>({ options, selected, onChange, inlineRender, itemRender }: SelectOptions<TVal, TOpt>) {
+export function InlineSelect<TVal, TOpt extends Opt<TVal>>({ options, selected, onChange, inlineRender, itemRender, listStyle }: SelectOptions<TVal, TOpt>) {
   const el = (o: TVal) => <>{options?.find(o => jsonEquals(o.value, selected))?.label}</>
   return <InlineForm<TVal> {...{ value: selected, onChange }} inlineRender={inlineRender ?? el} >
-    <OptionList {...{ options, selected: [selected], itemRender }} onChange={o => onChange(o.value)} />
+    <OptionList style={listStyle} {...{ options, selected: [selected], itemRender }} onChange={o => onChange(o.value)} />
   </InlineForm>
 }
 

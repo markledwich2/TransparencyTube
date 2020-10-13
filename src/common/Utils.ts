@@ -4,6 +4,7 @@ import numeral from 'numeral'
 import humanizeDuration from 'humanize-duration'
 import { compact, reverse } from 'remeda'
 import '@stardazed/streams-polyfill'
+import { keys } from './Pipe'
 
 
 /** GET a json object and deserialize it */
@@ -35,6 +36,10 @@ function parseJSON<T>(): TransformStream<string, T> {
     }
   })
 }
+
+export const shallowEquals = <T>(a: T, b: T) =>
+  keys(a).length === keys(b).length &&
+  keys(a).every(key => b.hasOwnProperty(key) && a[key] === b[key])
 
 export const jsonEquals = (a: any, b: any) => a == b || JSON.stringify(a) == JSON.stringify(b)
 

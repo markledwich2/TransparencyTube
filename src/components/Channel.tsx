@@ -4,23 +4,22 @@ import styled from 'styled-components'
 import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
 import { hoursFormat, numFormat } from '../common/Utils'
 import { EsChannel, getChannel } from '../common/EsApi'
-import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
+import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
 import { ChannelStats, ChannelWithStats, getChannelStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
-import { InlineSelect } from './InlineSelect'
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User } from '@styled-icons/boxicons-solid'
 
 
 export interface TopVideosProps {
   channel: Channel
-  size: 'min' | 'max'
+  mode: 'min' | 'max'
   indexes: ViewsIndexes
   defaultPeriod: StatsPeriod
 }
 
-export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVideosProps) => {
+export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVideosProps) => {
   const [channelEx, setChannelEx] = useState<EsChannel>(null)
   const [showDesc, setShowDesc] = useState(false)
   const [stats, setStats] = useState<ChannelStats>(null)
@@ -38,7 +37,7 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
   }, [channel])
 
   useEffect(() => {
-    if (size != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
+    if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
       return
     setStatsLoading(true)
     getChannelStats(indexes.channelStats, period, channel.channelId).then(c => {
@@ -53,21 +52,21 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
   const e = exIsSame ? channelEx : null
   const desc = showDesc ? e?.description : e?.description?.substr(0, 300)
 
-  return <FlexCol style={{ maxWidth: '70vw', width: '100%', maxHeight: '100%' }}>
+  return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
     <ChannelTitle c={{ ...c, ...period, ...stats }} e={e} showLr statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         {!e
           ? <Spinner />
           : <p style={{ maxWidth: '50em' }}>{desc}
-            {size == 'max' && <span>{e.description?.length > 300 && !showDesc ? '...' : null}
+            {mode == 'max' && <span>{e.description?.length > 300 && !showDesc ? '...' : null}
               &nbsp;<a onClick={_ => setShowDesc(!showDesc)}>{showDesc ? 'less' : 'more'}</a>
             </span>}
           </p>
         }
       </div>
 
-      {size == 'max' && <>
+      {mode == 'max' && <>
         <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
         <Videos channel={c} indexes={indexes} period={period} />
       </>}
@@ -77,7 +76,7 @@ export const ChannelDetails = ({ channel, size, indexes, defaultPeriod }: TopVid
 
 const ChannelTitleStyle = styled.div`
   display: flex;
-  max-width: 45em;
+  max-width: 40em;
   .logo {
     :hover {
       cursor: pointer;
@@ -135,8 +134,8 @@ export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLog
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
         {e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
-          <p><User /><b>{e.reviewsHuman}</b> manual reviews</p>
-          : <p><Bot /> automatic classification</p>}</span>}
+          <p><User style={styles.inlineIcon} /><b>{e.reviewsHuman}</b> manual reviews</p>
+          : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
       </MetricsStyle>
       <TagDiv style={{ marginBottom: '1em' }} >
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
