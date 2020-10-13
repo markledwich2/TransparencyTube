@@ -20,7 +20,7 @@ const lightValues = css`
 --fg2:#444;
 --fg3:#666;
 --bg: #fff;
---bgRgb: 0,0,0;
+--bgRgb: 255,255,255;
 --bg1: #eee;
 --bg2: #ddd;
 --bg3: #bbb;
@@ -29,11 +29,11 @@ const lightValues = css`
 
 const darkValues = css`
 --fg: #eee;
---fgRgb: 255,255,255;
 --fg1: #ccc;
 --fg2: #bbb;
 --fg3: #999;
 --bg: #000;
+--bgRgb: 0,0,0;
 --bg1: #111;
 --bg2: #222;
 --bg3: #444;
