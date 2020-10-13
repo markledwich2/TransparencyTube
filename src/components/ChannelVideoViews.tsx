@@ -219,7 +219,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
             c => c.channelViews, 'desc')
         ))}
-        itemRender={(c: Channel) => <ChannelTitle c={c} showLr />}
+        itemRender={(c: Channel) => <ChannelTitle c={c} showLr style={{ width: filterOnRight ? '50em' : '95vw' }} />}
         getKey={c => c.channelId}
         getLabel={c => c.channelTitle}
         placeholder='find channel'

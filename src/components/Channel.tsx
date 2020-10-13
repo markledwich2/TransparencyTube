@@ -99,12 +99,13 @@ export interface ChannelTitleProps {
   statsLoading?: boolean
   showLr?: boolean
   tipId?: string
+  style?: CSSProperties
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, e, showLr, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
@@ -115,7 +116,7 @@ export const ChannelTitle = ({ c, e, showLr, logoStyle, titleStyle, tipId, onLog
   //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
   //console.log('faded', faded)
   //style={{ opacity: faded ? 0.5 : null }}
-  return <ChannelTitleStyle >
+  return <ChannelTitleStyle style={style}>
     <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
       onClick={_ => onLogoClick ? onLogoClick(c) : window.open(`https://www.youtube.com/channel/${c.channelId}`, 'yt')}
       // onMouseOver={_ => {
