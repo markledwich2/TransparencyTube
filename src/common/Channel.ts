@@ -81,10 +81,14 @@ export const channelMd: { [key: string]: ColumnMd } = {
     values: [
       { value: 'channelViews', label: 'Channel Views', desc: 'The total number of channel views for all time as provided by the YouTube API.' },
       {
-        value: 'views', label: 'Views', desc: `The number of views within the selected period.
-    **Transparency.tube** records statistics for:
-- 730 days-young videos once per week (each channel has a day). 
-- 120 days-young videos from the top 30% viewed channels
+        value: 'views', label: 'Views', desc: `Video views within the selected period.
+    *Transparency.tube* records statistics for younger-than-365-days videos for all channels each day.
+
+Note:
+- For channels with large back-catalogs, we read older videos to try and capture all the views on a day
+- When new channels are added to transparency.tube, the history of views are estimated based on the upload date of videos.
+
+Click on a channel to see more detail about the collection of video statistics.
      ` },
       {
         value: 'watchHours', label: 'Watched', format: (n: number) => hoursFormat(n), desc: `Estimated hours watch of this video. 
@@ -168,7 +172,6 @@ export interface PageSelectionState extends BubblesSelectionState {
 }
 
 export const getGroupData = (channels: ChannelWithStats[], display: BubblesSelectionState) => {
-
   const { measure, groupBy, colorBy } = display
   const val = (c: ChannelWithStats) => c[measure] ?? 0
   const groupMd = indexBy(channelMd[groupBy].values, o => o.value)

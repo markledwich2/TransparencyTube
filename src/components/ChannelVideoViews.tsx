@@ -145,7 +145,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
       setLoading(true)
       await delay(1)
       // let start2 = new Date()
-      const rawStats = await indexes.channelStats.getRows(period)
+      const rawStats = await indexes.channelStatsByPeriod.getRows(period)
       // console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
       //setShowImg(false)
       // start2 = new Date()
@@ -174,7 +174,8 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
 
   return <div>
     <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
-      channel={stats[id]} mode='min'
+      channel={stats[id]}
+      mode='min'
       indexes={indexes}
       defaultPeriod={period}
     /> : <></>} />

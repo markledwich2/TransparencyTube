@@ -1,13 +1,13 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
-import { indexBy } from 'remeda'
+import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
-import { hoursFormat, numFormat } from '../common/Utils'
+import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { EsChannel, getChannel } from '../common/EsApi'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, getChannelStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User } from '@styled-icons/boxicons-solid'
 
@@ -40,8 +40,9 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
     if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
       return
     setStatsLoading(true)
-    getChannelStats(indexes.channelStats, period, channel.channelId).then(c => {
-      setStats(c)
+    indexes.channelStatsById.getRows({ ...period, channelId: channel.channelId }).then(c => {
+      setStats(first(c))
+      console.log('setStats', channel.channelId, period, c)
       setStatsLoading(false)
     })
   }, [period])
@@ -53,7 +54,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
   const desc = showDesc ? e?.description : e?.description?.substr(0, 300)
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} e={e} showLr statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} e={e} showLr showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         {!e
@@ -98,6 +99,7 @@ export interface ChannelTitleProps {
   e?: EsChannel
   statsLoading?: boolean
   showLr?: boolean
+  showCollectionStats?: boolean
   tipId?: string
   style?: CSSProperties
   logoStyle?: CSSProperties
@@ -105,7 +107,7 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, e, showLr, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, e, showLr, showCollectionStats, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
@@ -134,7 +136,13 @@ export const ChannelTitle = ({ c, e, showLr, style, logoStyle, titleStyle, tipId
         </span>
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
-        {e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
+        {showCollectionStats && isChannelWithStats(c) && <span>
+          <b>{c.updates && numFormat(c.updates)}</b>
+          {c.updates ? ' transparency.tube collection' : 'views estimated based on upload dates'}
+          {c.oldestVideoRefreshed && <span> from videos newer than {dateFormat(c.oldestVideoRefreshed)}</span>}
+        </span>
+        }
+        {showCollectionStats && e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
           <p><User style={styles.inlineIcon} /><b>{e.reviewsHuman}</b> manual reviews</p>
           : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
       </MetricsStyle>
