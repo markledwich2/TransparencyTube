@@ -30,8 +30,7 @@ export interface ChannelStats extends StatsPeriod {
   views?: number,
   watchHours?: number
   latestRefresh?: string
-  oldestVideoRefreshed?: string
-  updates?: number
+  videos?: number
 }
 
 export type ChannelWithStats = ChannelStats & Channel

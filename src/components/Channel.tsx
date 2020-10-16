@@ -137,9 +137,7 @@ export const ChannelTitle = ({ c, e, showLr, showCollectionStats, style, logoSty
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
         {showCollectionStats && isChannelWithStats(c) && <span>
-          <b>{c.updates && numFormat(c.updates)}</b>
-          {c.updates ? ' transparency.tube collection' : 'views estimated based on upload dates'}
-          {c.oldestVideoRefreshed && <span> from videos newer than {dateFormat(c.oldestVideoRefreshed)}</span>}
+          {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh)} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
         </span>
         }
         {showCollectionStats && e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?

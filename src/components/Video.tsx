@@ -85,27 +85,26 @@ const VideoStyle = styled.div`
     font-size:1em;
     left:0px;
     top:0px;
-    padding-top:0.3em;
-    width:2em;
+    padding:0.3em 0.2em;
+    min-width:2em;
     height:2em;
     position:absolute;
     font-weight:bolder;
     background-color: #ddd;
     color:#333;
     text-align:center;
-    border-radius: 50%;
+    border-radius: 2em;
     box-shadow: 0px 1px 6px 2px #444;
   }
   .duration {
     position:absolute;
     text-align:left;
-    padding:0.1em 0.3em 0.2em 1.5em;
-    background-color: rgba(0,0,0,0.5);
+    padding:0.1em 0.5em;
+    background-color: rgba(0,0,0,0.7);
     color:#ddd;
     border-radius: 1em;
-    font-weight:bold;
-    
-    left:1em;
+    font-weight:normal;
+    right:0.5em;
     top:0.15em;
   }
 `
