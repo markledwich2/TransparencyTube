@@ -47,13 +47,11 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
   }
 
   const getRows = async (filter: TKey) => {
-    console.log('getRows1', filter)
     const filterEntries = Object.entries(filter)
     const match = (f: IndexFile<TKey>) => compare(f.first, filter) <= 0 && compare(f.last, filter) >= 0
     const files = index.keyFiles.filter(match)
     const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
     const filtered = rows.filter(r => filterEntries.every(e => r[e[0]] == e[1]))
-    console.log('getRows2', rows)
     return filtered
   }
 

@@ -7,7 +7,7 @@ import { ChannelDetails, ChannelTitle } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import ReactTooltip from 'react-tooltip'
-import { ChannelStats, ChannelWithStats, getChannelStats, getVideoViews, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, getVideoViews, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { Channel } from '../common/Channel'
 import { StatsPeriod } from './Period'
 import { VideoFilter, videoFilterIncludes } from './VideoFilter'
@@ -136,7 +136,7 @@ export const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
               {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.views)}</span>}
               &nbsp;views
             </div>
-            <span>{dateFormat(v.uploadDate)}</span>
+            <span>{dateFormat(v.uploadDate, 'UTC')}</span>
           </FlexRow>
           <span><b>{hoursFormat(v.watchHours)}</b> watched</span>
           {c && <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>

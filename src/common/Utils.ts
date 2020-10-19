@@ -1,4 +1,5 @@
-import { format, parseISO } from 'date-fns'
+import { parseISO } from 'date-fns'
+import { format, utcToZonedTime } from "date-fns-tz"
 import { resetWarningCache } from 'prop-types'
 import numeral from 'numeral'
 import humanizeDuration from 'humanize-duration'
@@ -81,10 +82,13 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 /** like Object.assign, but doesn't mutate a */
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
 
-export const dateFormat = (date: Date | number | string) => {
+/** formats the given date or string. If tz is not specified it will be displayed in the local time */
+export const dateFormat = (date: Date | string, tz?: string | 'UTC') => {
   if (!date) return
-  const d = (typeof (date) == 'string') ? parseISO(date) : date
-  return format(d, 'do MMM yyyy')
+  const d: Date = (typeof (date) == 'string') ? parseISO(date) : date
+  const fmt = 'do MMM yyyy'
+  return tz ? format(utcToZonedTime(d, tz), fmt, { timeZone: tz }) //https://stackoverflow.com/questions/58561169/date-fns-how-do-i-format-to-utc
+    : format(d, fmt)
 }
 
 export const numFormat = (n: number) =>

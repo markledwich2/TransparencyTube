@@ -243,7 +243,6 @@ function bubbleEquals(a: Readonly<BubblesProps>, b: Readonly<BubblesProps>) {
   }
   const res = shallowEquals(shallowProps(a), shallowProps(b))
     && jsonEquals(bubbleSelections(a.selections), bubbleSelections(b.selections))
-  console.log('bubbles update check 3', res)
   return res
 }
 

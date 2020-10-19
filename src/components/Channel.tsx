@@ -137,7 +137,7 @@ export const ChannelTitle = ({ c, e, showLr, showCollectionStats, style, logoSty
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
         {showCollectionStats && isChannelWithStats(c) && <span>
-          {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh)} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
+          {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh, 'UTC')} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
         </span>
         }
         {showCollectionStats && e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
