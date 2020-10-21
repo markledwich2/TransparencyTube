@@ -8,9 +8,7 @@ import { Markdown } from '../components/Markdown'
 import styled from 'styled-components'
 
 
-const aboutMd = `## Transparency.tube - The First Comprehensive Look at Politics on YouTube
-
-YouTube is used by [71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and a source of news for [26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
+const aboutMd = `YouTube is used by [71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and a source of news for [26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
 
 That is why we built Transparancy.tube. By categorizing, indexing, and analyzing over 8,000 of the largest English language YouTube channels actively discussing political and cultural issues, we aim to provide the data necessary to better understand this space.
 
@@ -79,9 +77,19 @@ const AboutStyle = styled.div`
   }
 `
 
+const desc = "The First Comprehensive Look at Politics on YouTube"
+const card = "/about/ttube-about.jpg"
+
 const AboutPage = () => (
   <Layout>
+    <SEO
+      title="transparency.tube - about"
+      description={desc}
+      card={card}
+    />
     <AboutStyle>
+      <h2>{desc}</h2>
+      <img src={card} style={{ marginBottom: '1em' }} />
       <Markdown>{aboutMd}</Markdown>
     </AboutStyle>
     <Footer />
