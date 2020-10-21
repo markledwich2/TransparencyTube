@@ -27,13 +27,12 @@ Channels represented on Transparency.tube must have over 10K subscribers and tar
 
 The [transparency.tube](https://transparency.tube/) home page presents a window into political-YouTube with a **Channel Bubbles** visualization. By default, the size of each channel bubble represents views for the selected period, it gives an easy to grasp overview and the ability to dig into granular detail. There are a variety of options to filter and group (shown below). For example, different sized channels by total watch-time, or a historic look back to viewership and follower statistics for a particular moment in time.
 
-![channel bubble visualization](about/ttube-bubbles.gif)
+![channel bubble visualization](/about/ttube-bubbles.gif)
 
 
 Below is the **Top Videos List**, which shows the most viewed videos of the selected period, and allows the user to narrow the list to specific groups of channels.
 
-![top videos list](about/ttube-topvideos.gif)
-
+![top videos list](/about/ttube-topvideos.gif)
 
 We hope that transparency.tube will help generate new insights around political YouTube and reconcile some common misconceptions.
 
@@ -60,6 +59,7 @@ const AboutStyle = styled.div`
   font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
   h1, h2, h3 {
     margin-bottom: 2em;
+    font-weight: 800;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   }
   p, ul {

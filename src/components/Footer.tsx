@@ -12,13 +12,15 @@ const FooterStyle = styled.div`
   padding: 5em 3em;
   color: var(--fg3);
   > * {
-    padding-right: 4em;
+    padding: 2em;
     flex: 1
   }
 
-  li {
-    list-style-type: none;
-    line-height:1.6em;
+  ul {
+    li {
+      list-style-type: none;
+      line-height:1.6em;
+    }  
   }
 `
 
