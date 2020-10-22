@@ -28,11 +28,12 @@ module.exports = {
             },
         },
         {
-            resolve: `gatsby-plugin-google-analytics`,
+            resolve: `gatsby-plugin-google-gtag`,
             options: {
-                trackingId: "UA-181012489-1",
-                head: true,
-            }
+                trackingIds: [
+                    "G-RNECEYKXK5"
+                ]
+            },
         },
     ],
 }
