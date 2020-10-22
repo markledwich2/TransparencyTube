@@ -13,7 +13,7 @@ const FooterStyle = styled.div`
   color: var(--fg3);
   > * {
     padding: 2em;
-    flex: 1
+    flex: 1;
   }
 
   ul {
