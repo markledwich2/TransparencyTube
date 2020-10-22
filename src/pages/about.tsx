@@ -125,4 +125,3 @@ export function getAboutImg(): FluidObject {
   const aboutImg = aboutImage?.childImageSharp?.fluid
   return aboutImg
 }
-
