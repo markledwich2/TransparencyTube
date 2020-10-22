@@ -131,3 +131,5 @@ export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit?: TimeU
   const r = parts.map(u => `${numFormat(u.val)}${labelUnit(u.unit, u.val)}`).join(' ')
   return r
 }
+
+export const safeLocation = (): Location => typeof window === 'undefined' ? null : window.location
