@@ -46,13 +46,13 @@ Here are a few that stand out:
 
 
 Our intention is to follow this launch with a number of articles that dive deeper into political YouTube. Some of the topics we will address are:
-*   QAnon ban - How big did the group get and how much content still remains on YouTube.
-*   Mainstream Media vs. Independent YouTube over the last three years
-*   Tag overlap
-*   Watch time vs. views - what metric is best for measuring the impact of content
+*   QAnon Ban - How big did the group get and how much content still remains on YouTube.
+*   Mainstream Media vs. Independent YouTube Channels - Traffic trends and group analysis.
+*   Watch Time vs. Views - What metric is best for measuring the impact of content.
 
-We hope you find this as fascinating as we do and use our site to understand and report on political YouTube.`
+We hope you find this as fascinating as we do and use our site to understand and report on political YouTube.
 
+Disclaimer - The model and human reviewers who are responsible for the channel tags are not perfect, but we believe the quality of the tags are good enough to generate accurate aggregate statistics and useful insights. With that said, feedback on any incorrectly tagged channels would definitely be appreciated.`
 
 const AboutStyle = styled.div`
   max-width: 800px;
