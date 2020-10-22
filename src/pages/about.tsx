@@ -7,7 +7,7 @@ import { Footer } from '../components/Footer'
 import { Markdown } from '../components/Markdown'
 import styled from 'styled-components'
 import { graphql, useStaticQuery } from 'gatsby'
-import Img from 'gatsby-image'
+import Img, { FluidObject } from 'gatsby-image'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
 
@@ -84,19 +84,9 @@ const AboutStyle = styled.div`
 const desc = "The First Comprehensive Look at Politics on YouTube"
 
 const AboutPage = () => {
-  const { aboutImage } = useStaticQuery(graphql`query {
-    aboutImage: file(relativePath: { eq: "ttube-about.jpg" }) {
-      childImageSharp {
-        fluid(maxWidth: 1000) {
-          ...GatsbyImageSharpFluid
-        }
-      }
-    }
- }`)
+  const aboutImg = getAboutImg()
 
-  const aboutImg = aboutImage?.childImageSharp?.fluid
-
-  const fullImgUrl = uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
+  const fullImgUrl = fullFluidUrl(aboutImg)
 
   return (
     <Layout>
@@ -116,3 +106,23 @@ const AboutPage = () => {
 }
 
 export default AboutPage
+
+export function fullFluidUrl(aboutImg: FluidObject) {
+  return uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
+}
+
+export function getAboutImg(): FluidObject {
+  const { aboutImage } = useStaticQuery(graphql`query {
+    aboutImage: file(relativePath: { eq: "ttube-about.jpg" }) {
+      childImageSharp {
+        fluid(maxWidth: 1200) {
+          ...GatsbyImageSharpFluid
+        }
+      }
+    }
+ }`)
+
+  const aboutImg = aboutImage?.childImageSharp?.fluid
+  return aboutImg
+}
+

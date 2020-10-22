@@ -4,13 +4,18 @@ import Layout from "../components/Layout"
 import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
 import SEO from '../components/SEO'
 import { Footer } from '../components/Footer'
+import { fullFluidUrl, getAboutImg } from './about'
 
-const IndexPage = () => (
-  <Layout>
-    <SEO title="transparency.tube" />
-    <ChannelVideoViewsPage />
-    <Footer />
-  </Layout>
-)
+const IndexPage = () => {
+  const aboutImg = getAboutImg()
+
+  return (
+    <Layout>
+      <SEO title="transparency.tube" image={fullFluidUrl(aboutImg)} />
+      <ChannelVideoViewsPage />
+      <Footer />
+    </Layout>
+  )
+}
 
 export default IndexPage
