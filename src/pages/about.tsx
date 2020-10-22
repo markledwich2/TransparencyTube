@@ -8,6 +8,7 @@ import { Markdown } from '../components/Markdown'
 import styled from 'styled-components'
 import { graphql, useStaticQuery } from 'gatsby'
 import Img from 'gatsby-image'
+import { uri } from '../common/Uri'
 
 
 const aboutMd = `YouTube is used by [71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and a source of news for [26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
@@ -94,12 +95,14 @@ const AboutPage = () => {
 
   const aboutImg = aboutImage?.childImageSharp?.fluid
 
+  const fullImgUrl = uri(window?.location.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
+
   return (
     <Layout>
       <SEO
         title="transparency.tube - about"
         description={desc}
-        image={aboutImg?.src}
+        image={fullImgUrl}
       />
       <AboutStyle>
         <h2>{desc}</h2>
