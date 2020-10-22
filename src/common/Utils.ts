@@ -108,18 +108,15 @@ const timeUnits: { [key in TimeUnitType]: TimeUnit } = {
 
 interface TimeUnit { s: number, plural?: string }
 
-const labelUnit = (u: string, v: number) => {
-  const space = u.length > 2 ? ' ' : ''
-  return space + ((v == 1) ? u : (timeUnits[u].plural ?? `${u}s`))
-}
+const labelUnit = (u: string, v: number) => ((v == 1) ? u : (timeUnits[u].plural ?? `${u}s`))
 
-export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit?: TimeUnitType) => {
+export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit: TimeUnitType | null = 'hr') => {
   let remainingSecs = hours * timeUnits.hr.s
   let parts: { unit: string, val: number }[] = []
   reverse(Object.entries(timeUnits))
     .forEach(v => {
       const [unit, { s }] = v
-      if (maxUnit && timeUnits[maxUnit].s > s) // skip if unit is bigger than max Unit
+      if (maxUnit && s > timeUnits[maxUnit].s) // skip if unit is bigger than max Unit
         return
       if (parts.length <= numUnits && remainingSecs - s > 0) {
         const unitPortion = remainingSecs / s
@@ -128,7 +125,13 @@ export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit?: TimeU
         parts.push({ unit, val })
       }
     })
-  const r = parts.map(u => `${numFormat(u.val)}${labelUnit(u.unit, u.val)}`).join(' ')
+
+
+  const r = parts.map(u => {
+    const fNum = numFormat(u.val)
+    const space = u.unit.length > 2 || !Number.isInteger(fNum[fNum.length - 1]) ? ' ' : ''
+    return `${fNum}${space}${labelUnit(u.unit, u.val)}`
+  }).join(' ')
   return r
 }
 
