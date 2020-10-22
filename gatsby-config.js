@@ -25,6 +25,13 @@ module.exports = {
                 display: `standalone`,
                 icon: 'src/images/ttube.svg'
             },
-        }
+        },
+        {
+            resolve: `gatsby-plugin-google-analytics`,
+            options: {
+                trackingId: "250075741",
+                head: true,
+            }
+        },
     ],
 }
