@@ -16,7 +16,7 @@ const aboutMd = `YouTube is used by [71% of Americans](https://www.journalism.or
 
 That is why we built Transparency.tube. By categorizing, indexing, and analyzing over 8,000 of the largest English language YouTube channels actively discussing political and cultural issues, we aim to provide the data necessary to better understand this space.
 
-The unfathomable amount of politically oriented content on YouTube, 1.9M videos in 2020 alone in our dataset, makes it impossible for any individual to fully comprehend what's occurring in a given moment. There has traditionally been an absence of reliable data when it comes to the internal and external workings of Youtube. Consequently, reporters have historically resorted to using anecdotal evidence and small sample sizes of videos when reporting on the platform. Further, some have continued to articulate narratives that have not kept pace with contemporary changes occurring on the YouTube platform, such as the updating of recommendation systems and the evolution of political content.
+The unfathomable amount of politically oriented content on YouTube, 1.9M videos in 2020 alone in our dataset, makes it impossible for any individual to fully comprehend what's occurring in a given moment. There has traditionally been an absence of reliable data when it comes to the internal and external workings of YouTube. Consequently, reporters have historically resorted to using anecdotal evidence and small sample sizes of videos when reporting on the platform. Further, some have continued to articulate narratives that have not kept pace with contemporary changes occurring on the YouTube platform, such as the updating of recommendation systems and the evolution of political content.
 
 One solution for dealing with such a large amount of content is to leverage AI or Machine Learning. As one of the worldwide leaders in this domain, Google clearly has the ability to thoroughly analyze the political and cultural ideas being shared on YouTube. However, they have almost no incentive to.  YouTube has been the target of intense criticism from both the left and right. This criticism has centered on the content they allow on their platform and how this content is promoted through their recommendation system.  This has resulted in YouTube applying a very reticent approach to the data they share concerning hot button topics.
 
@@ -46,9 +46,9 @@ Here are a few that stand out:
 
 
 Our intention is to follow this launch with a number of articles that dive deeper into political YouTube. Some of the topics we will address are:
-*   QAnon Ban - How big did the group get and how much content still remains on YouTube.
+*   QAnon Ban - How big did the group get and how much content still remains on YouTube?
 *   Mainstream Media vs. Independent YouTube Channels - Traffic trends and group analysis.
-*   Watch Time vs. Views - What metric is best for measuring the impact of content.
+*   Watch Time vs. Views - What metric is best for measuring the impact of content?
 
 We hope you find this as fascinating as we do and use our site to understand and report on political YouTube.
 
