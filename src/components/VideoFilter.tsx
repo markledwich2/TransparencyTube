@@ -17,7 +17,7 @@ export const videoFilterIncludes = (filter: VideoFilter, video: VideoViews, chan
   const colTest = (c: keyof Channel) => {
     var filterValues = filter[c] as string[]
     if (!filterValues) return true
-    const cv = channels[video.channelId][c] as string | string[]
+    const cv = channels[video.channelId]?.[c] as string | string[]
     return Array.isArray(cv) ? filterValues.every(fv => cv.includes(fv)) : filterValues.includes(cv)
   }
   return ['tags', 'lr'].every(colTest)
