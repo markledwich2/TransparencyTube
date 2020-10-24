@@ -126,7 +126,7 @@ export interface ChannelNode {
 
 export async function getChannels(): Promise<Channel[]> {
   const path = blobCfg.resultsUri
-  const channels = await getJsonl<Channel>(path.addPath('ttube_channels.jsonl.gz').url, { headers: { cache: "no-store" } })
+  const channels = await getJsonl<Channel>(path.addPath('ttube_channels.jsonl.gz').url, { headers: { pragma: "no-cache", 'cache-control': 'no-cache' } })
 
   let tagViews: { [key: string]: { tag: string, sum: number } } = pipe(channelMd.tags.values,
     map(t => ({ tag: t.value, channels: channels.filter(c => c.tags.includes(t.value)) })),
