@@ -3,7 +3,6 @@ import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
-import { EsChannel, getChannel } from '../common/EsApi'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
@@ -20,21 +19,9 @@ export interface TopVideosProps {
 }
 
 export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVideosProps) => {
-  const [channelEx, setChannelEx] = useState<EsChannel>(null)
-  const [showDesc, setShowDesc] = useState(false)
   const [stats, setStats] = useState<ChannelStats>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [period, setPeriod] = useState(defaultPeriod)
-
-  useEffect(() => {
-    if (!channel) return
-    let canceled = false //https://medium.com/hackernoon/avoiding-race-conditions-when-fetching-data-with-react-hooks-220d6fd0f663
-    getChannel(channel.channelId, ['channelId', 'description', 'reviewsHuman']).then(c => {
-      if (canceled) return
-      setChannelEx(c)
-    })
-    return () => (canceled = true)
-  }, [channel])
 
   useEffect(() => {
     if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
@@ -49,24 +36,16 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
 
   if (!channel) return <></>
   const c = channel
-  const exIsSame = channelEx?.channelId == c.channelId
-  const e = exIsSame ? channelEx : null
-  const desc = showDesc ? e?.description : e?.description?.substr(0, 300)
+  const desc = c?.description
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} e={e} showLr showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
-        {!e
-          ? <Spinner />
-          : <p style={{ maxWidth: '50em' }}>{desc}
-            {mode == 'max' && <span>{e.description?.length > 300 && !showDesc ? '...' : null}
-              &nbsp;<a onClick={_ => setShowDesc(!showDesc)}>{showDesc ? 'less' : 'more'}</a>
-            </span>}
-          </p>
-        }
+        <p style={{ maxWidth: '50em' }}>
+          {desc}{desc?.length > 300 && '...'}
+        </p>
       </div>
-
       {mode == 'max' && <>
         <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
         <Videos channel={c} indexes={indexes} period={period} />
@@ -96,7 +75,6 @@ const MetricsStyle = styled(FlexRow)`
 
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
-  e?: EsChannel
   statsLoading?: boolean
   showLr?: boolean
   showCollectionStats?: boolean
@@ -107,7 +85,7 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, e, showLr, showCollectionStats, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, showLr, showCollectionStats, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
@@ -140,8 +118,8 @@ export const ChannelTitle = ({ c, e, showLr, showCollectionStats, style, logoSty
           {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh, 'UTC')} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
         </span>
         }
-        {showCollectionStats && e && e.reviewsHuman >= 0 && <span>{e.reviewsHuman ?
-          <p><User style={styles.inlineIcon} /><b>{e.reviewsHuman}</b> manual reviews</p>
+        {showCollectionStats && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
+          <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
           : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
       </MetricsStyle>
       <TagDiv style={{ marginBottom: '1em' }} >

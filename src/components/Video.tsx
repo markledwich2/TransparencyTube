@@ -7,7 +7,7 @@ import { ChannelDetails, ChannelTitle } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import ReactTooltip from 'react-tooltip'
-import { ChannelStats, ChannelWithStats, getVideoViews, VideoWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelWithStats, getVideoViews, VideoViews, ViewsIndexes } from '../common/RecfluenceApi'
 import { Channel } from '../common/Channel'
 import { StatsPeriod } from './Period'
 import { VideoFilter, videoFilterIncludes } from './VideoFilter'
@@ -25,7 +25,7 @@ interface VideosProps {
 
 export const Videos = ({ channel, channels, onOpenChannel, indexes, period, videoFilter }: VideosProps) => {
 
-  const [videos, setVideos] = useState<VideoWithStats[]>(null)
+  const [videos, setVideos] = useState<VideoViews[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [limit, setLimit] = useState<number>(20)
 
@@ -37,8 +37,7 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period, vide
     if (period) {
       setLoading(true)
       const periodFilter = channel ? { channelId: channel.channelId, ...period } : period
-      getVideoViews(index, periodFilter, videoFilter, channels,
-        ['videoId', 'videoTitle', 'channelId', 'channelTitle', 'uploadDate', 'views', 'durationSecs'], limit)
+      getVideoViews(index, periodFilter, videoFilter, channels, limit)
         .then(vids => {
           setVideos(vids)
           setLoading(false)
@@ -110,7 +109,7 @@ const VideoStyle = styled.div`
 `
 
 interface VideoProps extends StyleProps {
-  v: VideoWithStats,
+  v: VideoViews,
   c?: Channel,
   onOpenChannel?: (c: Channel) => void,
   //onHover?: (hover: VideoHover) => void
@@ -118,7 +117,7 @@ interface VideoProps extends StyleProps {
 
 export const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
   const fPeriodViews = numFormat(v.periodViews)
-  const fViews = numFormat(v.views)
+  const fViews = numFormat(v.videoViews)
 
   return <VideoStyle style={style}>
     <FlexRow>
@@ -133,7 +132,7 @@ export const Video = ({ v, style, c, onOpenChannel }: VideoProps) => {
           <FlexRow space='0.7em' style={{ alignItems: 'baseline' }}>
             <div>
               <span><b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b></span>
-              {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.views)}</span>}
+              {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}
               &nbsp;views
             </div>
             <span>{dateFormat(v.uploadDate, 'UTC')}</span>

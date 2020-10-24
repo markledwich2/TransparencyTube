@@ -13,13 +13,15 @@ import { StatsPeriod } from '../components/Period'
 export interface Channel {
   channelId: string
   channelTitle: string
+  description: string
   tags: string[]
   logoUrl: string
   date_to: string
   lr: string
   subs: number
-  channelViews: number,
+  channelViews: number
   media?: string
+  reviewsHuman?: number
 }
 
 export interface ColumnMd {
@@ -136,6 +138,7 @@ export async function getChannels(): Promise<Channel[]> {
     c.tags = orderBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
     c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
+  console.log(channels.length)
   return channels
 }
 

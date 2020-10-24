@@ -24,7 +24,12 @@ const FooterStyle = styled.div`
   }
 `
 
+const LiNowrap = styled.li`
+  white-space: nowrap;
+`
+
 export const Footer = () => <FooterStyle>
+  <ContactCard name="Transparency.tube" email="hello@transparency.tube" role="media inquiries" twitter="transparency_tb" />
   <ContactCard name="Mark Ledwich" email="mark@ledwich.com.au" role="data viz &amp; collection" twitter="mark_ledwich" />
   <ContactCard name="Sam Clark" email="sclark.uw@gmail.com" role=" automated channel discovery &amp; classification" twitter="samuel_clark" />
   <div>
@@ -47,7 +52,7 @@ export const ContactCard = ({ name, email, role, twitter }: ContactInfo) => <div
   <b>{name}</b>
   <ul>
     <li>{role}</li>
-    <li><Email style={styles.inlineIcon} /><a href={`mailto:${email}`}>{email}</a></li>
-    <li><Twitter /><a href={`https://twitter.com/${twitter}`}>{twitter}</a></li>
+    <LiNowrap><Email style={styles.inlineIcon} /><a href={`mailto:${email}`}>{email}</a></LiNowrap>
+    <LiNowrap><Twitter /><a href={`https://twitter.com/${twitter}`}>{twitter}</a></LiNowrap>
   </ul>
 </div>
