@@ -59,7 +59,7 @@ const Header = ({ siteTitle }: { siteTitle: string }) => (
         </Link>
       </h1>
       <Burger>
-        <Link to={'/'}>Home</Link>
+        <Link to={'/'} className='open-only'>Home</Link>
         <Link to={'/about'}>How it works</Link>
         <Link to={'/press'}>Press</Link>
         <Link to={'/contact'}>Contact</Link>

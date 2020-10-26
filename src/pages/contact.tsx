@@ -10,9 +10,15 @@ import styled from 'styled-components'
 const ContactPage = () => <Layout>
   <TextPage>
     <h2>Contact</h2>
-    <ContactCard name="Transparency.tube" email="hello@transparency.tube" role="media inquiries" twitter="transparency_tb" />
-    <ContactCard name="Mark Ledwich" email="mark@ledwich.com.au" role="data viz &amp; collection" twitter="mark_ledwich" />
-    <ContactCard name="Sam Clark" email="sclark.uw@gmail.com" role=" automated channel discovery &amp; classification" twitter="samuel_clark" />
+    <ContactCard name="Transparency.tube" email="hello@transparency.tube" role="Media &amp; General inquiries" twitter="transparency_tb" />
+    <ContactCard
+      name="Mark Ledwich" email="mark@ledwich.com.au"
+      role="Data processing, data-viz, channel classification, YouTube scraping"
+      twitter="mark_ledwich" />
+    <ContactCard
+      name="Sam Clark" email="sclark.uw@gmail.com"
+      role="Automated channel discovery &amp; classification"
+      twitter="samuel_clark" />
   </TextPage>
   <Footer />
 </Layout>
@@ -24,7 +30,7 @@ const StyledContact = styled.div`
   ul {
     list-style: none;
     li {
-      white-space: nowrap;
+      line-height:1.5em;
     }
   }
 `
@@ -38,7 +44,7 @@ interface ContactInfo {
   role: string
 }
 export const ContactCard = ({ name, email, role, twitter }: ContactInfo) => <StyledContact>
-  <b>{name}</b>
+  <h3>{name}</h3>
   <ul>
     <li>{role}</li>
     <li><Email style={iconStyle} /><a href={`mailto:${email}`}>{email}</a></li>

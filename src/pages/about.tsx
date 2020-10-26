@@ -1,15 +1,11 @@
 import React from "react"
 
 import Layout, { MdPageStyle } from "../components/Layout"
-import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
 import SEO from '../components/SEO'
 import { Footer } from '../components/Footer'
 import { Markdown } from '../components/Markdown'
-import styled from 'styled-components'
-import { graphql, useStaticQuery } from 'gatsby'
-import Img, { FluidObject } from 'gatsby-image'
-import { uri } from '../common/Uri'
-import { safeLocation } from '../common/Utils'
+import { FluidImage } from '../components/FluidImage'
+import AboutImage from '../images/ttube-about.jpg'
 
 
 const aboutMd = `YouTube is used by [71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and a source of news for [26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
@@ -59,20 +55,16 @@ Disclaimer - The model and human reviewers who are responsible for the channel t
 const desc = "The First Comprehensive Look at Politics on YouTube"
 
 const AboutPage = () => {
-  const aboutImg = getAboutImg()
-
-  const fullImgUrl = fullFluidUrl(aboutImg)
-
   return (
     <Layout>
       <SEO
         title="transparency.tube - about"
         description={desc}
-        image={fullImgUrl}
+        image={AboutImage}
       />
       <MdPageStyle>
         <h2>{desc}</h2>
-        <Img fluid={aboutImg} style={{ marginBottom: '1em' }} />
+        <FluidImage path='ttube-about.jpg' style={{ marginBottom: '1em' }} />
         <Markdown>{aboutMd}</Markdown>
       </MdPageStyle>
       <Footer />
@@ -81,22 +73,3 @@ const AboutPage = () => {
 }
 
 export default AboutPage
-
-export function fullFluidUrl(aboutImg: FluidObject) {
-  return uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
-}
-
-export function getAboutImg(): FluidObject {
-  const { aboutImage } = useStaticQuery(graphql`query {
-    aboutImage: file(relativePath: { eq: "ttube-about.jpg" }) {
-      childImageSharp {
-        fluid(maxWidth: 1200) {
-          ...GatsbyImageSharpFluid
-        }
-      }
-    }
- }`)
-
-  const aboutImg = aboutImage?.childImageSharp?.fluid
-  return aboutImg
-}

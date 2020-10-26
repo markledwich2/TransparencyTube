@@ -8,6 +8,9 @@ import Header from './Header'
 import { StyledIconBase } from '@styled-icons/styled-icon'
 import { popupClasses } from './Popup'
 import ReactModal from 'react-modal'
+import { FluidObject } from 'gatsby-image'
+import { uri } from '../common/Uri'
+import { safeLocation } from '../common/Utils'
 
 export interface StyleProps {
   style?: React.CSSProperties
@@ -165,6 +168,9 @@ export const MdPageStyle = styled(TextPage)`
     width: 100%
   }
 `
+
+export const fullFluidUrl = (aboutImg: FluidObject) =>
+  uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
 
 
 const Layout: FunctionComponent = ({ children }) => {

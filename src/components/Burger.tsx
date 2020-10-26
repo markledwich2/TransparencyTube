@@ -55,18 +55,25 @@ const MenuDiv = styled.div<{ open: boolean }>`
   flex-flow: row nowrap;
   a {
     padding: 18px 10px;
+    &.open-only {
+      display:${({ open }) => open ? 'block' : 'none'};
+    }
   }
+
+
+   
   @media (max-width: 768px) {
     flex-flow: column nowrap;
     background-color: var(--bg1);
     position: fixed;
     transform: ${({ open }) => open ? 'translateX(0)' : 'translateX(100%)'};
+    box-shadow:${({ open }) => open ? '-5px 0px 20px rgba(0, 0, 0, 0.2)' : 'none'};
     top: 0;
     right: 0;
     height: 100vh;
     width: 300px;
     padding-top: 3.5rem;
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.1s ease-in-out;
     z-index: 5;
   }
 `
