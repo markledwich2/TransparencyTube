@@ -8,6 +8,9 @@ import Header from './Header'
 import { StyledIconBase } from '@styled-icons/styled-icon'
 import { popupClasses } from './Popup'
 import ReactModal from 'react-modal'
+import { FluidObject } from 'gatsby-image'
+import { uri } from '../common/Uri'
+import { safeLocation } from '../common/Utils'
 
 export interface StyleProps {
   style?: React.CSSProperties
@@ -51,7 +54,9 @@ export const styles = {
 const GlobalStyle = createGlobalStyle`
   :root {
   --bg-feature:#125C6E;
+  --bg-feature2:#6E1D39;
   --fg-feature:#1F9FBF;
+  --fg-feature2:#b1d5df;
   ${lightValues}
   @media(prefers-color-scheme: dark) {
     ${darkValues}
@@ -125,6 +130,44 @@ export const NormalFont = styled.span`
   font-weight:normal;
   line-height: 1.2rem;
 `
+
+export const TextPage = styled.div`
+  max-width: 800px;
+  margin: auto;
+  font-size: 1.4em;
+  min-height: 80vh;
+  padding: 2em;
+  h2 {
+    margin-bottom: 1em;
+  }
+`
+
+export const MdPageStyle = styled(TextPage)`
+  font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
+  h1, h2, h3 {
+    margin-bottom: 2em;
+    font-weight: 800;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  p, ul {
+    margin-bottom: 2em;
+  }
+  ul {
+    list-style-position: outside;
+    margin-top: -1em;
+    margin-left: 1em;
+    li {
+      margin-bottom: 1em;
+    }
+  }
+
+  img {
+    width: 100%
+  }
+`
+
+export const fullFluidUrl = (aboutImg: FluidObject) =>
+  uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
 
 
 const Layout: FunctionComponent = ({ children }) => {
