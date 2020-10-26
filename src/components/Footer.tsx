@@ -29,7 +29,7 @@ export const Footer = () => <FooterStyle>
     <ul>
       <li><a href='https://github.com/sam-clark/chan2vec#chan2vec'>chan2vec</a> - Channel discovery &amp; automatic classification</li>
       <li><a href='https://github.com/markledwich2/Recfluence'>Recfluence</a> - Data collection &amp; classification details</li>
-      <li><a href='https://github.com/markledwich2/Recfluence'>Transparency.tube</a>- This website</li>
+      <li><a href='https://github.com/markledwich2/TransparencyTube'>Transparency.tube</a>- This website</li>
     </ul>
   </div>
 </FooterStyle>
