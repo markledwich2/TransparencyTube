@@ -6,6 +6,7 @@ import { Footer } from '../components/Footer'
 import { Markdown } from '../components/Markdown'
 import { FluidImage } from '../components/FluidImage'
 import AboutImage from '../images/ttube-about.jpg'
+import ReactMarkdown from 'react-markdown'
 
 
 const aboutMd = `YouTube is used by [71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and a source of news for [26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
@@ -65,7 +66,7 @@ const AboutPage = () => {
       <MdPageStyle>
         <h2>{desc}</h2>
         <FluidImage path='ttube-about.jpg' style={{ marginBottom: '1em' }} />
-        <Markdown>{aboutMd}</Markdown>
+        <ReactMarkdown>{aboutMd}</ReactMarkdown>
       </MdPageStyle>
       <Footer />
     </Layout>

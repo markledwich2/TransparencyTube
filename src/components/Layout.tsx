@@ -143,9 +143,6 @@ export const TextPage = styled.div`
 `
 
 export const MdPageStyle = styled(TextPage)`
-  max-width: 800px;
-  margin: auto;
-  font-size: 1.4em;
   font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
   h1, h2, h3 {
     margin-bottom: 2em;

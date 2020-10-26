@@ -1,4 +1,5 @@
 import React from "react"
+import ReactMarkdown from 'react-markdown'
 import { Footer } from '../components/Footer'
 import Layout, { MdPageStyle } from "../components/Layout"
 import { Markdown } from '../components/Markdown'
@@ -62,7 +63,7 @@ const PressPage = () => {
   return <Layout>
     <MdPageStyle>
       <h2>Press Release</h2>
-      <Markdown>{pressMd}</Markdown>
+      <ReactMarkdown>{pressMd}</ReactMarkdown>
     </MdPageStyle>
     <Footer />
   </Layout>
