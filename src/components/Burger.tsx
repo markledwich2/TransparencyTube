@@ -5,8 +5,8 @@ import styled from 'styled-components'
 const StyledBurger = styled.div<{ open: boolean }>`
   width: 2rem;
   height: 2rem;
-  position: fixed;
-  top: 20px;
+  position: absolute;
+  top: 22px;
   right: 15px;
   z-index: 20;
   display: none;
@@ -59,7 +59,6 @@ const MenuDiv = styled.div<{ open: boolean }>`
       display:${({ open }) => open ? 'block' : 'none'};
     }
   }
-
 
    
   @media (max-width: 768px) {

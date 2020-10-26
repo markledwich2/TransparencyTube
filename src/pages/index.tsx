@@ -10,8 +10,8 @@ import AboutImage from '../images/ttube-about.jpg'
 const PurposeDiv = styled.div`
   background-color:var(--bg-feature);
   color:#eee;
-  padding:2em;
-  font-size:1.7em;
+  padding:1.5em;
+  font-size:1.5em;
   margin-bottom:1em;
   background-image:url('/bubble-bg.svg');
   background-repeat: no-repeat;
