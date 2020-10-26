@@ -24,7 +24,7 @@ module.exports = {
                 background_color: `#000`,
                 theme_color: `#125C6E`,
                 display: `standalone`,
-                icon: 'src/images/ttube.svg'
+                icon: 'static/ttube.svg'
             },
         },
         {

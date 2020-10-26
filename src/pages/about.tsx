@@ -1,6 +1,6 @@
 import React from "react"
 
-import Layout from "../components/Layout"
+import Layout, { MdPageStyle } from "../components/Layout"
 import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
 import SEO from '../components/SEO'
 import { Footer } from '../components/Footer'
@@ -54,32 +54,7 @@ We hope you find this as fascinating as we do and use our site to understand and
 
 Disclaimer - The model and human reviewers who are responsible for the channel tags are not perfect, but we believe the quality of the tags are good enough to generate accurate aggregate statistics and useful insights. With that said, feedback on any incorrectly tagged channels would definitely be appreciated.`
 
-const AboutStyle = styled.div`
-  max-width: 800px;
-  margin: auto;
-  font-size: 1.4em;
-  font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
-  h1, h2, h3 {
-    margin-bottom: 2em;
-    font-weight: 800;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  }
-  p, ul {
-    margin-bottom: 2em;
-  }
-  ul {
-    list-style-position: outside;
-    margin-top: -1em;
-    margin-left: 1em;
-    li {
-      margin-bottom: 1em;
-    }
-  }
 
-  img {
-    width: 100%
-  }
-`
 
 const desc = "The First Comprehensive Look at Politics on YouTube"
 
@@ -95,11 +70,11 @@ const AboutPage = () => {
         description={desc}
         image={fullImgUrl}
       />
-      <AboutStyle>
+      <MdPageStyle>
         <h2>{desc}</h2>
         <Img fluid={aboutImg} style={{ marginBottom: '1em' }} />
         <Markdown>{aboutMd}</Markdown>
-      </AboutStyle>
+      </MdPageStyle>
       <Footer />
     </Layout>
   )
