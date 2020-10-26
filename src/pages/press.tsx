@@ -11,8 +11,6 @@ const pressMd = `
 
 **Press Contact: hello@transparency.tube**
 
-**Cell: 3303271644**
-
 **Data scientists conduct the first-ever comprehensive analysis of politics on YouTube, including the most thorough assessment of QAnon content on YouTube to date. **
 
 _Data scientists Sam Clark and Mark Ledwich have launched [Transparency.tube](https://transparency.tube/), a first-of-its-kind map of political content on YouTube. The tool offers an unprecedented look at the political landscape on a platform that Americans are increasingly using as a news source._
