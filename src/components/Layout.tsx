@@ -132,7 +132,8 @@ export const TextPage = styled.div`
   max-width: 800px;
   margin: auto;
   font-size: 1.4em;
-
+  min-height: 80vh;
+  padding: 2em;
   h2 {
     margin-bottom: 1em;
   }

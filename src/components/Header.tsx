@@ -41,7 +41,7 @@ const NavStyle = styled.nav`
 const Header = ({ siteTitle }: { siteTitle: string }) => (
   <header
     style={{
-      background: `var(--bg)`,
+      background: `var(--bg1)`,
       marginBottom: `0.5em`,
     }}
   >
@@ -59,6 +59,7 @@ const Header = ({ siteTitle }: { siteTitle: string }) => (
         </Link>
       </h1>
       <Burger>
+        <Link to={'/'}>Home</Link>
         <Link to={'/about'}>How it works</Link>
         <Link to={'/press'}>Press</Link>
         <Link to={'/contact'}>Contact</Link>

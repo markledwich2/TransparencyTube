@@ -8,7 +8,7 @@ import { Email } from '@styled-icons/entypo'
 import styled from 'styled-components'
 
 const ContactPage = () => <Layout>
-  <TextPage style={{ padding: '2em' }}>
+  <TextPage>
     <h2>Contact</h2>
     <ContactCard name="Transparency.tube" email="hello@transparency.tube" role="media inquiries" twitter="transparency_tb" />
     <ContactCard name="Mark Ledwich" email="mark@ledwich.com.au" role="data viz &amp; collection" twitter="mark_ledwich" />
