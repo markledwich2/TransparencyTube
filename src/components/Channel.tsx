@@ -8,7 +8,8 @@ import { Spinner } from './Spinner'
 import { Videos } from './Video'
 import { ChannelStats, ChannelWithStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
 import { PeriodSelect, StatsPeriod } from './Period'
-import { Bot, User } from '@styled-icons/boxicons-solid'
+import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
+import { Markdown } from './Markdown'
 
 
 export interface TopVideosProps {
@@ -68,10 +69,10 @@ const MetricsStyle = styled(FlexRow)`
   flex-flow:wrap;
   align-items:baseline;
   > * {
-    margin-bottom:0.5em;
     white-space: nowrap;
   }
 `
+
 
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
@@ -91,7 +92,6 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, style, logoStyle,
 
   const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
-
   //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
   //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
   //console.log('faded', faded)
@@ -118,24 +118,51 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, style, logoStyle,
           {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh, 'UTC')} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
         </span>
         }
-        {showCollectionStats && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
-          <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
-          : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
       </MetricsStyle>
-      <TagDiv style={{ marginBottom: '1em' }} >
+      <TagDiv style={{ margin: '0.2em 0' }} >
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>
+      {c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
+        <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
+        : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
+      <Note type='reviewer' c={c} />
+      <Note type='creator' c={c} />
     </div>
   </ChannelTitleStyle>
 }
 
+const autoReviewNotes = (c: Channel) => {
+  if (c.tags.includes('AntiSJW') && c.lr == 'R' && !c.tags.some(t => ['PartisanRight', 'ReligiousConservative'].includes(t)))
+    return `Anti-woke content is considered a 'right' position in our [classification process](https://github.com/markledwich2/Recfluence#leftcenterright).  ${c.reviewsHuman ? 'Reviewers weighed this against center/left content and concluded it was predominantly  on this side of the left/right dimension.' : ''}`
+  return null
+}
+
+const Note = ({ type, c }: { type: 'creator' | 'reviewer', c: Channel }) => {
+  if (!c) return <></>
+  const notes = type == 'reviewer' ? (c.publicReviewerNotes ?? autoReviewNotes(c)) : c.publicCreatorNotes
+  if (!notes) return <></>
+
+  const iconProps = {
+    style: {
+      ...styles.inlineIcon,
+      marginTop: '0.2em'
+    },
+    title: `${type == 'creator' ? 'Creator' : 'Reviewer'} notes`
+  }
+
+  return <FlexRow>
+    {type == 'reviewer' ? <Reviewer {...iconProps} /> : <Creator {...iconProps} />}
+    <Markdown>{notes}</Markdown>
+  </FlexRow>
+}
+
 const TagDiv = styled.div`
-    color: #eee;
-    > * {
-      margin-right:0.3em;
-        margin-bottom:0.2em;
-    }
+  color: #eee;
+  > * {
+    margin-right: 0.3em;
+    margin-bottom: 0.2em;
+  }
 `
 
 const TagStyle = styled.span`
@@ -146,7 +173,7 @@ const TagStyle = styled.span`
   line-height: 1.6;
   border-radius: 5px;
   padding: 1px 6px;
-  white-space:nowrap;
+  white-space: nowrap;
 `
 
 interface TagProps { color?: string, label: string }

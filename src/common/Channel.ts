@@ -22,6 +22,8 @@ export interface Channel {
   channelViews: number
   media?: string
   reviewsHuman?: number
+  publicReviewerNotes?: string
+  publicCreatorNotes?: string
 }
 
 export interface ColumnMd {
@@ -44,7 +46,7 @@ export const channelMd: { [key: string]: ColumnMd } = {
 - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
 \nNote: Each channel can have multiple tags.`,
     values: [
-      { value: 'AntiSJW', label: 'Anti-SJW', color: '#8a8acb', desc: 'Significant focus on criticizing `Social Justice`  with a positive view of the marketplace of ideas and discussing controversial topics.' },
+      { value: 'AntiSJW', label: 'Anti-Woke', color: '#8a8acb', desc: 'Significant focus on criticizing `Social Justice`  with a positive view of the marketplace of ideas and discussing controversial topics.' },
       { value: 'AntiTheist', label: 'Anti-theist', color: '#96cbb3', desc: 'Self-identified atheist who are also actively critical of religion. Also called New Atheists or Street Epistemologists. Usually combined with an interest in philosophy.' },
       { value: 'Conspiracy', color: '#e0990b', desc: 'Regularly promotes a variety of conspiracy theories or wildly unscientific beliefs (except for religious ones). Relevant only when the conspiracy/belief is connected to morality/politics or consequentially-important outcomes. \n\Example conspiracies: [Moon landings were faked](https://en.wikipedia.org/wiki/Moon_landing_conspiracy_theories), [QAnon](https://en.wikipedia.org/wiki/QAnon) & [Pizzagate](https://en.wikipedia.org/wiki/Pizzagate_conspiracy_theory), [Epstein was murdered](https://en.wikipedia.org/wiki/Death_of_Jeffrey_Epstein), [Trump-russia collusion](https://rationalwiki.org/wiki/Trump-Russia_connection).' },
       { value: 'LateNightTalkShow', label: 'Late night talk show', color: '#00b1b8', desc: 'Entertaining TV/cable talk show with topical news, guest interviews and comedy sketches. Sometimes are more entertainment than political and we are working to only include the videos that are political.' },
