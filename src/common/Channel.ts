@@ -74,7 +74,7 @@ export const channelMd: { [key: string]: ColumnMd } = {
 - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#chan2vec) `,
     values: [
       { value: 'L', label: 'Left', color: '#3887be' },
-      { value: 'C', label: 'Center', color: '#c060a1' },
+      { value: 'C', label: 'Center', color: '#ab82e8' },
       { value: 'R', label: 'Right', color: '#da2d2d' }
     ]
   },
