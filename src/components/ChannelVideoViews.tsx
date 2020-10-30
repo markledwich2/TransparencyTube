@@ -22,6 +22,7 @@ import { TagHelp, TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
 import { Popup } from './Popup'
+import { BubbleChart } from './BubbleChart'
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
@@ -101,17 +102,6 @@ export const ChannelVideoViewsPage = () => {
 
   </div >
 }
-
-const BubbleDiv = styled.div`
-  display:flex;
-  flex-direction:column;
-  margin:5px;
-  align-items:center;
-  padding:5px;
-  background-color: var(--bg1);
-  border: 1px solid var(--bg2);
-  border-radius: 10px;
-`
 
 interface BubblesProps {
   channels: Record<string, Channel>
@@ -228,7 +218,10 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
     </div>
 
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      <BubbleChart {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
+      <BubbleChart
+        {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg, channels: values(channels) }}
+        onOpenGroup={(g) => onSelection({ ...selections, openGroup: g })}
+        key={JSON.stringify(period)} />
     </div>
   </div>
 }, (a, b) => {
@@ -236,7 +229,8 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
 })
 
 function bubbleEquals(a: Readonly<BubblesProps>, b: Readonly<BubblesProps>) {
-  const bubbleSelections = ({ colorBy, groupBy, measure, period }: BubblesSelectionState) => ({ colorBy, groupBy, measure, period })
+  const bubbleSelections = ({ colorBy, groupBy, measure, period, openGroup }: BubblesSelectionState) =>
+    ({ colorBy, groupBy, measure, period, openGroup })
   const shallowProps = (p: BubblesProps) => {
     const { selections, onOpenChannel, onLoad, onSelection, ...rest } = p
     return rest
@@ -260,73 +254,3 @@ const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
 export const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
   <b>{o.label}</b><Markdown source={o.desc} />
 </NormalFont></MeasureOptionStyle>
-
-interface BubbleChartProps extends PackExtra { groupedNodes: GroupedNodes[], selections: BubblesSelectionState }
-
-const BubbleChart = ({ groupedNodes, selections, ...extra }: BubbleChartProps) => {
-  const measureFmt = measureFormat(selections.measure)
-  return <>
-    {groupedNodes && groupedNodes.map(t => <BubbleDiv key={t.group.value}>
-      <div style={{ padding: '2px' }}>
-        <h4>
-          <span style={{ color: 'var(--fg2)' }}>{t.group.label ?? t.group.value}</span>
-          <span style={{ padding: '0 0.5em' }} >{selections.groupBy == 'tags' && <TagHelp tag={t.group.value} />}</span>
-          <b style={{ fontSize: '1.5em' }}>{measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))}</b>
-        </h4>
-      </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-        <TagPack {...t} {...extra} />
-      </div>
-    </BubbleDiv>
-    )}</>
-}
-
-const SVGStyle = styled.svg`
-  .node {
-    :hover {
-      cursor:pointer;
-    }
-  }
-`
-
-interface PackExtra { zoom: number, packSize: number, channelClick: (c: ChannelStats) => void, showImg: boolean, key: string }
-const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key }: {} & GroupedNodes & PackExtra) => {
-  const dx = -dim.x.min.x + dim.x.min.r
-  const dy = -dim.y.min.y + dim.y.min.r
-  const z = zoom
-  const imgRatio = 0.9
-  const channelNodes = nodes.filter(n => n.data.type == 'channel')
-    .map(n => ({
-      ...n,
-      x: (n.x + dx) * zoom,
-      y: (n.y + dy) * zoom,
-      r: n.r * zoom,
-      id: n.data.key
-    }))
-
-  return <SVGStyle key={key} width={dim.w * z} height={dim.h * z} >
-    <defs>
-      {showImg && channelNodes.filter(n => n.data.img)
-        .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r * imgRatio} /></clipPath >)}
-    </defs>
-    <g>
-      {channelNodes.map(n => {
-        const { id, x, y, r } = n
-        const props = {
-          'data-for': 'bubble',
-          'data-tip': n.data.channel.channelId,
-          onClick: (_) => onChannelClick(n.data.channel),
-          className: 'node'
-        }
-        return <g key={id} transform={`translate(${x}, ${y})`}>
-          <circle r={r} fill={n.data.color} {...props} />
-          {showImg && n.data.img &&
-            <image x={- r * imgRatio} y={- r * imgRatio} width={r * imgRatio * 2}
-              href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
-        </g>
-      }
-      )}
-    </g>
-  </SVGStyle>
-}
-

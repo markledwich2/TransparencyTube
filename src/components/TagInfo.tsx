@@ -12,6 +12,7 @@ import { StyleProps, styles } from './Layout'
 
 interface TagProps {
   tag: string
+  showTitle?: boolean
 }
 
 const tipId = 'tag-help'
@@ -25,7 +26,7 @@ export const TagHelp = ({ tag, style }: TagProps & StyleProps) => <HelpOutline
   data-tip={tag}
   data-for={tipId} />
 
-export const TagInfo = ({ tag, channels }: TagProps & { channels: Channel[] }) => {
+export const TagInfo = ({ tag, channels, showTitle, style }: TagProps & { channels: Channel[] } & StyleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const t = tags[tag]
   if (!t || !channels) return <></>
@@ -41,8 +42,8 @@ export const TagInfo = ({ tag, channels }: TagProps & { channels: Channel[] }) =
     orderBy(o => o.pct, 'desc')
   )
 
-  return <div style={{ maxWidth: '40em' }}>
-    <b>{t?.label ?? tag}</b>
+  return <div style={{ maxWidth: '40em', ...style }}>
+    {showTitle && <b>{t?.label ?? tag}</b>}
     <Markdown>{t?.desc}</Markdown>
     <p style={{ margin: '0.5em 0 0.2em', lineHeight: '2em' }}>Overlaps with:&nbsp;{overlaps.map(o => <Tag
       key={o.tag.value}
