@@ -121,7 +121,7 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key 
           className: 'node'
         }
         return <g key={id} transform={`translate(${x}, ${y})`}>
-          <circle r={r} fill={n.data.color} {...props} />
+          <circle r={r} fill={n.data.color ?? 'var(--bg3)'} {...props} />
           {showImg && n.data.img &&
             <image x={- r * imgRatio} y={- r * imgRatio} width={r * imgRatio * 2}
               href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
