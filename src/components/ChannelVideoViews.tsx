@@ -129,7 +129,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
   const [showImg] = useState(true) // always render sans image first
 
   const period = parsePeriod(selections.period) ?? defaultPeriod
-  const derivedSelections = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections } as BubblesSelectionState
+  const derivedSelections = { ...{ measure: 'views', colorBy: 'tags', groupBy: 'tags' }, ...selections } as BubblesSelectionState
   const { measure, colorBy, groupBy } = derivedSelections
 
   const bubbleWidth = width > 800 ? 800 : 400
@@ -141,22 +141,14 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
 
   useEffect(() => {
     const go = async () => {
-      // const start = new Date()
       setLoading(true)
       await delay(1)
-      // let start2 = new Date()
       const rawStats = await indexes.channelStatsByPeriod.getRows(period)
-      // console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
-      //setShowImg(false)
-      // start2 = new Date()
       setRawStats(rawStats)
-      // console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
       setLoading(false)
       await delay(1000)
       ReactTooltip.rebuild()
       onLoad?.()
-      //setShowImg(true)
-      // console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
     go()
   }, [JSON.stringify(period), indexes, channels])
@@ -198,10 +190,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
         by
         <InlineSelect
           options={channelColOpts}
-          selected={groupBy} onChange={o => {
-            const cb = colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
-            onSelection({ ...selections, groupBy: o, colorBy: cb })
-          }}
+          selected={groupBy} onChange={o => onSelection({ ...selections, groupBy: o })}
           itemRender={ColOption}
         />
         and colored by
@@ -319,7 +308,7 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key 
           className: 'node'
         }
         return <g key={id} transform={`translate(${x}, ${y})`}>
-          <circle r={r} fill={n.data.color} {...props} />
+          <circle r={r} fill={n.data.color ?? 'var(--bg3)'} {...props} />
           {showImg && n.data.img &&
             <image x={- r * imgRatio} y={- r * imgRatio} width={r * imgRatio * 2}
               href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
