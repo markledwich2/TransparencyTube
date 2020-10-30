@@ -40,7 +40,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
   const desc = c?.description
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         <p style={{ maxWidth: '50em' }}>
@@ -79,6 +79,7 @@ export interface ChannelTitleProps {
   statsLoading?: boolean
   showLr?: boolean
   showCollectionStats?: boolean
+  showReviewInfo?: boolean
   tipId?: string
   style?: CSSProperties
   logoStyle?: CSSProperties
@@ -86,7 +87,7 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, showLr, showCollectionStats, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
   const tags = indexBy(channelMd.tags.values, t => t.value)
   const lr = channelMd.lr.values.find(i => i.value == c.lr)
 
@@ -123,11 +124,13 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, style, logoStyle,
         {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>
-      {c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
+      {showReviewInfo && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
         <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
         : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
-      <Note type='reviewer' c={c} />
-      <Note type='creator' c={c} />
+      {showReviewInfo && <>
+        <Note type='reviewer' c={c} />
+        <Note type='creator' c={c} />
+      </>}
     </div>
   </ChannelTitleStyle>
 }

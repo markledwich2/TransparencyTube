@@ -145,12 +145,14 @@ export const TextPage = styled.div`
 export const MdPageStyle = styled(TextPage)`
   font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
   h1, h2, h3 {
-    margin-bottom: 2em;
+    margin: 1em 0;
     font-weight: 800;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--fg1);
   }
   p, ul {
     margin-bottom: 2em;
+    color: var(--fg2);
   }
   ul {
     list-style-position: outside;

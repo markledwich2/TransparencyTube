@@ -131,22 +131,14 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
 
   useEffect(() => {
     const go = async () => {
-      // const start = new Date()
       setLoading(true)
       await delay(1)
-      // let start2 = new Date()
       const rawStats = await indexes.channelStatsByPeriod.getRows(period)
-      // console.log('rawStats ms', differenceInMilliseconds(new Date(), start2))
-      //setShowImg(false)
-      // start2 = new Date()
       setRawStats(rawStats)
-      // console.log('setRawStats ms', differenceInMilliseconds(new Date(), start2))
       setLoading(false)
       await delay(1000)
       ReactTooltip.rebuild()
       onLoad?.()
-      //setShowImg(true)
-      // console.log('useEffect ms', differenceInMilliseconds(new Date(), start))
     }
     go()
   }, [JSON.stringify(period), indexes, channels])
@@ -188,10 +180,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
         by
         <InlineSelect
           options={channelColOpts}
-          selected={groupBy} onChange={o => {
-            const cb = colorBy == o ? (o == 'lr' ? 'tags' : 'lr') : o //when changing the group, switch colorBy to sensible default
-            onSelection({ ...selections, groupBy: o, colorBy: cb })
-          }}
+          selected={groupBy} onChange={o => onSelection({ ...selections, groupBy: o })}
           itemRender={ColOption}
         />
         and colored by
