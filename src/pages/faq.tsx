@@ -10,7 +10,7 @@ YouTube is playing an important role in shaping opinions around political and cu
 
 
 ## Are you a political organization or do you have political goals?
-No. We have different political beliefs, have funded this project ourselves, and plan on keeping it independent / bi-partisan. We do both share concerns about the volume of misinformation on YouTube though and hope our data can be useful for finding appropriate solutions to this problem.
+No. We have different political beliefs, have funded this project ourselves, and plan on keeping it independent / non-partisan. We do both share concerns about the volume of misinformation on YouTube though and hope our data can be useful for finding appropriate solutions to this problem.
 
 
 
