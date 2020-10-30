@@ -1,14 +1,11 @@
 
-import { Uri } from './Uri'
 import { getJsonl, hoursFormat, numFormat } from './Utils'
-import { filter, first, flatMap, indexBy, map, mapValues, pipe } from 'remeda'
+import { filter, first, flatMap, indexBy, map, pipe } from 'remeda'
 import { entries, max, maxBy, minBy, orderBy, sumBy, values } from './Pipe'
 import { Opt } from '../components/InlineSelect'
 import { hierarchy, pack } from 'd3'
-import { StringLiteralLike } from 'typescript'
 import { blobCfg } from './Cfg'
-import { ChannelStats, ChannelWithStats } from './RecfluenceApi'
-import { StatsPeriod } from '../components/Period'
+import { ChannelWithStats } from './RecfluenceApi'
 
 export interface Channel {
   channelId: string

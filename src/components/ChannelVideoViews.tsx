@@ -129,7 +129,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
   const [showImg] = useState(true) // always render sans image first
 
   const period = parsePeriod(selections.period) ?? defaultPeriod
-  const derivedSelections = { ...{ measure: 'views', colorBy: 'tags', groupBy: 'tags' }, ...selections } as BubblesSelectionState
+  const derivedSelections = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections } as BubblesSelectionState
   const { measure, colorBy, groupBy } = derivedSelections
 
   const bubbleWidth = width > 800 ? 800 : 400
