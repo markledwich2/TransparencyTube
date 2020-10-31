@@ -1,11 +1,16 @@
-import React, { useState } from 'react'
+import React, { memo, useEffect } from 'react'
 import styled from 'styled-components'
-import { GroupedNodes, BubblesSelectionState, measureFormat, Channel } from '../common/Channel'
+import { measureFormat, Channel } from '../common/Channel'
+import { GroupedNodes, BubblesSelectionState, getZoomToFit, ChannelNode } from '../common/ChannelBubble'
 import { sumBy } from '../common/Pipe'
 import { ChannelStats } from '../common/RecfluenceApi'
 import { TagHelp, TagInfo } from './TagInfo'
-import { Fullscreen, ExitFullscreen } from '@styled-icons/boxicons-regular'
+import { Fullscreen } from '@styled-icons/boxicons-regular'
 import { Popup } from './Popup'
+import ContainerDimensions from 'react-container-dimensions'
+import { HierarchyCircularNode } from 'd3'
+import ReactTooltip from 'react-tooltip'
+import { delay, jsonEquals } from '../common/Utils'
 
 
 const FullscreenIcon = styled(Fullscreen)`
@@ -34,7 +39,7 @@ const BubbleDiv = styled.div`
   }
 `
 
-interface PackExtra {
+interface PackProps {
   zoom: number,
   packSize: number,
   channelClick: (c: ChannelStats) => void,
@@ -42,44 +47,72 @@ interface PackExtra {
   key: string
 }
 
-interface BubbleChartProps extends PackExtra {
+interface BubbleChartsProps {
   channels: Channel[]
   groupedNodes: GroupedNodes[],
   selections: BubblesSelectionState
   onOpenGroup: (group: string) => void
+  pack: PackProps
 }
 
-export const BubbleChart = ({ groupedNodes, selections, onOpenGroup, channels, ...extra }: BubbleChartProps) => {
-  const measureFmt = measureFormat(selections.measure)
-
+export const BubbleCharts = ({ groupedNodes, selections, channels, pack, onOpenGroup }: BubbleChartsProps) => {
+  const openNodes = selections.openGroup ? groupedNodes.find(g => g.group.value == selections.openGroup) : null
+  const commonProps = { selections, channels, pack, onOpenGroup }
   return <>
-    {groupedNodes && groupedNodes.map(t => {
+    {groupedNodes && groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...commonProps} />)}
+    {openNodes && <BubbleChart groupNodes={openNodes} {...commonProps} isOpen />}
+  </>
+}
 
-      const group = t.group.value
-      const groupBy = selections.groupBy ?? 'tags'
-      const isOpen = selections.openGroup && selections.openGroup == group
-      const gExtra = { ...extra, zoom: isOpen ? extra.zoom * 2 : 1 } //todo make this fit
-      const fMeasure = measureFmt(sumBy(t.nodes, n => n.data.val ?? 0))
+interface BubbleChartProps {
+  groupNodes: GroupedNodes
+  selections: BubblesSelectionState
+  channels: Channel[]
+  pack: PackProps,
+  onOpenGroup: (group: string) => void
+  isOpen?: boolean
+}
 
-      const contents = <BubbleDiv key={group} className={isOpen ? 'open' : 'inline'}>
-        <div style={{ padding: '2px' }}>
-          <h4>
-            <span style={{ paddingRight: '0.5em' }}>{t.group.label ?? group}</span>
-            {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupBy == 'tags' && <TagHelp tag={group} showTitle />}</span>}
-            <b style={{ fontSize: '1.5em' }}>{fMeasure}</b>
-          </h4>
-        </div>
-        {groupBy == 'tags' && <TagInfo tag={group} channels={channels} style={{ marginBottom: '1em' }} />}
+const BubbleChart = ({ groupNodes, selections, channels, pack, onOpenGroup, isOpen }: BubbleChartProps) => {
+  const group = groupNodes.group.value
+  const groupBy = selections.groupBy ?? 'tags'
+  const measureFmt = measureFormat(selections.measure)
+  const fMeasure = measureFmt(sumBy(groupNodes.nodes, n => n.data.val ?? 0))
 
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          <TagPack {...t} {...gExtra} />
+  useEffect(() => {
+    if (isOpen) {
+      delay(1000).then(() => ReactTooltip.rebuild())
+    }
+  }, [selections.openGroup])
+
+  const info = <div style={{ padding: '2px' }}>
+    <h4>
+      <span style={{ paddingRight: '0.5em' }}>{groupNodes.group.label ?? group}</span>
+      {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupBy == 'tags' && <TagHelp tag={group} showTitle />}</span>}
+      <b style={{ fontSize: '1.5em' }}>{fMeasure}</b>
+    </h4>
+    {isOpen && groupBy == 'tags' && <TagInfo tag={group} channels={channels} style={{ marginBottom: '1em' }} />}
+  </div>
+
+  if (!isOpen) return <BubbleDiv key={group} className='inline'>
+    {info}
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+      <BubbleSvg {...groupNodes} {...pack} />
+    </div>
+    <FullscreenIcon onClick={() => onOpenGroup(group)} />
+  </BubbleDiv>
+
+  return <Popup key={group + '|open'} isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
+    <ContainerDimensions >
+      {({ width, height }) => <BubbleDiv key={group}>
+        <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
+          {info}
+          <BubbleSvg {...groupNodes} {...pack} zoom={getZoomToFit(groupNodes, Math.min(width, height) - 20)} />
         </div>
         {!isOpen && <FullscreenIcon onClick={() => onOpenGroup(group)} />}
-      </BubbleDiv>
-
-      return isOpen ? <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)} >{contents}</Popup> : contents
-    }
-    )}</>
+      </BubbleDiv>}
+    </ContainerDimensions>
+  </Popup>
 }
 
 const SVGStyle = styled.svg`
@@ -89,27 +122,39 @@ const SVGStyle = styled.svg`
     }
   }
 `
+// function bubbleEquals(a: Readonly<BubblesProps>, b: Readonly<BubblesProps>) {
+//   const bubbleSelections = ({ colorBy, groupBy, measure, period, openGroup, openChannelId }: BubblesSelectionState) =>
+//     ({ colorBy, groupBy, measure, period, openGroup, openChannelId })
+//   const shallowProps = (p: BubblesProps) => {
+//     const { selections, onOpenChannel, onLoad, onSelection, ...rest } = p
+//     return rest
+//   }
+//   const res = shallowEquals(shallowProps(a), shallowProps(b))
+//     && jsonEquals(bubbleSelections(a.selections), bubbleSelections(b.selections))
+//   return res
+// }
 
 
-
-const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key }: {} & GroupedNodes & PackExtra) => {
+const BubbleSvg = memo(({ nodes, dim, zoom, channelClick: onChannelClick, showImg }: {} & GroupedNodes & PackProps) => {
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
   const z = zoom
-  const imgRatio = 0.9
+  const imgPad = 3
   const channelNodes = nodes.filter(n => n.data.type == 'channel')
     .map(n => ({
       ...n,
       x: (n.x + dx) * zoom,
       y: (n.y + dy) * zoom,
       r: n.r * zoom,
-      id: n.data.key
+      id: `${n.data.key}|${zoom}`
     }))
 
-  return <SVGStyle key={key} width={dim.w * z} height={dim.h * z} >
+  const showImage = (n: HierarchyCircularNode<ChannelNode>) => n.data.img && n.r > 10
+
+  return <SVGStyle width={dim.w * z} height={dim.h * z} >
     <defs>
-      {showImg && channelNodes.filter(n => n.data.img)
-        .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r * imgRatio} /></clipPath >)}
+      {showImg && channelNodes.filter(showImage)
+        .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath >)}
     </defs>
     <g>
       {channelNodes.map(n => {
@@ -122,13 +167,14 @@ const TagPack = ({ nodes, dim, zoom, channelClick: onChannelClick, showImg, key 
         }
         return <g key={id} transform={`translate(${x}, ${y})`}>
           <circle r={r} fill={n.data.color ?? 'var(--bg3)'} {...props} />
-          {showImg && n.data.img &&
-            <image x={- r * imgRatio} y={- r * imgRatio} width={r * imgRatio * 2}
+          {showImg && showImage(n) &&
+            <image x={- r - imgPad} y={- r - imgPad} width={(r + imgPad) * 2}
               href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
         </g>
       }
       )}
     </g>
   </SVGStyle>
-}
+}, (a, b) => a.zoom == b.zoom && a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data) && a?.dim.w == b?.dim.w && a?.showImg == b?.showImg)
+
 

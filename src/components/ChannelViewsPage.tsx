@@ -3,7 +3,8 @@ import React from 'react'
 import { delay, jsonEquals, shallowEquals } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { getChannels, GroupedNodes, channelMd, buildTagNodes, BubblesSelectionState, Channel, TagNodes, measureFormat, channelColOpts, ColumnValueMd, ColumnMdOpt, PageSelectionState } from '../common/Channel'
+import { buildChannelBubbleNodes, BubblesSelectionState, TagNodes } from '../common/ChannelBubble'
+import { getChannels, channelMd, Channel, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
 import { orderBy, sumBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
@@ -22,7 +23,7 @@ import { TagHelp, TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
 import { Popup } from './Popup'
-import { BubbleChart } from './BubbleChart'
+import { BubbleCharts } from './BubbleChart'
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
@@ -34,7 +35,7 @@ const FilterHeader = styled.h3`
 
 const navigate = (to: string) => history.replaceState({}, '', to)
 
-export const ChannelVideoViewsPage = () => {
+export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [indexes, setIndexes] = useState<ViewsIndexes>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
@@ -62,9 +63,9 @@ export const ChannelVideoViewsPage = () => {
   const period = parsePeriod(q.period) ?? defaultPeriod
   const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
-  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
+  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
   const onCloseChannel = () => setQuery({ openChannelId: null })
-  const onQuery = (s: BubblesSelectionState) => setQuery({ ...q, ...s })
+  const onQuery = (s: Partial<BubblesSelectionState>) => setQuery(s)
 
   return <div style={{ minHeight: '100vh' }}>
     {channels && defaultPeriod && indexes && <>
@@ -108,12 +109,12 @@ interface BubblesProps {
   width: number, onOpenChannel: (c: ChannelWithStats) => void
   indexes: ViewsIndexes
   selections: BubblesSelectionState
-  onSelection?: (d: PageSelectionState) => void
+  onSelection?: (d: BubblesSelectionState) => void
   defaultPeriod?: StatsPeriod
   onLoad?: () => void
 }
 
-const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
+const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [showImg] = useState(true) // always render sans image first
@@ -126,7 +127,7 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
 
   const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
   const { groupedNodes, zoom, packSize } = stats ?
-    buildTagNodes(Object.values(stats), derivedSelections, bubbleWidth) :
+    buildChannelBubbleNodes(Object.values(stats), derivedSelections, bubbleWidth) :
     { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
 
   useEffect(() => {
@@ -143,7 +144,9 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
     go()
   }, [JSON.stringify(period), indexes, channels])
 
-  useEffect(() => { ReactTooltip.rebuild() }, [groupBy])
+  useEffect(() => {
+    ReactTooltip.rebuild()
+  }, [groupBy])
 
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
@@ -169,31 +172,31 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
         <InlineSelect
           options={channelMd.measures.values}
           selected={measure}
-          onChange={o => onSelection({ ...selections, measure: o as any })}
+          onChange={o => onSelection({ measure: o as any })}
           itemRender={MeasureOption}
         />
         {['views', 'watchHours'].includes(measure) && <PeriodSelect
           periods={indexes.periods}
           period={period}
-          onPeriod={o => onSelection({ ...selections, period: periodString(o) })} />
+          onPeriod={o => onSelection({ period: periodString(o) })} />
         }
         by
         <InlineSelect
           options={channelColOpts}
-          selected={groupBy} onChange={o => onSelection({ ...selections, groupBy: o })}
+          selected={groupBy} onChange={o => onSelection({ groupBy: o })}
           itemRender={ColOption}
         />
         and colored by
         <InlineSelect
           options={channelColOpts}
           selected={colorBy}
-          onChange={o => onSelection({ ...selections, colorBy: o })}
+          onChange={o => onSelection({ colorBy: o })}
           itemRender={ColOption}
         />
       </FilterHeader>
       <SearchSelect
         popupStyle={{ right: filterOnRight ? '0px' : null }}
-        onSelect={(c: Channel) => onSelection({ ...selections, openChannelId: c.channelId })}
+        onSelect={(c: Channel) => onSelection({ openChannelId: c.channelId })}
         search={(q) => new Promise((resolve) => resolve(
           orderBy(
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
@@ -207,27 +210,17 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
     </div>
 
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      <BubbleChart
-        {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg, channels: values(channels) }}
-        onOpenGroup={(g) => onSelection({ ...selections, openGroup: g })}
-        key={JSON.stringify(period)} />
+      <BubbleCharts
+        {... {
+          groupedNodes, selections: derivedSelections, channels: values(channels),
+          pack: { zoom, packSize, channelClick, showImg, key: JSON.stringify(period) }
+        }}
+        onOpenGroup={(g) => onSelection({ openGroup: g })}
+      />
     </div>
   </div>
-}, (a, b) => {
-  return bubbleEquals(a, b)
-})
-
-function bubbleEquals(a: Readonly<BubblesProps>, b: Readonly<BubblesProps>) {
-  const bubbleSelections = ({ colorBy, groupBy, measure, period, openGroup }: BubblesSelectionState) =>
-    ({ colorBy, groupBy, measure, period, openGroup })
-  const shallowProps = (p: BubblesProps) => {
-    const { selections, onOpenChannel, onLoad, onSelection, ...rest } = p
-    return rest
-  }
-  const res = shallowEquals(shallowProps(a), shallowProps(b))
-    && jsonEquals(bubbleSelections(a.selections), bubbleSelections(b.selections))
-  return res
 }
+
 
 const MeasureOptionStyle = styled.div`
   padding: 0.1em 0 0.2em 0;
