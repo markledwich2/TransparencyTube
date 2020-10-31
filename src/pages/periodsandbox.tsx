@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { useEffect, useState } from "react"
 import { channelMd } from '../common/Channel'
 import { getViewsIndexes, ViewsIndexes } from '../common/RecfluenceApi'
-import { MeasureOption } from '../components/ChannelVideoViews'
+import { MeasureOption } from '../components/ChannelViewsPage'
 import { Footer } from '../components/Footer'
 import { InlineSelect } from '../components/InlineSelect'
 import Layout from '../components/Layout'

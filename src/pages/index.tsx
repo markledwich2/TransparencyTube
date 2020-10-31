@@ -1,7 +1,7 @@
 import React from "react"
 
 import Layout from "../components/Layout"
-import { ChannelVideoViewsPage } from '../components/ChannelVideoViews'
+import { ChannelViewsPage } from '../components/ChannelViewsPage'
 import SEO from '../components/SEO'
 import { Footer } from '../components/Footer'
 import styled from 'styled-components'
@@ -44,7 +44,7 @@ const IndexPage = () => <Layout>
       <p className="subtle">Note - Channel classification is based on video content, not the identity of the channel creator. Please contact us if you think a channel has been misclassified or is missing.</p>
     </div>
   </PurposeDiv>
-  <ChannelVideoViewsPage />
+  <ChannelViewsPage />
   <Footer />
 </Layout>
 
