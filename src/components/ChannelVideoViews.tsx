@@ -146,14 +146,18 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
       const rawStats = await indexes.channelStatsByPeriod.getRows(period)
       setRawStats(rawStats)
       setLoading(false)
-      await delay(1000)
+      await delay(1000) // wait a sec before rebuilding tooltips. This makes it work more consistently but i'm not sure why
       ReactTooltip.rebuild()
+      await delay(1000) // wait a sec before allowing other things to load
       onLoad?.()
     }
     go()
   }, [JSON.stringify(period), indexes, channels])
 
-  useEffect(() => { ReactTooltip.rebuild() }, [groupBy])
+  useEffect(() => {
+    if (selections.groupBy)
+      ReactTooltip.rebuild()
+  }, [selections.groupBy])
 
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
@@ -165,15 +169,6 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
   const filterOnRight = width > 800
 
   return <div>
-    <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
-      channel={stats[id]}
-      mode='min'
-      indexes={indexes}
-      defaultPeriod={period}
-    /> : <></>} />
-
-    <TagTip channels={values(channels)} />
-
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
       <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
@@ -219,6 +214,15 @@ const Bubbles = memo(({ channels, width, onOpenChannel, indexes, selections, onS
     <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
       <BubbleChart {... { groupedNodes, selections: derivedSelections, zoom, packSize, channelClick, showImg }} key={JSON.stringify(period)} />
     </div>
+
+    <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
+      channel={stats[id]}
+      mode='min'
+      indexes={indexes}
+      defaultPeriod={period}
+    /> : <></>} />
+
+    <TagTip channels={values(channels)} />
   </div>
 }, (a, b) => {
   return bubbleEquals(a, b)

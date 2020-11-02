@@ -1,5 +1,5 @@
 import React, { useState, useEffect, FunctionComponent } from 'react'
-import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
+import { dateFormat, delay, hoursFormat, numFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
@@ -41,7 +41,9 @@ export const Videos = ({ channel, channels, onOpenChannel, indexes, period, vide
         .then(vids => {
           setVideos(vids)
           setLoading(false)
-          ReactTooltip.rebuild()
+          delay(2000).then(() => {
+            ReactTooltip.rebuild()
+          })
         })
     }
   }, [channel, period, videoFilter, index, limit])
