@@ -30,7 +30,6 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
     setStatsLoading(true)
     indexes.channelStatsById.getRows({ ...period, channelId: channel.channelId }).then(c => {
       setStats(first(c))
-      console.log('setStats', channel.channelId, period, c)
       setStatsLoading(false)
     })
   }, [period])

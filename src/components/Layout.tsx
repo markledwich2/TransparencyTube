@@ -85,7 +85,7 @@ const GlobalStyle = createGlobalStyle`
       outline: none;
       overflow-y: auto;
       max-height: 90vh;
-      max-width: 90vw;
+      max-width: 95vw;
       top: 50%;
       left: 50%;
       right: auto;
