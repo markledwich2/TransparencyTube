@@ -1,12 +1,12 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
+import { Channel, md, ColumnValueMd, measureFormat } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes, VideoViews } from '../common/RecfluenceApi'
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
@@ -15,14 +15,15 @@ import { Markdown } from './Markdown'
 export interface TopVideosProps {
   channel: Channel
   mode: 'min' | 'max'
-  indexes: ViewsIndexes
-  defaultPeriod: StatsPeriod
+  indexes?: ChannelViewIndexes
+  defaultPeriod?: StatsPeriod
 }
 
 export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVideosProps) => {
   const [stats, setStats] = useState<ChannelStats>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [period, setPeriod] = useState(defaultPeriod)
+  const [videos, setVideos] = useState<VideoViews[]>(null)
 
   useEffect(() => {
     if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
@@ -32,6 +33,8 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
       setStats(first(c))
       setStatsLoading(false)
     })
+    indexes.channelVideo.getRows({ ...period, channelId: channel.channelId }).then(setVideos)
+    //TODO: build tooltips, set loading property on videos
   }, [period])
 
   if (!channel) return <></>
@@ -48,7 +51,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
       </div>
       {mode == 'max' && <>
         <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
-        <Videos channel={c} indexes={indexes} period={period} />
+        <Videos videos={videos} />
       </>}
     </FlexCol>
   </FlexCol>
@@ -87,8 +90,8 @@ export interface ChannelTitleProps {
 }
 
 export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
-  const tags = indexBy(channelMd.tags.values, t => t.value)
-  const lr = channelMd.lr.values.find(i => i.value == c.lr)
+  const tags = indexBy(md.channel.tags.values, t => t.value)
+  const lr = md.channel.lr.values.find(i => i.value == c.lr)
 
   const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)

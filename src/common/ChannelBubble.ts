@@ -51,7 +51,7 @@ export interface BubblesSelectionState {
 export const getGroupData = (channels: ChannelWithStats[], display: BubblesSelectionState) => {
   const { measure, groupBy, colorBy } = display
   const val = (c: ChannelWithStats) => c[measure] ?? 0
-  const groupMd = indexBy(channelMd[groupBy].values, o => o.value)
+  const groupMd = indexBy(channelMd[groupBy].values.filter(g => g.color), o => o.value)
   const colorMd = indexBy(channelMd[colorBy].values, o => o.value)
 
   const groups = values(groupMd).map(g => {

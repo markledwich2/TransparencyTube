@@ -11,17 +11,29 @@ export interface videoViewsQuery {
   top?: number
 }
 
-export interface VideoViews extends StatsPeriod {
+export interface VideoCommon {
   channelId: string
   channelTitle: string
   videoId: string
   videoTitle: string
   videoViews: number
-  periodViews: number
-  watchHours: number
   durationSecs: number
   uploadDate: string
+}
+
+export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews).periodViews != undefined
+export interface VideoViews extends StatsPeriod, VideoCommon {
+  periodViews: number
+  watchHours: number
   rank: number
+}
+
+export const isVideoRemoved = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
+export interface VideoRemoved extends VideoCommon {
+  errorType: string
+  copyrightHolder?: string
+  lastSeen: string
+  errorUpdated: string
 }
 
 export type ChannelKey = { channelId: string }
@@ -35,31 +47,25 @@ export interface ChannelStats extends StatsPeriod {
   latestRefresh?: string
   videos?: number
 }
-
 export type ChannelWithStats = ChannelStats & Channel
-
 export const isChannelWithStats = (c: any): c is ChannelWithStats => c.views
 
-export interface ViewsIndexes {
+
+export interface ChannelViewIndexes {
   periods: StatsPeriod[]
-  video: VideoViewsIndex<StatsPeriod>
   channelVideo: VideoViewsIndex<ChannelAndPeriodKey>
   channelStatsByPeriod: BlobIndex<ChannelStats, StatsPeriod>
   channelStatsById: BlobIndex<ChannelStats, ChannelKey>
 }
 
-export const getViewsIndexes: () => Promise<ViewsIndexes> = async () => {
-  const [video, channelVideo, channelStatsById, channelStatsByPeriod] = await Promise.all([
-    blobIndex<VideoViews, StatsPeriod>('top_videos'),
+export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => {
+  const [channelVideo, channelStatsById, channelStatsByPeriod] = await Promise.all([
     blobIndex<VideoViews, ChannelAndPeriodKey>('top_channel_videos'),
     blobIndex<VideoViews, ChannelKey>('channel_stats_by_id'),
     blobIndex<VideoViews, StatsPeriod>('channel_stats_by_period')
   ])
-  const [videoPeriods] = await Promise.all([video, channelVideo]
-    .map(i => getJsonl<StatsPeriod>(i.baseUri.addPath('periods.jsonl.gz').url, noCacheReq)))
-  const indexes: ViewsIndexes = {
-    periods: videoPeriods,
-    video,
+  const indexes: ChannelViewIndexes = {
+    periods: await getJsonl<StatsPeriod>(channelVideo.baseUri.addPath('periods.jsonl.gz').url, noCacheReq),
     channelVideo,
     channelStatsByPeriod,
     channelStatsById
@@ -67,14 +73,21 @@ export const getViewsIndexes: () => Promise<ViewsIndexes> = async () => {
   return indexes
 }
 
+export const indexTopVideos = async () => {
+  const topVideos = await blobIndex<VideoViews, StatsPeriod>('top_videos')
+  const periods = await getJsonl<StatsPeriod>(topVideos.baseUri.addPath('periods.jsonl.gz').url, noCacheReq)
+  return { topVideos, periods }
+}
+
+export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
+
 export const getVideoViews = async (index: VideoViewsIndex<StatsPeriod>, periodFilter: StatsPeriod, videoFilter: VideoFilter, channels: Record<string, Channel>,
   limit?: number): Promise<VideoViews[]> => {
   try {
     const vidViews = (await index.getRows(periodFilter))
       .map((v, i) => ({ ...v, rank: i + 1 }))
       .filter(v => videoFilterIncludes(videoFilter, v, channels))
-      .slice(0, limit ?? 20)
-    return vidViews
+    return limit ? vidViews.slice(0, limit ?? 20) : vidViews
   }
   catch (e) {
     console.log('error getting videos', e)

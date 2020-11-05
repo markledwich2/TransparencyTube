@@ -113,7 +113,7 @@ export const FlexRow = styled.div<{ space?: string }>`
   display:flex;
   flex-direction: row;
   > * {
-    padding-right: ${p => p.space ?? '0.6em'};
+    margin-right: ${p => p.space ?? '0.6em'};
   }
 `
 

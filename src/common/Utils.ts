@@ -136,3 +136,9 @@ export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit: TimeUn
 }
 
 export const safeLocation = (): Location => typeof window === 'undefined' ? null : window.location
+
+export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
+
+export type PartialRecord<K extends keyof any, T> = {
+  [P in K]?: T
+}
