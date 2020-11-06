@@ -64,7 +64,7 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
         : compare(f.first, filter) <= 0 && compare(f.last, filter) >= 0
 
     const files = index.keyFiles.filter(fileOverlap)
-    console.log('blobIndex. filter, matching files.', filter, files)
+    //console.log('blobIndex. filter, matching files.', filter, files)
     const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
     const filtered = rows.filter((r: TKey) => {
       if (isFilterRange(filter)) {

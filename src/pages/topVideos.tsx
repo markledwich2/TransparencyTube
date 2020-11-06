@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react"
 import { indexBy } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
-import { Channel, getChannels } from '../common/Channel'
+import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, getVideoViews, indexChannelViews, indexTopVideos, VideoRemoved, VideoViews } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexTopVideos, VideoRemoved, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout from "../components/Layout"
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from '../components/Period'
 import { Spinner } from '../components/Spinner'
 import { Videos } from '../components/Video'
-import { InlineVideoFilter, VideoFilter } from '../components/VideoFilter'
+import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
 import { navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'
 import { Footer } from '../components/Footer'
+import { InlineValueFilter } from '../components/ValueFilter'
+import { videoWithEx } from '../common/Video'
 
 interface QueryState extends Record<string, string> {
   period?: string
@@ -43,8 +45,10 @@ const TopVideosPage = () => {
   useEffect(() => {
     if (!idx || !channels) return
     setLoading(true)
-    getVideoViews(idx.topVideos, period, videoFilter, channels).then(vids => {
-      setVideos(vids)
+    idx.topVideos.getRows(period).then(vids => {
+      const vidsEx = vids.map(v => videoWithEx(v, channels))
+        .filter(v => videoFilterIncludes(videoFilter, v))
+      setVideos(vidsEx)
       setLoading(false)
     })
   }, [idx, channels, period ? periodString(period) : null, videoFilter])
@@ -59,13 +63,13 @@ const TopVideosPage = () => {
         setQuery({ period: periodString(p) })
       }} />
 
-  filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} showFilters={['tags', 'lr']} />
+  filtered to <InlineValueFilter md={md} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />
     </FilterHeader>
-    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels loading={loading} />
+    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels showThumb loading={loading} />
+    <Footer />
     <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
       {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={period} />}
     </Popup>
-    <Footer />
   </Layout>
 }
 

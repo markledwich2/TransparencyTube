@@ -4,7 +4,7 @@ import { delay, jsonEquals, navigateNoHistory, shallowEquals } from '../common/U
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { buildChannelBubbleNodes, BubblesSelectionState, TagNodes } from '../common/ChannelBubble'
-import { getChannels, channelMd, Channel, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
+import { getChannels, md, Channel, ColumnValueMd, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
 import { orderBy, sumBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
@@ -137,12 +137,13 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   if (!rawStats) return <Spinner />
 
   const filterOnRight = width > 800
+  const colOptions = getColOptions('channel')
 
   return <div>
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
       <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
-          options={channelMd.measures.values}
+          options={md.channel.measures.values}
           selected={measure}
           onChange={o => onSelection({ measure: o as any })}
           itemRender={MeasureOption}
@@ -154,13 +155,13 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
         }
         by
         <InlineSelect
-          options={channelColOpts}
+          options={colOptions}
           selected={groupBy} onChange={o => onSelection({ groupBy: o })}
           itemRender={ColOption}
         />
         and colored by
         <InlineSelect
-          options={channelColOpts}
+          options={colOptions}
           selected={colorBy}
           onChange={o => onSelection({ colorBy: o })}
           itemRender={ColOption}

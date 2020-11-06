@@ -81,17 +81,4 @@ export const indexTopVideos = async () => {
 
 export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
 
-export const getVideoViews = async (index: VideoViewsIndex<StatsPeriod>, periodFilter: StatsPeriod, videoFilter: VideoFilter, channels: Record<string, Channel>,
-  limit?: number): Promise<VideoViews[]> => {
-  try {
-    const vidViews = (await index.getRows(periodFilter))
-      .map((v, i) => ({ ...v, rank: i + 1 }))
-      .filter(v => videoFilterIncludes(videoFilter, v, channels))
-    return limit ? vidViews.slice(0, limit ?? 20) : vidViews
-  }
-  catch (e) {
-    console.log('error getting videos', e)
-  }
-}
-
 

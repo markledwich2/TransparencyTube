@@ -1,31 +1,38 @@
 import React, { useEffect, useState } from "react"
-import { first, indexBy, uniq } from 'remeda'
+import { filter, groupBy, indexBy, map, pipe, uniq } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
-import { Channel, getChannels } from '../common/Channel'
+import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, getVideoViews, indexChannelViews, indexRemovedVideos, indexTopVideos, VideoRemoved, VideoViews } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexRemovedVideos, VideoRemoved } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
-import Layout from "../components/Layout"
-import { Spinner } from '../components/Spinner'
+import Layout, { FlexRow } from "../components/Layout"
 import { Videos } from '../components/Video'
-import { FilterValues, InlineVideoFilter, VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
+import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
-import { dateFormat, navigateNoHistory } from '../common/Utils'
+import { navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'
-import { orderBy } from '../common/Pipe'
-import { DateRangePicker, DateRangeProps } from 'react-date-range'
-import 'react-date-range/dist/styles.css'
-import 'react-date-range/dist/theme/default.css'
+import { entries, orderBy } from '../common/Pipe'
 import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
-import { InlineForm } from '../components/InlineForm'
-import { utcDays } from 'd3'
-import styled from 'styled-components'
+import { DateRangeValue, InlineDateRange } from '../components/DateRange'
+import SearchText from '../components/SearchText'
+import { StatsPeriod } from '../components/Period'
+import { Footer } from '../components/Footer'
+import ReactTooltip from 'react-tooltip'
+import { InlineValueFilter } from '../components/ValueFilter'
+import { videoWithEx } from '../common/Video'
 
 interface QueryState extends Record<string, string> {
   openChannelId?: string
   start?: string
   end?: string
+  search?: string
+}
+
+const searchIncludes = (search: string, v: VideoRemoved) => {
+  if (!search) return true
+  const re = new RegExp(`${search}`, 'i')
+  return v.videoTitle?.search(re) > 0 || v.channelTitle?.search(re) > 0
 }
 
 const RemovedVideosPage = () => {
@@ -34,9 +41,9 @@ const RemovedVideosPage = () => {
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
-  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null })
-  const [filterValues, setFilterValues] = useState<FilterValues>(null)
+  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null, errorType: null })
   const [loading, setLoading] = useState(false)
+  const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
 
   const dateRange = {
     startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -7),
@@ -45,9 +52,12 @@ const RemovedVideosPage = () => {
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
-    indexChannelViews().then(setChannelIndexes)
+    indexChannelViews().then(ci => {
+      setChannelIndexes(ci)
+      setDefaultPeriod(ci?.periods.find(p => p.periodType == 'd7'))
+    })
     indexRemovedVideos().then(setIdx)
-  }, [JSON.stringify(dateRange)])
+  }, [])
 
   useEffect(() => {
     if (!idx || !channels) return
@@ -57,120 +67,47 @@ const RemovedVideosPage = () => {
         from: { lastSeen: dateRange.startDate.toISOString() },
         to: { lastSeen: dateRange.endDate.toISOString() }
       }).then(vids => {
-        setFilterValues(videos ? { errorType: uniq(vids.map(v => v.errorType)) } : null)
-        setVideos(orderBy(vids.filter(v => videoFilterIncludes(videoFilter, v, channels)), v => v.lastSeen, 'desc'))
+        setVideos(vids)
+        ReactTooltip.rebuild()
         setLoading(false)
       })
-  }, [idx, channels, videoFilter])
+  }, [idx, channels, q.start, q.end])
 
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
 
+  const vidsFiltered = videos ? pipe(videos,
+    map(v => videoWithEx(v, channels)),
+    filter(v => videoFilterIncludes(videoFilter, v) && searchIncludes(q.search, v)),
+    orderBy(v => v.videoViews, 'desc')
+  ) : null
+
   return <Layout>
-    <FilterHeader style={{ marginBottom: '2em' }}>
-      Removed videos filtered to
-      <InlineVideoFilter
-        filter={videoFilter}
-        onFilter={(f) => {
-          console.log('filter', f)
-          setVideoFilter(f)
-        }}
-        showFilters={['tags', 'lr', 'errorType']}
-        filterValues={filterValues}
-      />
-      within period
-      <InlineDateRange
-        ranges={[dateRange]}
-        onChange={(v: any) => {
-          const r = (v as { range1: DateRange }).range1 // in practice this is different to the types 💢
-          console.log('range', r)
-          return setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })
-        }}
-      />
-    </FilterHeader>
-    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels loading={loading} defaultLimit={100} groupChannels />
+    <FlexRow style={{ justifyContent: 'space-between', margin: '1em 0 2em' }}>
+      <FilterHeader>
+        Removed videos on
+        <InlineDateRange
+          range={dateRange}
+          onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
+        />
+        filtered to
+        <InlineValueFilter
+          filter={videoFilter}
+          onFilter={setVideoFilter}
+          md={md}
+          rows={vidsFiltered}
+        />
+      </FilterHeader>
+      <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
+    </FlexRow>
+    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered} showChannels loading={loading} defaultLimit={100} groupChannels />
+
+    <Footer />
+
     <Popup isOpen={openChannel != null} onRequestClose={() => setQuery({ openChannelId: null })}>
-      {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} />}
+      {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={defaultPeriod} />}
     </Popup>
   </Layout>
 }
-
-interface DateRange {
-  startDate: Date
-  endDate: Date
-}
-
-
-const DateRangeStyle = styled.div`
-  .rdrDateRangePickerWrapper, .rdrDateDisplayWrapper, .rdrDefinedRangesWrapper, .rdrStaticRange, .rdrMonths, .rdrMonthAndYearWrapper {
-    background-color: var(--bg1);
-    color: var(--fg1);
-  }
-
-  .rdrDateDisplayItem, .rdrDateDisplayItemActive {
-    background-color: var(--bg1);
-    input {
-      color: var(--fg1);
-    }
-  }
-
-  .rdrNextPrevButton {
-    background: var(--bg3);
-    &:hover {
-      background: var(--bg4);
-    }
-  }
-
-  .rdrPprevButton i {
-      border-color: transparent var(--fg3) transparent transparent !important;
-  }
-
-  .rdrNextButton i {
-      border-color: transparent transparent transparent var(--fg3) !important;
-  }
-
-  .rdrDayToday .rdrDayNumber span:after {
-    background: var(--bg-feature);
-  }
-
-  button.rdrDay .rdrDayNumber span {
-    color: var(--fg);
-  }
-
-  button.rdrDayPassive .rdrDayNumber span {
-    color: var(--fg3);
-  }
-
-  .rdrStaticRange {
-    border-bottom: 1px solid var(--bg2);
-    background: var(--bg1);
-
-
-    &:hover, &:focus{
-      .rdrStaticRangeLabel{
-        background: var(--bg2);
-      }
-    }
-  }
-
-  .rdrStaticRange.rdrStaticRangeSelected span {
-      color:var(--fg-feature);
-    }
-
-  .rdrDefinedRangesWrapper {
-    border-right: solid 1px var(--bg2);
-  }
-
-  .rdrSelected, .rdrInRange, .rdrStartEdge, .rdrEndEdge{
-    background: var(--bg-feature);
-  }
-
-`
-
-const InlineDateRange = (p: DateRangeProps) => <InlineForm
-  value={first(p.ranges as any) as DateRange}
-  inlineRender={r => r ? <span>{dateFormat(r.startDate)} - {dateFormat(r.endDate)}</span> : <></>}>
-  <DateRangeStyle><DateRangePicker {...p} /></DateRangeStyle>
-</InlineForm>
 
 export default RemovedVideosPage

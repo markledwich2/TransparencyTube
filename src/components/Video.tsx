@@ -9,7 +9,8 @@ import { Tip } from './Tooltip'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoRemoved } from '../common/RecfluenceApi'
 import { Channel } from '../common/Channel'
 import { chunk, groupBy } from 'remeda'
-import { entries, orderBy } from '../common/Pipe'
+import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
+import ContainerDimensions from 'react-container-dimensions'
 
 const tipId = 'video-tip'
 
@@ -26,11 +27,14 @@ interface VideosProps {
 
 const chanVidChunk = 3
 
+
+const videoWidth = 400
+
 export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb, groupChannels, defaultLimit }: VideosProps) => {
   const [limit, setLimit] = useState(defaultLimit ?? 20)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>()
 
-  if (!videos || !channels) return <Spinner />
+  if (!videos) return <Spinner />
 
   const groupedVids = groupChannels ? entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: e[1] })) : null
 
@@ -40,24 +44,51 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
       filter: loading ? loadingFilter : null,
       display: 'flex',
       flexDirection: 'row',
-      flexWrap: 'wrap'
+      flexWrap: 'wrap',
+      width: '100%'
     }}>
       {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
-      {groupedVids && groupedVids.slice(0, limit).map((g) => {
-        const c = channels[g.channelId]
-        const showAll = showAlls?.[g.channelId] ?? false
-        const vidsToShow = showAll ? chunk(g.vids, chanVidChunk) : [g.vids.slice(0, chanVidChunk)]
-        return vidsToShow.map((vids, i) => <div key={`${g.channelId}|${i}`}>
-          {i == 0 && <VideoChannel c={c} onOpenChannel={onOpenChannel} />}
-          {vids.map((v, i) => <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb} v={v} />)}
-          {i == vidsToShow.length - 1 && g.vids.length > chanVidChunk && <a onClick={_ => setShowAlls({ ...showAlls, [c.channelId]: !showAll })}>
-            {showAll ? `show less` : `show all ${g.vids.length}`}
-          </a>}
-        </div>)
-      })}
-      {!groupedVids && videos && videos.slice(0, limit).map(v => <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb}
+      {groupedVids &&
+        <ContainerDimensions >
+          {({ width }) => {
+            const numCols = Math.max(Math.floor(width / videoWidth), 1)
+            // flex doesn't do a column wrap. Se we do this ourselves
+            var colGroups: { channelId: string, channel: Channel, vidsToShow: VideoCommon[], showAll: boolean, showLess: boolean, totalVids: number }[][] =
+              [...Array(numCols)].map(_ => [...new Array(0)])
+            groupedVids.slice(0, limit).forEach(g => {
+              const channel = channels[g.channelId]
+              const showAll = showAlls?.[g.channelId] ?? false
+              const showLess = g.vids.length > chanVidChunk
+              const vidsToShow = showAll ? g.vids : g.vids.slice(0, chanVidChunk)
+              const colG = minBy(colGroups, cg => sumBy(cg, g => g.vidsToShow.length))
+              const v = { channelId: g.channelId, channel, vidsToShow, showAll, showLess, totalVids: g.vids.length }
+              colG.push(v)
+            })
+
+            return <FlexRow>
+              {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
+                const { vidsToShow, channelId, channel, showAll, showLess, totalVids } = g
+                return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
+                  {i == 0 && <VideoChannel c={channel} onOpenChannel={onOpenChannel} />}
+                  <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb} v={v} style={{ width: (videoWidth) }} />
+                  {i == vidsToShow.length - 1 && (showLess || showAll) &&
+                    <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
+                      {showAll ? `show less` : `show all ${totalVids}`}
+                    </a>}
+                </div>)
+              })}
+              </FlexCol>
+              )}
+            </FlexRow>
+          }}
+        </ContainerDimensions>
+      }
+      {!groupedVids && videos && videos.slice(0, limit).map(v => <Video
+        key={v.videoId}
+        onOpenChannel={onOpenChannel}
+        showThumb={showThumb}
         v={v}
-        style={{ maxWidth: '100%' }}
+        style={{ width: '600px', maxWidth: '100%' }}
         c={showChannels && channels && channels[v.channelId]} />)}
     </div>
     <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
@@ -65,7 +96,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
     </div>
     {showChannels && <Tip id={tipId} getContent={(id) => {
       if (!id || !channels[id]) return <></>
-      return <ChannelTitle c={channels[id] as ChannelWithStats} />
+      return <ChannelDetails channel={channels[id] as ChannelWithStats} mode='min' />
     }} />}
   </div>
 }
@@ -121,8 +152,8 @@ export const Video = ({ v, style, c, onOpenChannel, showThumb }: VideoProps) => 
           {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
           {isVideoViews(v) && <div className='rank'>{v.rank}</div>}
         </div>}
-        <FlexCol style={{ width: '28em', color: 'var(--fg1)' }} space='0.2em'>
-          <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>{v.videoTitle}</h4></VideoA>
+        <FlexCol style={{ color: 'var(--fg1)' }} space='0.2em'>
+          <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)', maxWidth: '24em' }}>{v.videoTitle}</h4></VideoA>
           <FlexRow space='0.7em' style={{ alignItems: 'baseline', flexWrap: 'wrap' }}>
             {fPeriodViews && <div><span><b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b></span>
               {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}

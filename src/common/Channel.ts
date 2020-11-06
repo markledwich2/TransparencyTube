@@ -1,9 +1,9 @@
 
 import { getJsonl, hoursFormat, numFormat } from './Utils'
 import { indexBy, map, pipe } from 'remeda'
-import { orderBy, sumBy } from './Pipe'
-import { Opt } from '../components/InlineSelect'
+import { entries, orderBy, sumBy } from './Pipe'
 import { blobCfg } from './Cfg'
+import { ColumnMd, Opt } from './Metadata'
 
 export interface Channel {
   channelId: string
@@ -21,13 +21,7 @@ export interface Channel {
   publicCreatorNotes?: string
 }
 
-export interface ColumnMd {
-  label?: string
-  desc?: string
-  values: ColumnValueMd<string>[]
-}
-
-export interface ColumnValueMd<T> extends Opt<T> { color?: string, format?: (n: number) => string, desc?: string }
+export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
 
 
 export const hiddenTags = ['Black', 'LGBT']
@@ -61,7 +55,7 @@ export const md = {
         { value: 'SocialJustice', label: 'Social Justice', color: '#56b881', desc: 'Focused on the problems of racism and sexism. Places a particular importance on grievances from historically oppressed identities. Skeptical of the role genetics in human behavior and concerned about speech that might cause harm. Content in reaction to Anti-SJW or conservative content.' },
         { value: 'Socialist', color: '#6ec9e0', desc: 'Focus on the problems of capitalism. Endorse the view that capitalism is the source of most problems in society. Critiques of aspects of capitalism that are more specific (i.e. promotion of fee healthcare or a large welfare system or public housing) don’t qualify for this tag. Promotes alternatives to capitalism. Usually some form of either  Social Anarchist  (stateless egalitarian communities) or Marxist (nationalized production and a way of viewing society though class relations and social conflict).' },
         { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500', desc: 'Identifies-with/is-proud-of the superiority of “whites” and western Civilization. An example of identifying with “western heritage”  would be to refer to the sistine chapel, or bach as “our culture”.Promotes or defends: An ethno-state where residence or citizenship would be limited to “whites” OR a type of nationalist that seek to maintain a white national identity (white nationalism), historical narratives focused on the “white” lineage and its superiority, Essentialist concepts of racial differences. Are concerned about whites becoming a minority population in the US.' },
-        { value: 'StateFunded', label: 'State Funded' }
+        { value: 'StateFunded', label: 'State Funded', desc: '' }
       ]
     } as ColumnMd,
     lr: {
@@ -115,18 +109,13 @@ Click on a channel to see more detail about the collection of video statistics.
   }
 }
 
-export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
 
-// export const channelColOpts: ColumnMdOpt[] = entries(channelMd).map(([value, col]) =>
-//   ({ value: value as keyof Channel, label: col.label, desc: col.desc }))
 
-/**
- * Gets column metadata. Provides somde derived data that don't exist directly on the metadata (e.g. col default labels)
- */
-export const colMd = (table: string, col: string): ColumnMd => {
-  const colMd = md[table][col] as ColumnMd
-  return { label: col, ...colMd }
+export const getColOptions = (table: keyof typeof md) => {
+  return Object.entries(md[table]).map(([value, col]) => ({ value: value as keyof Channel, label: col.label, desc: col.desc }))
 }
+
+
 
 //export const colLabel = (table: string, col: string) => md[table][col].label ?? col
 

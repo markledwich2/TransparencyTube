@@ -57,22 +57,25 @@ interface InlineFormOptions<T> {
   inlineRender?: (v: T) => JSX.Element
   popupStyle?: CSSProperties
   keepOpenOnChange?: boolean
+  onClose?: () => void
 }
 
-export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange }: PropsWithChildren<InlineFormOptions<T>>) => {
+export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose }: PropsWithChildren<InlineFormOptions<T>>) => {
   const [open, setOpen] = useState<T>(null)
   const popupRef = useRef<HTMLDivElement>()
 
-
   const handleClick = ({ target }) => {
     if (popupRef.current?.contains(target)) return
-    setOpen(null)
+    if (open) {
+      setOpen(null)
+      onClose?.()
+    }
   }
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  }, [open, onClose])
 
   useEffect(() => {
     keepInView(popupRef.current)
@@ -80,7 +83,8 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
 
   return <OuterStyle>
     <InlineStyle onClick={e => {
-      if (!open) setOpen(value)
+      if (!open)
+        setOpen(value)
     }}>
       {inlineRender ? inlineRender(value) : value?.toString()}
       <ChevIcon />

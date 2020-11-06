@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Channel, channelMd, getChannels } from '../common/Channel'
+import { Channel, getChannels } from '../common/Channel'
 import { orderBy } from '../common/Pipe'
 import { ChannelTitle } from '../components/Channel'
 import Layout from '../components/Layout'

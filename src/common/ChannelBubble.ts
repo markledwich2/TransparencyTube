@@ -2,7 +2,7 @@ import { pack, hierarchy } from 'd3'
 import orderBy from 'lodash.orderby'
 import { pipe, map, indexBy, flatMap, filter, first } from 'remeda'
 import { blobCfg } from './Cfg'
-import { Channel, channelMd, hiddenTags, ColumnValueMd } from './Channel'
+import { Channel, md, hiddenTags, ColumnValueMd, ColumnMd } from './Channel'
 import { sumBy, values, minBy, maxBy, max } from './Pipe'
 import { ChannelWithStats } from './RecfluenceApi'
 import { getJsonl } from './Utils'
@@ -51,6 +51,8 @@ export interface BubblesSelectionState {
 export const getGroupData = (channels: ChannelWithStats[], display: BubblesSelectionState) => {
   const { measure, groupBy, colorBy } = display
   const val = (c: ChannelWithStats) => c[measure] ?? 0
+  const channelMd: Record<string, ColumnMd> = md.channel
+
   const groupMd = indexBy(channelMd[groupBy].values.filter(g => g.color), o => o.value)
   const colorMd = indexBy(channelMd[colorBy].values, o => o.value)
 

@@ -1,7 +1,7 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, md, ColumnValueMd, measureFormat } from '../common/Channel'
+import { Channel, md, measureFormat } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
@@ -51,7 +51,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
       </div>
       {mode == 'max' && <>
         <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
-        <Videos videos={videos} />
+        <Videos videos={videos} showThumb />
       </>}
     </FlexCol>
   </FlexCol>
@@ -172,7 +172,7 @@ const TagDiv = styled.div`
 
 const TagStyle = styled.span`
   display: inline-block;
-  background-color: rgb(66, 66, 66);
+  background-color: var(--bg4);
   font-size: 0.9em;
   font-weight: bold;
   line-height: 1.6;

@@ -66,6 +66,12 @@ const GlobalStyle = createGlobalStyle`
     height: 1.4em;
     width: 1.4em;
     color: var(--fg2);
+    &.clickable {
+      &:hover {
+        cursor: pointer;
+        fill: var(--fg-feature);
+      }
+    }
   }
 
   div.${popupClasses.popup} {
