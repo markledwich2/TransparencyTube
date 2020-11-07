@@ -90,7 +90,7 @@ const RemovedVideosPage = () => {
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
 
   const vidsFiltered = videos ? pipe(videos,
-    map(v => videoWithEx(v, channels)),
+    map(v => ({ ...videoWithEx(v, channels), copyrightHolder: v.copyrightHolder?.substring(0, 15) })), //TODO: use css. This is a shortcut for now
     filter(v => videoFilterIncludes(videoFilter, v) && searchIncludes(q.search, v)),
     orderBy(v => v.videoViews, 'desc')
   ) : null
