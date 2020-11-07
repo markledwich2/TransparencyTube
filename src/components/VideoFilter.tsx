@@ -8,7 +8,8 @@ import { FilterState } from './ValueFilter'
 export interface VideoFilter extends FilterState {
   tags?: string[],
   lr?: string[],
-  errorType?: string[]
+  errorType?: string[],
+  copyrightHolder?: string[]
 }
 
 export interface VideoChannelExtra { tags: string[], lr: string }

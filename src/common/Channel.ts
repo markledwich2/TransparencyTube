@@ -102,7 +102,6 @@ Click on a channel to see more detail about the collection of video statistics.
     errorType: {
       label: 'Removed Reason',
       values: [
-        { value: 'Detected missing', desc: `This video was missing from the channel video list, but we haven't determined the reason yet` },
         { value: 'Removed by uploader', color: '#8a8acb', label: 'Removed by creator', desc: `The creator removed a video that was once public` },
         { value: 'Unavailable', color: '#444', desc: `The video's page reported *Unavailable* as the reason` },
         { value: 'Private', color: '#aa557f', desc: `A public video was made private by the creator` },
@@ -111,7 +110,11 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'Hate speech', color: '#e55e5e', desc: `YouTube decided the video violated their [policy on hate speech](https://support.google.com/youtube/answer/2801939?hl=en)` },
         { value: 'Community guidelines', color: '#e55e5e', desc: `YouTube decided the video violated their [community guidelines](https://www.youtube.com/howyoutubeworks/policies/community-guidelines/)` },
         { value: 'Sexual content', color: '#e0990b', desc: `YouTube decided the video violated their [policy on nudity or sexual content](https://support.google.com/youtube/answer/2802002?hl=en)` },
+        { value: 'Copyright claim', color: '#41afa5', desc: `The video was removed because a copyright claim as made` },
       ]
+    } as ColumnMd,
+    copyrightHolder: {
+      label: 'Copyright holder'
     } as ColumnMd
   }
 }

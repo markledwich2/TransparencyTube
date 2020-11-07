@@ -17,7 +17,7 @@ const PurposeDiv = styled.div<PurposeDivProps>`
   font-size:1.3em;
   margin-bottom:1em;
   background-image:url('/bubble-bg.svg');
-  //background-image:${p => p.feature ? `url('/bubble-bg.svg')` : 'none'};
+  background-image:${p => p.feature ? `url('/bubble-bg.svg')` : 'none'};
   background-color:${p => p.feature ? `var(--bg-feature)` : 'var(--bg1)'};
   background-repeat: no-repeat;
   background-position: right;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { filter, groupBy, indexBy, map, pipe, uniq } from 'remeda'
+import { filter, indexBy, map, pipe } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -12,18 +12,16 @@ import { useLocation } from '@reach/router'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
-import { entries, orderBy } from '../common/Pipe'
+import { orderBy } from '../common/Pipe'
 import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
-import { DateRangeValue, InlineDateRange } from '../components/DateRange'
+import { InlineDateRange } from '../components/DateRange'
 import SearchText from '../components/SearchText'
 import { StatsPeriod } from '../components/Period'
-import { Footer } from '../components/Footer'
 import ReactTooltip from 'react-tooltip'
 import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import { colMd, ColumnValueMd } from '../common/Metadata'
-import { Markdown } from '../components/Markdown'
 import ReactMarkdown from 'react-markdown'
 
 
@@ -34,7 +32,8 @@ interface QueryState {
   search?: string
   tags?: string,
   lr?: string,
-  errorType?: string
+  errorType?: string,
+  copyrightHolder?: string
 }
 
 const searchIncludes = (search: string, v: VideoRemoved) => {
@@ -52,11 +51,11 @@ const RemovedVideosPage = () => {
   const [loading, setLoading] = useState(false)
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
 
-  const videoFilter: VideoFilter = filterFromQuery(q, ['errorType', 'tags', 'lr'])
+  const videoFilter: VideoFilter = filterFromQuery(q, ['errorType', 'copyrightHolder', 'tags', 'lr'])
   const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
 
   const dateRange = {
-    startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -7),
+    startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -30),
     endDate: q.end ? parseISO(q.end) : endOfToday()
   }
 

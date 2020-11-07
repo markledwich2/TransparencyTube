@@ -1,5 +1,5 @@
 import React from "react"
-import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys } from 'remeda'
+import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact } from 'remeda'
 import styled from 'styled-components'
 import { colMd, ColumnValueMd, Opt, tableMdForCol, TablesMetadata } from '../common/Metadata'
 import { entries, keys, orderBy, values } from '../common/Pipe'
@@ -41,18 +41,18 @@ const tableColOptions = <TRow, TFilter extends FilterState>(md: TablesMetadata, 
   const c = colMd(md, table, col)
   const allOption: FilterColOption = { value: { value: '_all', num: rows?.length }, label: `All - ${c.label}`, color: '#444', selected: isSelected(filter, col, '_all') }
 
-  const mdByVal = indexBy(c.values, v => v.value)
+  const mdByVal = indexBy(c.values ?? [], v => v.value)
 
   if (!rows) rows = []
 
   // values from data
-  const rawColValues = flatMap(rows, r => {
+  const rawColValues = compact(flatMap(rows, r => {
     const v = r[col]
     return Array.isArray(v) ? v as string[] : [v as string]
-  })
+  }))
 
   var filterValues = entries(groupBy(rawColValues, v => v)).map(([value, g]) => ({ value, num: g.length } as FilterColValue))
-  filterValues = c.values.filter(v => !filterValues.find(f => f.value == v.value)).map(v => ({ value: v.value })).concat(filterValues)
+  filterValues = c.values?.filter(v => !filterValues.find(f => f.value == v.value)).map(v => ({ value: v.value })).concat(filterValues) ?? filterValues
   filterValues = (filter?.[col] ?? []).filter(v => !filterValues.find(f => f.value == v)).map(v => ({ value: v })).concat(filterValues)
   const filterOptions = pipe(filterValues,
     map(v => {
@@ -114,7 +114,8 @@ const FilterFormStyle = styled.div`
 const FilterForm = <TRow, TFilter extends FilterState>({ filter, onFilter, rows, md }: FilterFormProps<TRow, TFilter>) => {
   const filterOptions = getFilterOptions(md, filter, rows)
   const tagRender = (o: FilterColOption) => <div className='item'>
-    <Tag label={o.label} color={o.color} />{o.value.num > 0 && <span className='num'>{numFormat(o.value.num)}</span>}
+    <Tag label={o.label} color={o.color} style={{}} />
+    {o.value.num > 0 && <span className='num'>{numFormat(o.value.num)}</span>}
   </div>
   const onSelect = (o: FilterColOption, col: keyof TFilter) => onFilter(filterWithSelect(filter, col, o.value.value, o.selected))
   return < FilterFormStyle >
