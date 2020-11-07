@@ -54,7 +54,8 @@ export const md = {
         { value: 'SocialJustice', label: 'Social Justice', color: '#56b881', desc: 'Focused on the problems of racism and sexism. Places a particular importance on grievances from historically oppressed identities. Skeptical of the role genetics in human behavior and concerned about speech that might cause harm. Content in reaction to Anti-SJW or conservative content.' },
         { value: 'Socialist', color: '#6ec9e0', desc: 'Focus on the problems of capitalism. Endorse the view that capitalism is the source of most problems in society. Critiques of aspects of capitalism that are more specific (i.e. promotion of fee healthcare or a large welfare system or public housing) don’t qualify for this tag. Promotes alternatives to capitalism. Usually some form of either  Social Anarchist  (stateless egalitarian communities) or Marxist (nationalized production and a way of viewing society though class relations and social conflict).' },
         { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500', desc: 'Identifies-with/is-proud-of the superiority of “whites” and western Civilization. An example of identifying with “western heritage”  would be to refer to the sistine chapel, or bach as “our culture”.Promotes or defends: An ethno-state where residence or citizenship would be limited to “whites” OR a type of nationalist that seek to maintain a white national identity (white nationalism), historical narratives focused on the “white” lineage and its superiority, Essentialist concepts of racial differences. Are concerned about whites becoming a minority population in the US.' },
-        { value: 'StateFunded', label: 'State Funded', desc: '' }
+        { value: 'StateFunded', label: 'State Funded' },
+        { value: 'MissingLinkMedia', label: 'Missing Link Media' }
       ]
     } as ColumnMd,
     lr: {

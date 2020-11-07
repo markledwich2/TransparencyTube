@@ -110,3 +110,8 @@ a:hover {
 p {
     color: var(--fg2);
 }
+
+mark {
+    background-color: var(--bg-feature);
+    color: #fff;
+}

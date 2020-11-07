@@ -10,7 +10,7 @@ import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes,
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
-
+import Highlighter from "react-highlight-words"
 
 export interface TopVideosProps {
   channel: Channel
@@ -87,12 +87,13 @@ export interface ChannelTitleProps {
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
   onLogoClick?: (c: Channel) => void
+  highlightWords?: string[]
 }
 
-export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
-  const tags = indexBy(md.channel.tags.values, t => t.value)
-  const lr = md.channel.lr.values.find(i => i.value == c.lr)
+const tags = indexBy(md.channel.tags.values, t => t.value)
 
+export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
+  const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
   //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
@@ -109,7 +110,13 @@ export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo,
       style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} />
     </div>
     <div style={{ paddingLeft: '0.5em' }}>
-      <h2 style={{ marginBottom: '4px', ...titleStyle }}>{c.channelTitle}</h2>
+      <h2 style={{ marginBottom: '4px', ...titleStyle }}>
+        {highlightWords ? <Highlighter
+          searchWords={highlightWords}
+          autoEscape
+          caseSensitive={false}
+          textToHighlight={c.channelTitle ?? ""}
+        /> : c.channelTitle}</h2>
       <MetricsStyle space='2em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
           {fPeriodViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>}

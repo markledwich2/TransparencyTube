@@ -12,6 +12,7 @@ import { groupBy, indexBy } from 'remeda'
 import { entries, minBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
+import Highlighter from "react-highlight-words"
 
 const tipId = 'video-tip'
 
@@ -24,6 +25,7 @@ interface VideosProps {
   showThumb?: boolean
   groupChannels?: boolean
   defaultLimit?: number
+  highlightWords?: string[]
 }
 
 const chanVidChunk = 3
@@ -31,7 +33,7 @@ const chanVidChunk = 3
 
 const videoWidth = 400
 
-export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb, groupChannels, defaultLimit }: VideosProps) => {
+export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb, groupChannels, defaultLimit, highlightWords }: VideosProps) => {
   const [limit, setLimit] = useState(defaultLimit ?? 20)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>()
 
@@ -70,8 +72,8 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
               {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
                 const { vidsToShow, channelId, channel, showAll, showLess, totalVids } = g
                 return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
-                  {i == 0 && <VideoChannel c={channel} onOpenChannel={onOpenChannel} v={v} />}
-                  <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb} v={v} style={{ width: (videoWidth) }} />
+                  {i == 0 && <VideoChannel c={channel} onOpenChannel={onOpenChannel} v={v} highlightWords={highlightWords} />}
+                  <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb} v={v} style={{ width: (videoWidth) }} highlightWords={highlightWords} />
                   {i == vidsToShow.length - 1 && (showLess || showAll) &&
                     <a style={{ paddingLeft: '1em' }} onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
                       {showAll ? `show less` : `show all ${totalVids}`}
@@ -88,12 +90,13 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
         key={v.videoId}
         onOpenChannel={onOpenChannel}
         showThumb={showThumb}
+        showChannel
         v={v}
         style={{ width: '600px', maxWidth: '100%' }}
         c={showChannels && channels && channels[v.channelId]} />)}
     </div>
     <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
-      <a onClick={_ => setLimit(limit + 20)}>show more</a>
+      <a onClick={_ => setLimit(limit + 40)}>show more</a>
     </div>
     {showChannels && <Tip id={tipId} getContent={(id) => {
       if (!id || !channels[id]) return <></>
@@ -140,11 +143,12 @@ interface VideoProps extends StyleProps {
   onOpenChannel?: (c: Channel) => void,
   showThumb?: boolean
   showChannel?: boolean
+  highlightWords?: string[]
 }
 
 const errorTypeMd = indexBy(colMd(md, 'video', 'errorType').values, c => c.value)
 
-export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb }: VideoProps) => {
+export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords }: VideoProps) => {
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
 
@@ -159,7 +163,14 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb }: Vi
           {isVideoViews(v) && <div className='rank'>{v.rank}</div>}
         </div>}
         <FlexCol style={{ color: 'var(--fg1)' }} space='0.2em'>
-          <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)', maxWidth: '24em' }}>{v.videoTitle}</h4></VideoA>
+          <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)', maxWidth: '24em' }}>
+            {highlightWords ? <Highlighter
+              searchWords={highlightWords}
+              autoEscape
+              caseSensitive={false}
+              textToHighlight={v.videoTitle ?? ""}
+            /> : v.videoTitle}
+          </h4></VideoA>
           <FlexRow space='0.7em' style={{ alignItems: 'baseline', flexWrap: 'wrap' }}>
             {fPeriodViews && <div><span><b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b></span>
               {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}
@@ -173,18 +184,18 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb }: Vi
             </>}
           </FlexRow>
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} />}
+          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} />}
         </FlexCol>
       </FlexRow>
     </FlexRow>
   </VideoStyle>
 }
 
-const VideoChannel = ({ c, v, onOpenChannel }: { c: Channel, v: VideoCommon, onOpenChannel?: (c: Channel) => void }) => {
+const VideoChannel = ({ c, v, onOpenChannel, highlightWords }: { c: Channel, v: VideoCommon, onOpenChannel?: (c: Channel) => void, highlightWords?: string[] }) => {
   if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }}
-      tipId={tipId} onLogoClick={onOpenChannel} />
+      tipId={tipId} onLogoClick={onOpenChannel} highlightWords={highlightWords} />
   </div>
 }
 

@@ -26,6 +26,7 @@ import { colMd, ColumnValueMd } from '../common/Metadata'
 import { Markdown } from '../components/Markdown'
 import ReactMarkdown from 'react-markdown'
 
+
 interface QueryState {
   openChannelId?: string
   start?: string
@@ -39,7 +40,7 @@ interface QueryState {
 const searchIncludes = (search: string, v: VideoRemoved) => {
   if (!search) return true
   const re = new RegExp(`${search}`, 'i')
-  return v.videoTitle?.search(re) > 0 || v.channelTitle?.search(re) > 0
+  return v.videoTitle?.search(re) >= 0 || v.channelTitle?.search(re) >= 0
 }
 
 const RemovedVideosPage = () => {
@@ -97,7 +98,7 @@ const RemovedVideosPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>YouTube <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines. We provide transparency into removed video's to be able scrutinise the platforms moderation.</p>
+      <p>YouTube  <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines without providing information about what is removed or why. We fill the gap: here you'll find transparency on what videos are removed. While we don't know all of YouTube's moderation process, we hope this transparency will enable anyone and everyone to try to understand and/or scrutinize it with higher fidelity.</p>
       <p className="subtle">We show videos removed by both the creator or by YouTube. Here are the reason's that you can filter by:</p>
       <FlexRow wrap style={{ margin: 'auto' }}>
         {colMd(md, 'video', 'errorType').values.map(v => <ErrorTag v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}</FlexRow>
@@ -120,7 +121,8 @@ const RemovedVideosPage = () => {
         </FilterHeader>
         <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
       </FlexRow>
-      <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered} showChannels loading={loading} defaultLimit={100} groupChannels />
+      <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered}
+        showChannels loading={loading} defaultLimit={100} groupChannels highlightWords={q.search ? [q.search] : null} />
     </MinimalPage>
     <Popup isOpen={openChannel != null} onRequestClose={() => setQuery({ openChannelId: null })}>
       {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={defaultPeriod} />}

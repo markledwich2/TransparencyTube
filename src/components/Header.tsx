@@ -72,7 +72,7 @@ interface NavItem {
 const pagesMd: NavItem[] = [
   {
     path: '/', label: 'Home', home: true, subItems: [
-      { path: '/', label: 'Channel Views' },
+      { path: '/', label: 'Channels' },
       { path: '/topVideos', label: 'Top Videos' },
       { path: '/removedVideos', label: 'Removed Videos' }
     ]

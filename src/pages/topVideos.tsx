@@ -11,17 +11,20 @@ import { Spinner } from '../components/Spinner'
 import { Videos } from '../components/Video'
 import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
-import { navigateNoHistory } from '../common/Utils'
+import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'
 import { Footer } from '../components/Footer'
-import { InlineValueFilter } from '../components/ValueFilter'
+import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
+import ReactTooltip from 'react-tooltip'
 
 interface QueryState extends Record<string, string> {
   period?: string
   openChannelId?: string
+  tags?: string,
+  lr?: string,
 }
 
 const TopVideosPage = () => {
@@ -32,16 +35,22 @@ const TopVideosPage = () => {
   }>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
-  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null })
   const [videos, setVideos] = useState<VideoViews[]>(null)
   const [loading, setLoading] = useState(false)
   const period = q.period ? parsePeriod(q.period) : idx?.periods.find(p => p.periodType == 'd7')
+
+  const videoFilter: VideoFilter = filterFromQuery(q, ['tags', 'lr'])
+  const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
     indexTopVideos().then(setIdx)
     indexChannelViews().then(setChannelIndexes)
   }, [])
+
+  useEffect(() => {
+    delay(200).then(() => ReactTooltip.rebuild())
+  }, [JSON.stringify(q)])
 
   useEffect(() => {
     if (!idx || !channels) return
@@ -52,7 +61,7 @@ const TopVideosPage = () => {
       setVideos(vidsEx)
       setLoading(false)
     })
-  }, [idx, channels, period ? periodString(period) : null, videoFilter])
+  }, [idx, channels, period ? periodString(period) : null, q.lr, JSON.stringify(q.tags)])
 
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
@@ -60,7 +69,8 @@ const TopVideosPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>See the most viewed videos of the selected period, and narrow the list to specific groups of channels</p>
+      <p>Here you can find the most viewed videos for a given period of time, or withing a particular category, by selecting each from the drop down menus below.</p>
+      <p className="subtle">Note: Results are limited to the top 20k videos</p>
     </PurposeBanner>
     <MinimalPage>
       <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
