@@ -11,6 +11,7 @@ import ReactModal from 'react-modal'
 import { FluidObject } from 'gatsby-image'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
+import { Footer } from './Footer'
 
 export interface StyleProps {
   style?: React.CSSProperties
@@ -66,6 +67,12 @@ const GlobalStyle = createGlobalStyle`
     height: 1.4em;
     width: 1.4em;
     color: var(--fg2);
+    &.clickable {
+      &:hover {
+        cursor: pointer;
+        fill: var(--fg-feature);
+      }
+    }
   }
 
   div.${popupClasses.popup} {
@@ -109,11 +116,12 @@ const GlobalStyle = createGlobalStyle`
 
 export const loadingFilter = 'opacity(0.4)'
 
-export const FlexRow = styled.div<{ space?: string }>`
+export const FlexRow = styled.div<{ space?: string, wrap?: boolean }>`
   display:flex;
   flex-direction: row;
+  ${p => p.wrap && 'flex-wrap: wrap;'}
   > * {
-    padding-right: ${p => p.space ?? '0.6em'};
+    margin-right: ${p => p.space ?? '0.6em'};
   }
 `
 
@@ -140,6 +148,11 @@ export const TextPage = styled.div`
   h2 {
     margin-bottom: 1em;
   }
+`
+
+export const MinimalPage = styled.div`
+  margin: 1em;
+  min-height: 80vh;
 `
 
 export const MdPageStyle = styled(TextPage)`
@@ -187,13 +200,10 @@ query SiteTitleQuery {
     <>
       <GlobalStyle />
       <Header siteTitle={data.site.siteMetadata.title} />
-      <div
-        style={{ padding: '0 0.5em' }}
-      >
+      <div>
         <main id='main'>{children}</main>
-        <footer>
-        </footer>
       </div>
+      <Footer />
     </>
   )
 }

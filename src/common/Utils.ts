@@ -6,6 +6,7 @@ import humanizeDuration from 'humanize-duration'
 import { compact, reverse } from 'remeda'
 import '@stardazed/streams-polyfill'
 import { keys } from './Pipe'
+import { useEffect, useState } from 'react'
 
 
 /** GET a json object and deserialize it */
@@ -136,3 +137,23 @@ export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit: TimeUn
 }
 
 export const safeLocation = (): Location => typeof window === 'undefined' ? null : window.location
+
+export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
+
+export type PartialRecord<K extends keyof any, T> = {
+  [P in K]?: T
+}
+
+export const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(
+    () => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value)
+      }, delay)
+      return () => { clearTimeout(handler) }
+    },
+    [value]
+  )
+  return debouncedValue
+}

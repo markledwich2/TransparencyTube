@@ -12,7 +12,7 @@ const Close = styled(CloseOutline)`
   position: absolute;
   right: 0.5em;
   top: 0.5em;
-  height: 2em;
+  height: 3em;
   :hover {
     cursor: pointer;
   }

@@ -1,53 +1,45 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
-import { delay, jsonEquals, shallowEquals } from '../common/Utils'
+import { delay, navigateNoHistory } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { buildChannelBubbleNodes, BubblesSelectionState, TagNodes } from '../common/ChannelBubble'
-import { getChannels, channelMd, Channel, channelColOpts, ColumnValueMd, ColumnMdOpt } from '../common/Channel'
+import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
-import { orderBy, sumBy, values } from '../common/Pipe'
+import { orderBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import ContainerDimensions from 'react-container-dimensions'
-import { Videos } from './Video'
 import { Tip } from './Tooltip'
-import { ChannelStats, ChannelWithStats, getViewsIndexes, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews } from '../common/RecfluenceApi'
 import { loadingFilter, NormalFont } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
-import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
-import { TagHelp, TagTip } from './TagInfo'
+import { TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
 import { Popup } from './Popup'
 import { BubbleCharts } from './BubbleChart'
+import { FilterHeader } from './FilterCommon'
+import { ColumnValueMd } from '../common/Metadata'
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
 }
 
-const FilterHeader = styled.h3`
-  line-height:2em;
-`
-
-const navigate = (to: string) => history.replaceState({}, '', to)
-
 export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
-  const [indexes, setIndexes] = useState<ViewsIndexes>(null)
+  const [indexes, setIndexes] = useState<ChannelViewIndexes>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigate)
-  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null })
-  const [allowVideoLoad, setAllowVideoLoad] = useState(false)
+  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
 
   useEffect(() => {
     const go = async () => {
       const channelsTask = getChannels()
       try {
-        const idx = await getViewsIndexes()
+        const idx = await indexChannelViews()
         setIndexes(idx)
         setDefaultPeriod(idx?.periods.find(p => p.periodType == 'd7'))
       }
@@ -60,8 +52,6 @@ export const ChannelViewsPage = () => {
     go()
   }, [])
 
-  const period = parsePeriod(q.period) ?? defaultPeriod
-  const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
   const onCloseChannel = () => setQuery({ openChannelId: null })
@@ -78,23 +68,9 @@ export const ChannelViewsPage = () => {
           selections={q}
           onSelection={onQuery}
           defaultPeriod={defaultPeriod}
-          onLoad={() => !allowVideoLoad ? setAllowVideoLoad(true) : null}
         />}
       </ContainerDimensions>
       <div style={{ height: '2em' }} />
-
-      {indexes && allowVideoLoad && <>
-        <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-      <PeriodSelect periods={indexes.periods} period={videoPeriod} onPeriod={(p) => {
-            if (p == period) return
-            setQuery({ videoPeriod: periodString(p) })
-          }} />
-
-        filtered to <InlineVideoFilter filter={videoFilter} onFilter={setVideoFilter} />
-        </FilterHeader>
-        <Videos channels={channels} onOpenChannel={onOpenChannel} indexes={indexes} period={videoPeriod} videoFilter={videoFilter} />
-      </>
-      }
 
       <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
         <ChannelDetails channel={openChannel} mode='max' indexes={indexes} defaultPeriod={defaultPeriod} />
@@ -107,7 +83,7 @@ export const ChannelViewsPage = () => {
 interface BubblesProps {
   channels: Record<string, Channel>
   width: number, onOpenChannel: (c: ChannelWithStats) => void
-  indexes: ViewsIndexes
+  indexes: ChannelViewIndexes
   selections: BubblesSelectionState
   onSelection?: (d: BubblesSelectionState) => void
   defaultPeriod?: StatsPeriod
@@ -146,14 +122,9 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   }, [JSON.stringify(period), indexes, channels])
 
   useEffect(() => {
-<<<<<<< HEAD:src/components/ChannelVideoViews.tsx
     if (selections.groupBy)
       ReactTooltip.rebuild()
   }, [selections.groupBy])
-=======
-    ReactTooltip.rebuild()
-  }, [groupBy])
->>>>>>> b652fa3c15d2e7ca6a5327150e2d3dfa855bddfb:src/components/ChannelViewsPage.tsx
 
   const channelClick = (c: ChannelWithStats) => {
     ReactTooltip.hide()
@@ -163,12 +134,13 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   if (!rawStats) return <Spinner />
 
   const filterOnRight = width > 800
+  const colOptions = getColOptions('channel')
 
   return <div>
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
       <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
         <InlineSelect
-          options={channelMd.measures.values}
+          options={md.channel.measures.values}
           selected={measure}
           onChange={o => onSelection({ measure: o as any })}
           itemRender={MeasureOption}
@@ -180,13 +152,13 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
         }
         by
         <InlineSelect
-          options={channelColOpts}
+          options={colOptions}
           selected={groupBy} onChange={o => onSelection({ groupBy: o })}
           itemRender={ColOption}
         />
         and colored by
         <InlineSelect
-          options={channelColOpts}
+          options={colOptions}
           selected={colorBy}
           onChange={o => onSelection({ colorBy: o })}
           itemRender={ColOption}
@@ -200,7 +172,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
             c => c.channelViews, 'desc')
         ))}
-        itemRender={(c: Channel) => <ChannelTitle c={c} showLr style={{ width: filterOnRight ? '50em' : '95vw' }} />}
+        itemRender={(c: Channel) => <ChannelTitle c={c} style={{ width: filterOnRight ? '50em' : '95vw' }} />}
         getKey={c => c.channelId}
         getLabel={c => c.channelTitle}
         placeholder='find channel'

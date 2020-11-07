@@ -158,7 +158,7 @@ const BubbleSvg = memo(({ nodes, dim, zoom, channelClick: onChannelClick, showIm
         return <g key={id} transform={`translate(${x}, ${y})`}>
           <circle r={r} fill={n.data.color ?? 'var(--bg3)'} {...props} />
           {showImg && showImage(n) &&
-            <image x={- r - imgPad} y={- r - imgPad} width={(r + imgPad) * 2}
+            <image x={- r + imgPad} y={- r + imgPad} width={(r - imgPad) * 2}
               href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
         </g>
       }

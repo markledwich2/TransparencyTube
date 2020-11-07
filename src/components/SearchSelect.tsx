@@ -3,6 +3,7 @@ import { keepInView, PopupStyle } from './InlineForm'
 import { Search } from '@styled-icons/boxicons-regular'
 import { Opt, UlStyled } from './InlineSelect'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import { useDebounce } from '../common/Utils'
 
 interface SearchSelectOptions<T> {
   onSelect: (item: T) => void
@@ -92,18 +93,5 @@ export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRende
   </div>
 }
 
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(
-    () => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value)
-      }, delay)
-      return () => { clearTimeout(handler) }
-    },
-    [value]
-  )
-  return debouncedValue
-}
 
 

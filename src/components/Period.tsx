@@ -64,6 +64,8 @@ interface PeriodSelectProps {
   onPeriod?: (p: StatsPeriod) => void
 }
 export const PeriodSelect = ({ periods, period, onPeriod }: PeriodSelectProps) => {
+  if (!periods) return <></>
+
   const periodGroups = pipe(periods,
     map(p => periodOption(p)),
     orderBy([p => p.parent?.periodValue ?? p.value.periodValue, p => p.parent ? 1 : -1, p => p.value.periodValue, p => p.daysTill ? numeral(p.daysTill).format('####') : 0]

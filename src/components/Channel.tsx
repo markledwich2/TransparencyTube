@@ -1,28 +1,29 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelMd, ColumnValueMd, measureFormat } from '../common/Channel'
+import { Channel, channelUrl, md, measureFormat, openYtChannel } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, isChannelWithStats, ViewsIndexes } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes, VideoViews } from '../common/RecfluenceApi'
 import { PeriodSelect, StatsPeriod } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
-
+import Highlighter from "react-highlight-words"
 
 export interface TopVideosProps {
   channel: Channel
   mode: 'min' | 'max'
-  indexes: ViewsIndexes
-  defaultPeriod: StatsPeriod
+  indexes?: ChannelViewIndexes
+  defaultPeriod?: StatsPeriod
 }
 
 export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVideosProps) => {
   const [stats, setStats] = useState<ChannelStats>(null)
   const [statsLoading, setStatsLoading] = useState(false)
   const [period, setPeriod] = useState(defaultPeriod)
+  const [videos, setVideos] = useState<VideoViews[]>(null)
 
   useEffect(() => {
     if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
@@ -32,6 +33,8 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
       setStats(first(c))
       setStatsLoading(false)
     })
+    indexes.channelVideo.getRows({ ...period, channelId: channel.channelId }).then(setVideos)
+    //TODO: build tooltips, set loading property on videos
   }, [period])
 
   if (!channel) return <></>
@@ -39,7 +42,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
   const desc = c?.description
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} tagsMode='show' showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         <p style={{ maxWidth: '50em' }}>
@@ -48,7 +51,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
       </div>
       {mode == 'max' && <>
         <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
-        <Videos channel={c} indexes={indexes} period={period} />
+        <Videos videos={videos} showThumb />
       </>}
     </FlexCol>
   </FlexCol>
@@ -76,7 +79,7 @@ const MetricsStyle = styled(FlexRow)`
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
   statsLoading?: boolean
-  showLr?: boolean
+  tagsMode?: 'show' | 'faded'
   showCollectionStats?: boolean
   showReviewInfo?: boolean
   tipId?: string
@@ -84,12 +87,13 @@ export interface ChannelTitleProps {
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
   onLogoClick?: (c: Channel) => void
+  highlightWords?: string[]
 }
 
-export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
-  const tags = indexBy(channelMd.tags.values, t => t.value)
-  const lr = channelMd.lr.values.find(i => i.value == c.lr)
+const tags = indexBy(md.channel.tags.values, t => t.value)
 
+export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
+  const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
   //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
@@ -98,7 +102,7 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, s
   //style={{ opacity: faded ? 0.5 : null }}
   return <ChannelTitleStyle style={style}>
     <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
-      onClick={_ => onLogoClick ? onLogoClick(c) : window.open(`https://www.youtube.com/channel/${c.channelId}`, 'yt')}
+      onClick={_ => onLogoClick ? onLogoClick(c) : openYtChannel(c.channelId)}
       // onMouseOver={_ => {
       //   inter.hover = { col: 'lr', value: c.lr }
       // }}
@@ -106,7 +110,13 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, s
       style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} />
     </div>
     <div style={{ paddingLeft: '0.5em' }}>
-      <h2 style={{ marginBottom: '4px', ...titleStyle }}>{c.channelTitle}</h2>
+      <h2 style={{ marginBottom: '4px', ...titleStyle }}>
+        {highlightWords ? <Highlighter
+          searchWords={highlightWords}
+          autoEscape
+          caseSensitive={false}
+          textToHighlight={c.channelTitle ?? ""}
+        /> : c.channelTitle}</h2>
       <MetricsStyle space='2em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
           {fPeriodViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>}
@@ -119,10 +129,10 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, s
         </span>
         }
       </MetricsStyle>
-      <TagDiv style={{ margin: '0.2em 0' }} >
-        {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
+      {tagsMode && <TagDiv style={{ margin: '0.2em 0', filter: tagsMode == 'faded' ? 'grayscale(80%)' : null }} >
+        {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
-      </TagDiv>
+      </TagDiv>}
       {showReviewInfo && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
         <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
         : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}
@@ -169,7 +179,7 @@ const TagDiv = styled.div`
 
 const TagStyle = styled.span`
   display: inline-block;
-  background-color: rgb(66, 66, 66);
+  background-color: var(--bg4);
   font-size: 0.9em;
   font-weight: bold;
   line-height: 1.6;

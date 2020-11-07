@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, CSSProperties } from 'react'
 import { jsonEquals } from '../common/Utils'
 import { InlineForm } from './InlineForm'
 import { StyleProps } from './Layout'
+import { Opt } from '../common/Metadata'
 
 export const UlStyled = styled.ul`
   list-style-type: none;
@@ -18,10 +19,7 @@ export const UlStyled = styled.ul`
     }
   }
 `
-export interface Opt<T> {
-  label?: string
-  value: T
-}
+
 
 export interface SelectOptions<TVal, TOpt extends Opt<TVal>> {
   options: TOpt[]

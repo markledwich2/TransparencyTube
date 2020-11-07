@@ -1,5 +1,5 @@
 import React from 'react'
-import { Channel, channelColOpts, channelMd } from '../common/Channel'
+import { Channel, md } from '../common/Channel'
 import { HelpOutline } from '@styled-icons/material'
 import ReactTooltip from 'react-tooltip'
 import { Tip } from './Tooltip'
@@ -27,7 +27,7 @@ export const TagHelp = ({ tag, style }: TagProps & StyleProps) => <HelpOutline
   data-for={tipId} />
 
 export const TagInfo = ({ tag, channels, showTitle, style }: TagProps & { channels: Channel[] } & StyleProps) => {
-  const tags = indexBy(channelMd.tags.values, t => t.value)
+  const tags = indexBy(md.channel.tags.values, t => t.value)
   const t = tags[tag]
   if (!t || !channels) return <></>
 
