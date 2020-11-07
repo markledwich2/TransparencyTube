@@ -5,13 +5,13 @@ import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexRemovedVideos, VideoRemoved } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
-import Layout, { FlexRow } from "../components/Layout"
+import Layout, { FlexRow, MinimalPage } from "../components/Layout"
 import { Videos } from '../components/Video'
 import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
-import { navigateNoHistory } from '../common/Utils'
+import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
-import { ChannelDetails } from '../components/Channel'
+import { ChannelDetails, Tag } from '../components/Channel'
 import { entries, orderBy } from '../common/Pipe'
 import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
 import { DateRangeValue, InlineDateRange } from '../components/DateRange'
@@ -19,14 +19,21 @@ import SearchText from '../components/SearchText'
 import { StatsPeriod } from '../components/Period'
 import { Footer } from '../components/Footer'
 import ReactTooltip from 'react-tooltip'
-import { InlineValueFilter } from '../components/ValueFilter'
+import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
+import PurposeBanner from '../components/PurposeBanner'
+import { colMd, ColumnValueMd } from '../common/Metadata'
+import { Markdown } from '../components/Markdown'
+import ReactMarkdown from 'react-markdown'
 
-interface QueryState extends Record<string, string> {
+interface QueryState {
   openChannelId?: string
   start?: string
   end?: string
   search?: string
+  tags?: string,
+  lr?: string,
+  errorType?: string
 }
 
 const searchIncludes = (search: string, v: VideoRemoved) => {
@@ -41,9 +48,11 @@ const RemovedVideosPage = () => {
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
-  const [videoFilter, setVideoFilter] = useState<VideoFilter>({ tags: null, lr: null, errorType: null })
   const [loading, setLoading] = useState(false)
   const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
+
+  const videoFilter: VideoFilter = filterFromQuery(q, ['errorType', 'tags', 'lr'])
+  const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
 
   const dateRange = {
     startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -7),
@@ -68,13 +77,17 @@ const RemovedVideosPage = () => {
         to: { lastSeen: dateRange.endDate.toISOString() }
       }).then(vids => {
         setVideos(vids)
-        ReactTooltip.rebuild()
         setLoading(false)
       })
   }, [idx, channels, q.start, q.end])
 
+
+  useEffect(() => {
+    delay(200).then(() => ReactTooltip.rebuild())
+  }, [JSON.stringify(q)])
+
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
-  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
+  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
 
   const vidsFiltered = videos ? pipe(videos,
     map(v => videoWithEx(v, channels)),
@@ -83,31 +96,42 @@ const RemovedVideosPage = () => {
   ) : null
 
   return <Layout>
-    <FlexRow style={{ justifyContent: 'space-between', margin: '1em 0 2em' }}>
-      <FilterHeader>
-        Removed videos on
+    <PurposeBanner>
+      <p>YouTube <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines. We provide transparency into removed video's to be able scrutinise the platforms moderation.</p>
+      <p className="subtle">We show videos removed by both the creator or by YouTube. Here are the reason's that you can filter by:</p>
+      <FlexRow wrap style={{ margin: 'auto' }}>
+        {colMd(md, 'video', 'errorType').values.map(v => <ErrorTag v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}</FlexRow>
+    </PurposeBanner>
+    <MinimalPage>
+      <FlexRow wrap style={{ justifyContent: 'space-between', margin: '1em 0 2em' }}>
+        <FilterHeader>
+          Removed videos on
         <InlineDateRange
-          range={dateRange}
-          onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
-        />
+            range={dateRange}
+            onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
+          />
         filtered to
         <InlineValueFilter
-          filter={videoFilter}
-          onFilter={setVideoFilter}
-          md={md}
-          rows={vidsFiltered}
-        />
-      </FilterHeader>
-      <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
-    </FlexRow>
-    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered} showChannels loading={loading} defaultLimit={100} groupChannels />
-
-    <Footer />
-
+            filter={videoFilter}
+            onFilter={setVideoFilter}
+            md={md}
+            rows={vidsFiltered}
+          />
+        </FilterHeader>
+        <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
+      </FlexRow>
+      <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered} showChannels loading={loading} defaultLimit={100} groupChannels />
+    </MinimalPage>
     <Popup isOpen={openChannel != null} onRequestClose={() => setQuery({ openChannelId: null })}>
       {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={defaultPeriod} />}
     </Popup>
   </Layout>
 }
+
+const ErrorTag = ({ v, onErrorType }: { v: ColumnValueMd<string>, onErrorType: (error: string) => void }) =>
+  <div key={v.value} style={{ width: '20em', fontSize: '0.8em' }}>
+    <a onClick={() => onErrorType(v.value)}><Tag label={v.label ?? v.value} color={v.color} /></a>
+    <ReactMarkdown>{v.desc}</ReactMarkdown>
+  </div>
 
 export default RemovedVideosPage

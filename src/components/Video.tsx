@@ -7,10 +7,11 @@ import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoRemoved } from '../common/RecfluenceApi'
-import { Channel } from '../common/Channel'
-import { chunk, groupBy } from 'remeda'
-import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
+import { Channel, channelUrl, md } from '../common/Channel'
+import { groupBy, indexBy } from 'remeda'
+import { entries, minBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
+import { colMd } from '../common/Metadata'
 
 const tipId = 'video-tip'
 
@@ -69,10 +70,10 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
               {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
                 const { vidsToShow, channelId, channel, showAll, showLess, totalVids } = g
                 return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
-                  {i == 0 && <VideoChannel c={channel} onOpenChannel={onOpenChannel} />}
+                  {i == 0 && <VideoChannel c={channel} onOpenChannel={onOpenChannel} v={v} />}
                   <Video key={v.videoId} onOpenChannel={onOpenChannel} showThumb={showThumb} v={v} style={{ width: (videoWidth) }} />
                   {i == vidsToShow.length - 1 && (showLess || showAll) &&
-                    <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
+                    <a style={{ paddingLeft: '1em' }} onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
                       {showAll ? `show less` : `show all ${totalVids}`}
                     </a>}
                 </div>)
@@ -138,11 +139,16 @@ interface VideoProps extends StyleProps {
   c?: Channel,
   onOpenChannel?: (c: Channel) => void,
   showThumb?: boolean
+  showChannel?: boolean
 }
 
-export const Video = ({ v, style, c, onOpenChannel, showThumb }: VideoProps) => {
+const errorTypeMd = indexBy(colMd(md, 'video', 'errorType').values, c => c.value)
+
+export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb }: VideoProps) => {
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
+
+  const errorTypeOpt = isVideoRemoved(v) ? errorTypeMd[v.errorType] : null
 
   return <VideoStyle style={style}>
     <FlexRow>
@@ -161,25 +167,24 @@ export const Video = ({ v, style, c, onOpenChannel, showThumb }: VideoProps) => 
             </div>}
             {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
             {isVideoRemoved(v) && <>
-              <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : v.errorType} />
+              <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
               <span><b>{numFormat(v.videoViews)} views</b></span>
               <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>
             </>}
           </FlexRow>
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-
-          <VideoChannel c={c} onOpenChannel={onOpenChannel} />
+          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} />}
         </FlexCol>
       </FlexRow>
     </FlexRow>
   </VideoStyle>
 }
 
-const VideoChannel = ({ c, onOpenChannel }: { c: Channel, onOpenChannel?: (c: Channel) => void }) => {
-  if (!c) return <></>
+const VideoChannel = ({ c, v, onOpenChannel }: { c: Channel, v: VideoCommon, onOpenChannel?: (c: Channel) => void }) => {
+  if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }}
-      tipId={tipId} onLogoClick={onOpenChannel} showLr />
+      tipId={tipId} onLogoClick={onOpenChannel} />
   </div>
 }
 

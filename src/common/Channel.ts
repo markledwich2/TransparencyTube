@@ -23,7 +23,6 @@ export interface Channel {
 
 export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
 
-
 export const hiddenTags = ['Black', 'LGBT']
 
 export const md = {
@@ -98,26 +97,27 @@ Click on a channel to see more detail about the collection of video statistics.
       ]
     } as ColumnMd
   },
-  removedVideo: {
+  video: {
     errorType: {
       label: 'Removed Reason',
       values: [
-        { value: 'Detected missing' },
-        { value: 'Removed by uploader' }
+        { value: 'Detected missing', desc: `This video was missing from the channel video list, but we haven't determined the reason yet` },
+        { value: 'Removed by uploader', color: '#8a8acb', label: 'Removed by creator', desc: `The creator removed a video that was once public` },
+        { value: 'Unavailable', color: '#444', desc: `The video's page reported *Unavailable* as the reason` },
+        { value: 'Private', color: '#aa557f', desc: `A public video was made private by the creator` },
+        { value: 'Terms of service', color: '#e55e5e', desc: `YouTube decided the video violated *YouTube's Terms of Service*` },
+        { value: 'Harassment and bullying', color: '#e55e5e', desc: `YouTube decided the video violated the [harassment and cyberbullying policy](https://support.google.com/youtube/answer/2802268?hl=en-GB)` },
+        { value: 'Hate speech', color: '#e55e5e', desc: `YouTube decided the video violated their [policy on hate speech](https://support.google.com/youtube/answer/2801939?hl=en)` },
+        { value: 'Community guidelines', color: '#e55e5e', desc: `YouTube decided the video violated their [community guidelines](https://www.youtube.com/howyoutubeworks/policies/community-guidelines/)` },
+        { value: 'Sexual content', color: '#e0990b', desc: `YouTube decided the video violated their [policy on nudity or sexual content](https://support.google.com/youtube/answer/2802002?hl=en)` },
       ]
     } as ColumnMd
   }
 }
 
-
-
 export const getColOptions = (table: keyof typeof md) => {
   return Object.entries(md[table]).map(([value, col]) => ({ value: value as keyof Channel, label: col.label, desc: col.desc }))
 }
-
-
-
-//export const colLabel = (table: string, col: string) => md[table][col].label ?? col
 
 export const measureFormat = (measure: string) => {
   const measureMd = md.channel.measures.values.find(m => m.value == measure)
@@ -140,3 +140,6 @@ export async function getChannels(): Promise<Channel[]> {
   })
   return channels
 }
+
+export const channelUrl = (channelId: string) => `https://www.youtube.com/channel/${channelId}`
+export const openYtChannel = (channelId: string) => window.open(channelUrl(channelId), 'yt')

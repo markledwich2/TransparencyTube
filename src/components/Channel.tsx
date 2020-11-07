@@ -1,7 +1,7 @@
 import React, { CSSProperties, useContext, useEffect, useState } from 'react'
 import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, md, measureFormat } from '../common/Channel'
+import { Channel, channelUrl, md, measureFormat, openYtChannel } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
@@ -42,7 +42,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
   const desc = c?.description
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} showLr showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} tagsMode='show' showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         <p style={{ maxWidth: '50em' }}>
@@ -79,7 +79,7 @@ const MetricsStyle = styled(FlexRow)`
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
   statsLoading?: boolean
-  showLr?: boolean
+  tagsMode?: 'show' | 'faded'
   showCollectionStats?: boolean
   showReviewInfo?: boolean
   tipId?: string
@@ -89,7 +89,7 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
 }
 
-export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading }: ChannelTitleProps) => {
   const tags = indexBy(md.channel.tags.values, t => t.value)
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
 
@@ -101,7 +101,7 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, s
   //style={{ opacity: faded ? 0.5 : null }}
   return <ChannelTitleStyle style={style}>
     <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
-      onClick={_ => onLogoClick ? onLogoClick(c) : window.open(`https://www.youtube.com/channel/${c.channelId}`, 'yt')}
+      onClick={_ => onLogoClick ? onLogoClick(c) : openYtChannel(c.channelId)}
       // onMouseOver={_ => {
       //   inter.hover = { col: 'lr', value: c.lr }
       // }}
@@ -122,10 +122,10 @@ export const ChannelTitle = ({ c, showLr, showCollectionStats, showReviewInfo, s
         </span>
         }
       </MetricsStyle>
-      <TagDiv style={{ margin: '0.2em 0' }} >
-        {showLr && lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
+      {tagsMode && <TagDiv style={{ margin: '0.2em 0', filter: tagsMode == 'faded' ? 'grayscale(80%)' : null }} >
+        {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
-      </TagDiv>
+      </TagDiv>}
       {showReviewInfo && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
         <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
         : <p><Bot style={styles.inlineIcon} /> automatic classification</p>}</span>}

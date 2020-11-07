@@ -2,15 +2,15 @@
 import React, { PropsWithChildren, useState } from 'react'
 import styled from 'styled-components'
 
-const StyledBurger = styled.div<{ open: boolean }>`
+const StyledBurger = styled.div<{ open: boolean, collapseWidth: string }>`
   width: 2rem;
   height: 2rem;
   position: absolute;
-  top: 22px;
+  top: 15px;
   right: 15px;
   z-index: 20;
   display: none;
-  @media (max-width: 768px) {
+  @media (max-width: ${p => p.collapseWidth}) {
     display: flex;
     justify-content: space-around;
     flex-flow: column nowrap;
@@ -35,12 +35,12 @@ const StyledBurger = styled.div<{ open: boolean }>`
   }
 `
 
-export const Burger = ({ children }: PropsWithChildren<{}>) => {
+export const Burger = ({ children, collapseWidth }: PropsWithChildren<{ collapseWidth: string }>) => {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <StyledBurger open={open} onClick={() => setOpen(!open)}>
+      <StyledBurger collapseWidth={collapseWidth} open={open} onClick={() => setOpen(!open)}>
         <div />
         <div />
         <div />
@@ -54,7 +54,7 @@ const MenuDiv = styled.div<{ open: boolean }>`
   display: flex;
   flex-flow: row nowrap;
   a {
-    padding: 18px 10px;
+    margin: 0.8em 0.7em;
     &.open-only {
       display:${({ open }) => open ? 'block' : 'none'};
     }
@@ -85,21 +85,3 @@ const RightNav = ({ open, children }: PropsWithChildren<{ open: boolean }>) => {
   )
 }
 
-
-const Nav = styled.nav`
-  width: 100%;
-  height: 55px;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  .logo {
-    padding: 15px 0;
-  }
-`
-
-const Navbar = () => <Nav>
-  <div className="logo">
-    Nav Bar
-      </div>
-  <Burger />
-</Nav>

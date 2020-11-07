@@ -1,8 +1,9 @@
 import React from "react"
-import { uniq, flatMap, indexBy, pipe, map, groupBy } from 'remeda'
+import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys } from 'remeda'
 import styled from 'styled-components'
 import { colMd, ColumnValueMd, Opt, tableMdForCol, TablesMetadata } from '../common/Metadata'
 import { entries, keys, orderBy, values } from '../common/Pipe'
+import { mapToObj } from '../common/remeda/mapToObj'
 import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
 import { InlineForm } from './InlineForm'
@@ -50,9 +51,10 @@ const tableColOptions = <TRow, TFilter extends FilterState>(md: TablesMetadata, 
     return Array.isArray(v) ? v as string[] : [v as string]
   })
 
-  const filterValues = entries(groupBy(rawColValues, v => v)).map(([value, g]) => ({ value, num: g.length } as FilterColValue))
-  const mdValues = (c.values.filter(v => !filterValues.find(f => f.value == v.value)).map(v => ({ value: v.value } as FilterColValue)).concat(filterValues))
-  const filterOptions = pipe(mdValues,
+  var filterValues = entries(groupBy(rawColValues, v => v)).map(([value, g]) => ({ value, num: g.length } as FilterColValue))
+  filterValues = c.values.filter(v => !filterValues.find(f => f.value == v.value)).map(v => ({ value: v.value })).concat(filterValues)
+  filterValues = (filter?.[col] ?? []).filter(v => !filterValues.find(f => f.value == v)).map(v => ({ value: v })).concat(filterValues)
+  const filterOptions = pipe(filterValues,
     map(v => {
       const m = mdByVal[v.value]
       return ({ value: v, label: m?.label ?? v.value, color: m?.color, desc: m?.desc, selected: isSelected(filter, col, v.value) })
@@ -112,7 +114,7 @@ const FilterFormStyle = styled.div`
 const FilterForm = <TRow, TFilter extends FilterState>({ filter, onFilter, rows, md }: FilterFormProps<TRow, TFilter>) => {
   const filterOptions = getFilterOptions(md, filter, rows)
   const tagRender = (o: FilterColOption) => <div className='item'>
-    <Tag label={o.label} color={o.color} />{o.value.num && <span className='num'>{numFormat(o.value.num)}</span>}
+    <Tag label={o.label} color={o.color} />{o.value.num > 0 && <span className='num'>{numFormat(o.value.num)}</span>}
   </div>
   const onSelect = (o: FilterColOption, col: keyof TFilter) => onFilter(filterWithSelect(filter, col, o.value.value, o.selected))
   return < FilterFormStyle >
@@ -121,9 +123,9 @@ const FilterForm = <TRow, TFilter extends FilterState>({ filter, onFilter, rows,
 }
 
 const isSelected = <T extends FilterState,>(filter: T, col: string, v: string) => {
-  const c = filter[col]
-  if (v == '_all') return !c
-  return !c || c.includes(v)
+  const filterValues = filter[col]
+  if (v == '_all') return !filterValues // all selected when filter null
+  return filterValues?.includes(v) == true
 }
 
 const filterWithSelect = <T extends FilterState,>(f: T, col: keyof T, val: string, select: boolean): T => {
@@ -138,3 +140,10 @@ const filterWithSelect = <T extends FilterState,>(f: T, col: keyof T, val: strin
     }
   }
 }
+
+export const filterToQuery = (f: FilterState) => mapValues(f, v => v?.join('|'))
+export const filterFromQuery = <T,>(q: T, filterProps: (keyof T)[]) =>
+  mapToObj(filterProps, p => {
+    const filterValues = (q[p] as unknown as string)?.split('|').filter(s => s?.length > 0)
+    return [p, filterValues?.length <= 0 ? null : filterValues] // treat an empty array as no filter
+  })

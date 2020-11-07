@@ -5,7 +5,7 @@ import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexTopVideos, VideoRemoved, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
-import Layout from "../components/Layout"
+import Layout, { MinimalPage } from "../components/Layout"
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from '../components/Period'
 import { Spinner } from '../components/Spinner'
 import { Videos } from '../components/Video'
@@ -17,6 +17,7 @@ import { ChannelDetails } from '../components/Channel'
 import { Footer } from '../components/Footer'
 import { InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
+import PurposeBanner from '../components/PurposeBanner'
 
 interface QueryState extends Record<string, string> {
   period?: string
@@ -58,18 +59,21 @@ const TopVideosPage = () => {
   const onCloseChannel = () => setQuery({ openChannelId: null })
 
   return <Layout>
-    <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
+    <PurposeBanner>
+      <p>See the most viewed videos of the selected period, and narrow the list to specific groups of channels</p>
+    </PurposeBanner>
+    <MinimalPage>
+      <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
     <PeriodSelect periods={idx?.periods} period={period} onPeriod={(p) => {
-        setQuery({ period: periodString(p) })
-      }} />
-
+          setQuery({ period: periodString(p) })
+        }} />
   filtered to <InlineValueFilter md={md} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />
-    </FilterHeader>
-    <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels showThumb loading={loading} />
-    <Footer />
-    <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
-      {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={period} />}
-    </Popup>
+      </FilterHeader>
+      <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels showThumb loading={loading} />
+      <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
+        {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={period} />}
+      </Popup>
+    </MinimalPage>
   </Layout>
 }
 

@@ -32,8 +32,26 @@ const NavStyle = styled.nav`
     }
   }
 `
+const menuCollapseWidth = '768px'
+
+const BurgerSubNavStyle = styled(NavStyle)`
+  a {
+    display:block;
+    text-transform: none;
+    font-size: 0.9em;
+    margin: 0.5em 0.5em 0.5em 1em;
+  }
+
+  display:none;
+  @media (max-width: ${menuCollapseWidth}) {
+    display:unset;
+  }
+`
 
 const SubNavStyle = styled(NavStyle)`
+  @media (max-width: ${menuCollapseWidth}) {
+    display:none;
+  }
   padding-top: 0;
   padding-left: 2em;
   font-size: 1em;
@@ -65,7 +83,6 @@ const pagesMd: NavItem[] = [
   { path: '/contact', label: 'Contact' },
 ]
 
-
 interface NavItemRun extends NavItem {
   path: string
   label?: string
@@ -74,23 +91,22 @@ interface NavItemRun extends NavItem {
   subItems?: NavItemRun[]
 }
 
-
 const Header = ({ siteTitle }: { siteTitle: string }) => {
-  const path = '/' + (safeLocation() ? uri(safeLocation().href).parts.path.join('/') : '')
+  const loc = safeLocation()
+  const path = loc ? '/' + uri(loc.href).parts.path.join('/') : null
   const createAllPages = (items: NavItem[]): NavItemRun[] => items.map(i => ({
     ...i,
     active: i.path == path,
     subItems: i.subItems ? createAllPages(i.subItems) : null
   }))
   const pages = createAllPages(pagesMd)
-  const topPage = path ? pages.find(p => path.startsWith(p.path)) : null
+  const topPage = path ? pages.find(p => path?.startsWith(p.path)) : null
   const subPages = topPage?.subItems
 
   return (
     <header
       style={{
-        background: `var(--bg1)`,
-        marginBottom: `0.5em`,
+        background: `var(--bg1)`
       }}
     >
       <NavStyle>
@@ -106,12 +122,17 @@ const Header = ({ siteTitle }: { siteTitle: string }) => {
             {siteTitle}
           </Link>
         </h1>
-        <Burger>
-          {pages.map(p => <PageLink page={p} key={p.path} />)}
+        <Burger collapseWidth={menuCollapseWidth}>
+          {pages.map(p => <>
+            <PageLink page={p} key={p.path} />
+            {p.subItems && <BurgerSubNavStyle>
+              {p.subItems.map(sp => <PageLink page={sp} key={`burger-sub-${p.path}-${sp.path}`} />)}
+            </BurgerSubNavStyle>}
+          </>)}
         </Burger>
       </NavStyle>
       {subPages && <SubNavStyle>
-        {subPages.map(p => <PageLink page={p} key={p.path} />)}
+        {subPages.map(p => <PageLink page={p} key={`main-sub-${p.path}`} />)}
       </SubNavStyle>
       }
     </header>

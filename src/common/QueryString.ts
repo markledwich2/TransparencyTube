@@ -13,7 +13,7 @@ export type QsResult<T> = {
   [1]: (values: Partial<T>) => void
 } & Array<any>
 
-export const useQuery = <T extends Record<string, string | string[]>>(
+export const useQuery = <T>(
   location: Location,
   navigate: (path: string) => void,
   parseOptions?: ParseOptions,
@@ -27,7 +27,7 @@ export const useQuery = <T extends Record<string, string | string[]>>(
       ...values
     }
     setState(newQuery)
-    navigate(location.pathname + '?' + stringify(newQuery, stringifyOptions))
+    navigate(location.pathname + '?' + stringify(newQuery as any, stringifyOptions))
   }
 
   return [state, setQuery]

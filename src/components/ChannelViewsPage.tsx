@@ -1,30 +1,29 @@
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
-import { delay, jsonEquals, navigateNoHistory, shallowEquals } from '../common/Utils'
+import { delay, navigateNoHistory } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { buildChannelBubbleNodes, BubblesSelectionState, TagNodes } from '../common/ChannelBubble'
-import { getChannels, md, Channel, ColumnValueMd, ColumnMdOpt, getColOptions } from '../common/Channel'
+import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
-import { orderBy, sumBy, values } from '../common/Pipe'
+import { orderBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import ContainerDimensions from 'react-container-dimensions'
-import { Videos } from './Video'
 import { Tip } from './Tooltip'
 import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews } from '../common/RecfluenceApi'
 import { loadingFilter, NormalFont } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
-import { InlineVideoFilter, VideoFilter } from './VideoFilter'
 import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
-import { TagHelp, TagTip } from './TagInfo'
+import { TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
 import { Popup } from './Popup'
 import { BubbleCharts } from './BubbleChart'
 import { FilterHeader } from './FilterCommon'
+import { ColumnValueMd } from '../common/Metadata'
 
 interface QueryState extends Record<string, string>, BubblesSelectionState {
   videoPeriod?: string
@@ -53,8 +52,6 @@ export const ChannelViewsPage = () => {
     go()
   }, [])
 
-  const period = parsePeriod(q.period) ?? defaultPeriod
-  const videoPeriod = parsePeriod(q.videoPeriod) ?? defaultPeriod
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
   const onCloseChannel = () => setQuery({ openChannelId: null })
@@ -175,7 +172,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
             c => c.channelViews, 'desc')
         ))}
-        itemRender={(c: Channel) => <ChannelTitle c={c} showLr style={{ width: filterOnRight ? '50em' : '95vw' }} />}
+        itemRender={(c: Channel) => <ChannelTitle c={c} style={{ width: filterOnRight ? '50em' : '95vw' }} />}
         getKey={c => c.channelId}
         getLabel={c => c.channelTitle}
         placeholder='find channel'
