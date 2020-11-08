@@ -21,12 +21,12 @@ const NavStyle = styled.nav`
     color: var(--fg);
     text-decoration: none;
     text-transform: uppercase;
-    padding-right: 1.5em;
+    padding-right: 0.5em;
     font-weight: bold;
+    white-space: nowrap;
     :hover {
       color:var(--fg-feature)
     }
-
     &.active {
       color:var(--fg-feature)
     }
@@ -40,6 +40,7 @@ const BurgerSubNavStyle = styled(NavStyle)`
     text-transform: none;
     font-size: 0.9em;
     margin: 0.5em 0.5em 0.5em 1em;
+    white-space: nowrap;
   }
 
   display:none;
@@ -110,7 +111,7 @@ const Header = ({ siteTitle }: { siteTitle: string }) => {
       }}
     >
       <NavStyle>
-        <h1 style={{ margin: 0 }}>
+        <h1 style={{ margin: 0, whiteSpace: 'nowrap' }}>
           <img src="/ttube.svg" style={{ height: '1em', marginRight: '0.2em', position: 'relative', top: '0.2em' }} />
           <Link
             to="/"

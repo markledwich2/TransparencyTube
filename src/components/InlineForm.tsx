@@ -2,6 +2,7 @@ import styled from 'styled-components'
 import React, { useState, useEffect, useRef, FunctionComponent, PropsWithChildren, CSSProperties } from 'react'
 import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
 import { jsonEquals } from '../common/Utils'
+import { StyleProps } from './Layout'
 
 
 const OuterStyle = styled.span`
@@ -60,7 +61,7 @@ interface InlineFormOptions<T> {
   onClose?: () => void
 }
 
-export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose }: PropsWithChildren<InlineFormOptions<T>>) => {
+export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose, style }: PropsWithChildren<InlineFormOptions<T>> & StyleProps) => {
   const [open, setOpen] = useState<T>(null)
   const popupRef = useRef<HTMLDivElement>()
 
@@ -81,7 +82,7 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
     keepInView(popupRef.current)
   })
 
-  return <OuterStyle>
+  return <OuterStyle style={style}>
     <InlineStyle onClick={e => {
       if (!open)
         setOpen(value)

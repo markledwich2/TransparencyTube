@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { filter, indexBy, map, pipe } from 'remeda'
+import React, { PropsWithChildren, useEffect, useState } from "react"
+import { filter, indexBy, map, pipe, pick } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -23,6 +23,7 @@ import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import { colMd, ColumnValueMd } from '../common/Metadata'
 import ReactMarkdown from 'react-markdown'
+import styled from 'styled-components'
 
 
 interface QueryState {
@@ -41,6 +42,11 @@ const searchIncludes = (search: string, v: VideoRemoved) => {
   const re = new RegExp(`${search}`, 'i')
   return v.videoTitle?.search(re) >= 0 || v.channelTitle?.search(re) >= 0
 }
+
+const FilterPart = styled.span`
+  white-space:nowrap;
+  margin-right:1em;
+`
 
 const RemovedVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
@@ -100,26 +106,42 @@ const RemovedVideosPage = () => {
       <p>YouTube  <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines without providing information about what is removed or why. We fill the gap: here you'll find transparency on what videos are removed. While we don't know all of YouTube's moderation process, we hope this transparency will enable anyone and everyone to try to understand and/or scrutinize it with higher fidelity.</p>
       <p className="subtle">We show videos removed by both the creator or by YouTube. Here are the reason's that you can filter by:</p>
       <FlexRow wrap style={{ margin: 'auto' }}>
-        {colMd(md, 'video', 'errorType').values.map(v => <ErrorTag v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}</FlexRow>
+        {colMd(md, 'video', 'errorType').values.map(v => <ErrorTag
+          v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}
+      </FlexRow>
     </PurposeBanner>
     <MinimalPage>
-      <FlexRow wrap style={{ justifyContent: 'space-between', margin: '1em 0 2em' }}>
-        <FilterHeader>
+      <FilterHeader>
+        <FilterPart>
           Removed videos on
-        <InlineDateRange
+          <InlineDateRange
             range={dateRange}
             onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
           />
-        filtered to
-        <InlineValueFilter
-            filter={videoFilter}
+        </FilterPart>
+        <FilterPart>
+          filtered by removal type
+          <InlineValueFilter
+            filter={pick(videoFilter, ['errorType', 'copyrightHolder'])}
             onFilter={setVideoFilter}
             md={md}
             rows={vidsFiltered}
           />
-        </FilterHeader>
-        <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
-      </FlexRow>
+        </FilterPart>
+        <FilterPart>
+          channel tags
+          <InlineValueFilter
+            filter={pick(videoFilter, ['lr', 'tags'])}
+            onFilter={setVideoFilter}
+            md={md}
+            rows={vidsFiltered}
+          />
+        </FilterPart>
+        <FilterPart>
+          search <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
+        </FilterPart>
+      </FilterHeader>
+
       <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered}
         showChannels loading={loading} defaultLimit={100} groupChannels highlightWords={q.search ? [q.search] : null} />
     </MinimalPage>
@@ -131,7 +153,7 @@ const RemovedVideosPage = () => {
 
 const ErrorTag = ({ v, onErrorType }: { v: ColumnValueMd<string>, onErrorType: (error: string) => void }) =>
   <div key={v.value} style={{ width: '20em', fontSize: '0.8em' }}>
-    <a onClick={() => onErrorType(v.value)}><Tag label={v.label ?? v.value} color={v.color} /></a>
+    <a onClick={() => onErrorType(v.value)}><Tag label={v.label ?? v.value} color={v.color} style={{ marginBottom: '0.3em' }} /></a>
     <ReactMarkdown>{v.desc}</ReactMarkdown>
   </div>
 

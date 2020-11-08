@@ -12,7 +12,7 @@ interface SearchSelectOptions {
 }
 
 
-const inputIconStyle: React.CSSProperties = { position: 'absolute', right: '0.3em', top: '0.7em', color: 'var(--bg4)' }
+const inputIconStyle: React.CSSProperties = { position: 'absolute', right: '0.3em', top: '0em', color: 'var(--bg4)' }
 
 const SearchText = ({ search, onSearch, placeholder, style }: SearchSelectOptions & StyleProps) => {
   const [inputFocused, setInputFocused] = useState(false)
@@ -28,7 +28,7 @@ const SearchText = ({ search, onSearch, placeholder, style }: SearchSelectOption
     [debouncedSearch]
   )
 
-  return <div style={{ position: 'relative' }}>
+  return <span style={{ position: 'relative' }}>
     <input
       type='text'
       placeholder={placeholder}
@@ -43,7 +43,7 @@ const SearchText = ({ search, onSearch, placeholder, style }: SearchSelectOption
       onSearch(null)
       setInputSearch(null)
     }} />}
-  </div>
+  </span>
 }
 
 export default SearchText

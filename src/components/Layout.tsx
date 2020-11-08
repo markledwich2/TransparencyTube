@@ -140,7 +140,7 @@ export const NormalFont = styled.span`
 `
 
 export const TextPage = styled.div`
-  max-width: 800px;
+  max-width: 45em;
   margin: auto;
   font-size: 1.4em;
   min-height: 80vh;

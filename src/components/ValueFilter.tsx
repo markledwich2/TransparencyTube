@@ -8,6 +8,7 @@ import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
 import { InlineForm } from './InlineForm'
 import { OptionList } from './InlineSelect'
+import { StyleProps } from './Layout'
 export type FilterState = Record<string, string[]>
 
 
@@ -32,7 +33,8 @@ interface FilterFormProps<TRow, TFilter> {
   rows?: TRow[]
   //filterValues?: FilterValues
 }
-export const InlineValueFilter = <TRow, TFilter extends FilterState>(p: FilterFormProps<TRow, TFilter>) => <InlineForm<TFilter>
+export const InlineValueFilter = <TRow, TFilter extends FilterState>(p: FilterFormProps<TRow, TFilter> & StyleProps) => <InlineForm<TFilter>
+  style={p.style}
   inlineRender={f => inlineFilterElement(p.md, f)} value={p.filter} onChange={f => p.onFilter(f)} keepOpenOnChange>
   <FilterForm {...p} />
 </InlineForm>
