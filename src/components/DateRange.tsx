@@ -110,7 +110,7 @@ export const InlineDateRange = ({ onClose, onChange, range, style, className, ..
     () => {
       onChange(debounceRange)
     },
-    [debounceRange]
+    [JSON.stringify(debounceRange)]
   )
 
   return <InlineForm

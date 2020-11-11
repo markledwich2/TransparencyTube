@@ -1,6 +1,6 @@
 import { Link } from "gatsby"
 import PropTypes from "prop-types"
-import React from "react"
+import React, { Fragment } from "react"
 import { compact, flatMap } from 'remeda'
 import styled from 'styled-components'
 import { uri } from '../common/Uri'
@@ -124,12 +124,12 @@ const Header = ({ siteTitle }: { siteTitle: string }) => {
           </Link>
         </h1>
         <Burger collapseWidth={menuCollapseWidth}>
-          {pages.map(p => <>
+          {pages.map(p => <Fragment key={p.path}>
             <PageLink page={p} key={p.path} />
             {p.subItems && <BurgerSubNavStyle>
               {p.subItems.map(sp => <PageLink page={sp} key={`burger-sub-${p.path}-${sp.path}`} />)}
             </BurgerSubNavStyle>}
-          </>)}
+          </Fragment>)}
         </Burger>
       </NavStyle>
       {subPages && <SubNavStyle>

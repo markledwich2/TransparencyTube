@@ -8,9 +8,17 @@ import { entries } from './Pipe'
 
 export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   keyFiles: IndexFile<TKey>[]
+  cols: IndexCol<TRow>[]
   baseUri: Uri
   fileRowsCache: { [key: string]: TRow[] }
   getRows: (filter: TKey | FilterRange<TKey>) => Promise<TRow[]>
+}
+
+interface IndexCol<TRow> {
+  name: keyof TRow,
+  inIndex: boolean,
+  dbName?: string,
+  distinct?: string[]
 }
 
 interface IndexFile<TKey> {
@@ -32,10 +40,22 @@ export const noCacheReq = { headers: { 'Cache-Control': 'no-cache' } }
 const enableLocalCache = true
 
 export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRow, TKey>> => {
-  const baseUri = blobCfg.indexUri.addPath(path)
-  const baseUriCdn = blobCfg.indexCdnUri.addPath(path)
+  const subPath = [path, blobCfg.indexVersion]
+  const baseUri = blobCfg.indexUri.addPath(...subPath)
+  const baseUriCdn = blobCfg.indexCdnUri.addPath(...subPath)
   const fileRowsCache = {}
-  const index = await getJson<BlobIndex<TRow, TKey>>(baseUri.addPath('index.json.gz').url, noCacheReq)
+  const indexUrl = baseUri.addPath('index.json.gz').url
+
+  let index: BlobIndex<TRow, TKey> = null
+  try {
+    index = await getJson<BlobIndex<TRow, TKey>>(indexUrl, noCacheReq)
+  }
+  catch (err) {
+    console.log(`unable to to load json index (${indexUrl})`, err)
+    throw err
+  }
+
+  console.log(`index loaded ${indexUrl}`, index)
 
   const compare = (file: TKey, filter: TKey) => {
     for (const key in file) {
@@ -51,8 +71,16 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
   const fileRows = async (file: string) => {
     const cache = enableLocalCache ? fileRowsCache[file] : null
     if (cache) return cache
-    const rows = await getJsonl<TRow>(baseUriCdn.addPath(file).url)
-    if (enableLocalCache)
+    const path = baseUriCdn.addPath(file).url
+
+    let rows: TRow[] = []
+    try {
+      rows = await getJsonl<TRow>(path)
+    }
+    catch (err) {
+      console.log(`Error loading index file ${path}`)
+    }
+    if (rows && enableLocalCache)
       fileRowsCache[file] = rows
     return rows
   }
@@ -64,7 +92,7 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
         : compare(f.first, filter) <= 0 && compare(f.last, filter) >= 0
 
     const files = index.keyFiles.filter(fileOverlap)
-    //console.log('blobIndex. filter, matching files.', filter, files)
+    console.log(`index files in ${indexUrl} loaded`, files)
     const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
     const filtered = rows.filter((r: TKey) => {
       if (isFilterRange(filter)) {

@@ -80,7 +80,7 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
 
   useEffect(() => {
     keepInView(popupRef.current)
-  })
+  }, [open])
 
   return <OuterStyle style={style}>
     <InlineStyle onClick={e => {

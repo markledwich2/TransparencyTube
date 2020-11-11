@@ -1,9 +1,9 @@
-import React, { PropsWithChildren, useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { filter, indexBy, map, pipe, pick } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, indexChannelViews, indexRemovedVideos, VideoRemoved } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoRemoved } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout, { FlexRow, MinimalPage } from "../components/Layout"
 import { Videos } from '../components/Video'
@@ -16,7 +16,7 @@ import { orderBy } from '../common/Pipe'
 import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
 import { InlineDateRange } from '../components/DateRange'
 import SearchText from '../components/SearchText'
-import { StatsPeriod } from '../components/Period'
+import { Period } from '../components/Period'
 import ReactTooltip from 'react-tooltip'
 import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
@@ -55,13 +55,13 @@ const RemovedVideosPage = () => {
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
   const [loading, setLoading] = useState(false)
-  const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
+  const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
 
   const videoFilter: VideoFilter = filterFromQuery(q, ['errorType', 'copyrightHolder', 'tags', 'lr'])
   const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
 
   const dateRange = {
-    startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -30),
+    startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -7),
     endDate: q.end ? parseISO(q.end) : endOfToday()
   }
 
@@ -69,7 +69,7 @@ const RemovedVideosPage = () => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
     indexChannelViews().then(ci => {
       setChannelIndexes(ci)
-      setDefaultPeriod(ci?.periods.find(p => p.periodType == 'd7'))
+      setDefaultPeriod(indexPeriods(ci.channelStatsByPeriod).find(p => p.type == 'd7'))
     })
     indexRemovedVideos().then(setIdx)
   }, [])

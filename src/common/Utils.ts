@@ -144,7 +144,7 @@ export type PartialRecord<K extends keyof any, T> = {
   [P in K]?: T
 }
 
-export const useDebounce = (value: any, delay: number) => {
+export const useDebounce = <T>(value: T, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value)
   useEffect(
     () => {

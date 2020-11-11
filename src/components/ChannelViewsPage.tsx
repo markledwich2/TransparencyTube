@@ -11,12 +11,12 @@ import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import ContainerDimensions from 'react-container-dimensions'
 import { Tip } from './Tooltip'
-import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews } from '../common/RecfluenceApi'
+import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews, indexPeriods } from '../common/RecfluenceApi'
 import { loadingFilter, NormalFont } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
-import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from './Period'
+import { parsePeriod, PeriodSelect, periodString, HasPeriod, Period } from './Period'
 import { TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
@@ -32,7 +32,7 @@ interface QueryState extends Record<string, string>, BubblesSelectionState {
 export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [indexes, setIndexes] = useState<ChannelViewIndexes>(null)
-  const [defaultPeriod, setDefaultPeriod] = useState<StatsPeriod>(null)
+  const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
 
   useEffect(() => {
@@ -41,7 +41,8 @@ export const ChannelViewsPage = () => {
       try {
         const idx = await indexChannelViews()
         setIndexes(idx)
-        setDefaultPeriod(idx?.periods.find(p => p.periodType == 'd7'))
+        const periods = idx ? indexPeriods(idx.channelStatsByPeriod) : []
+        setDefaultPeriod(periods.find(p => p.type == 'd7'))
       }
       catch (e) {
         console.log('error getting view indexes', e)
@@ -86,7 +87,7 @@ interface BubblesProps {
   indexes: ChannelViewIndexes
   selections: BubblesSelectionState
   onSelection?: (d: BubblesSelectionState) => void
-  defaultPeriod?: StatsPeriod
+  defaultPeriod?: Period
   onLoad?: () => void
 }
 
@@ -110,7 +111,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
     const go = async () => {
       setLoading(true)
       await delay(1)
-      const rawStats = await indexes.channelStatsByPeriod.getRows(period)
+      const rawStats = await indexes.channelStatsByPeriod.getRows({ period: periodString(period) })
       setRawStats(rawStats)
       setLoading(false)
       await delay(1000) // wait a sec before rebuilding tooltips. This makes it work more consistently but i'm not sure why
@@ -119,7 +120,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       onLoad?.()
     }
     go()
-  }, [JSON.stringify(period), indexes, channels])
+  }, [periodString(period), indexes, channels])
 
   useEffect(() => {
     if (selections.groupBy)
@@ -146,7 +147,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
           itemRender={MeasureOption}
         />
         {['views', 'watchHours'].includes(measure) && <PeriodSelect
-          periods={indexes.periods}
+          periods={indexPeriods(indexes.channelStatsByPeriod)}
           period={period}
           onPeriod={o => onSelection({ period: periodString(o) })} />
         }

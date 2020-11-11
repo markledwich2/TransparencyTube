@@ -184,18 +184,26 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
             </>}
           </FlexRow>
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} />}
+          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoRemoved(v)} />}
         </FlexCol>
       </FlexRow>
     </FlexRow>
   </VideoStyle>
 }
 
-const VideoChannel = ({ c, v, onOpenChannel, highlightWords }: { c: Channel, v: VideoCommon, onOpenChannel?: (c: Channel) => void, highlightWords?: string[] }) => {
+
+interface VideoChannelProps {
+  c: Channel
+  v: VideoCommon,
+  onOpenChannel?: (c: Channel) => void
+  highlightWords?: string[]
+  showTags?: boolean
+}
+const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags }: VideoChannelProps) => {
   if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
-    <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }}
-      tipId={tipId} onLogoClick={onOpenChannel} highlightWords={highlightWords} />
+    <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '50px' }} titleStyle={{ fontSize: '1em' }} style={{ maxWidth: '350px' }}
+      tipId={tipId} onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} />
   </div>
 }
 

@@ -1,7 +1,7 @@
 import { getJsonl } from './Utils'
 import { BlobIndex, blobIndex, noCacheReq } from './BlobIndex'
 import { Channel } from './Channel'
-import { StatsPeriod } from '../components/Period'
+import { HasPeriod, parsePeriod, Period } from '../components/Period'
 import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 
 export interface videoViewsQuery {
@@ -22,7 +22,7 @@ export interface VideoCommon {
 }
 
 export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews).periodViews != undefined
-export interface VideoViews extends StatsPeriod, VideoCommon {
+export interface VideoViews extends HasPeriod, VideoCommon {
   periodViews: number
   watchHours: number
   rank: number
@@ -37,10 +37,9 @@ export interface VideoRemoved extends VideoCommon {
 }
 
 export type ChannelKey = { channelId: string }
-export type ChannelAndPeriodKey = ChannelKey & StatsPeriod
-export type VideoViewsIndex<TKey> = BlobIndex<VideoViews, TKey>
+export type ChannelAndPeriodKey = ChannelKey & HasPeriod
 
-export interface ChannelStats extends StatsPeriod {
+export interface ChannelStats extends HasPeriod {
   channelId: string,
   views?: number,
   watchHours?: number
@@ -52,20 +51,18 @@ export const isChannelWithStats = (c: any): c is ChannelWithStats => c.views
 
 
 export interface ChannelViewIndexes {
-  periods: StatsPeriod[]
-  channelVideo: VideoViewsIndex<ChannelAndPeriodKey>
-  channelStatsByPeriod: BlobIndex<ChannelStats, StatsPeriod>
+  channelVideo: BlobIndex<VideoViews, ChannelAndPeriodKey>
+  channelStatsByPeriod: BlobIndex<ChannelStats, HasPeriod>
   channelStatsById: BlobIndex<ChannelStats, ChannelKey>
 }
 
 export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => {
-  const [channelVideo, channelStatsById, channelStatsByPeriod] = await Promise.all([
+  const [channelVideo, channelStatsByPeriod, channelStatsById] = await Promise.all([
     blobIndex<VideoViews, ChannelAndPeriodKey>('top_channel_videos'),
-    blobIndex<VideoViews, ChannelKey>('channel_stats_by_id'),
-    blobIndex<VideoViews, StatsPeriod>('channel_stats_by_period')
+    blobIndex<ChannelStats, HasPeriod>('channel_stats_by_period'),
+    blobIndex<ChannelStats, ChannelKey>('channel_stats_by_id'),
   ])
   const indexes: ChannelViewIndexes = {
-    periods: await getJsonl<StatsPeriod>(channelVideo.baseUri.addPath('periods.jsonl.gz').url, noCacheReq),
     channelVideo,
     channelStatsByPeriod,
     channelStatsById
@@ -73,11 +70,7 @@ export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => 
   return indexes
 }
 
-export const indexTopVideos = async () => {
-  const topVideos = await blobIndex<VideoViews, StatsPeriod>('top_videos')
-  const periods = await getJsonl<StatsPeriod>(topVideos.baseUri.addPath('periods.jsonl.gz').url, noCacheReq)
-  return { topVideos, periods }
-}
+export const indexPeriods = (index: BlobIndex<any, HasPeriod>) => index.cols?.find(c => c.name == 'period')?.distinct.map(d => parsePeriod(d))
 
 export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
 

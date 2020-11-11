@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react"
 import { indexBy } from 'remeda'
-import { BlobIndex } from '../common/BlobIndex'
+import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, indexChannelViews, indexTopVideos, VideoRemoved, VideoViews } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexPeriods, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout, { MinimalPage } from "../components/Layout"
-import { parsePeriod, PeriodSelect, periodString, StatsPeriod } from '../components/Period'
-import { Spinner } from '../components/Spinner'
+import { parsePeriod, PeriodSelect, periodString, HasPeriod } from '../components/Period'
 import { Videos } from '../components/Video'
 import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'
-import { Footer } from '../components/Footer'
 import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
@@ -29,22 +27,21 @@ interface QueryState extends Record<string, string> {
 
 const TopVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
-  const [idx, setIdx] = useState<{
-    topVideos: BlobIndex<VideoViews, StatsPeriod>
-    periods: StatsPeriod[]
-  }>(null)
+  const [videoIdx, setVideoIdx] = useState<BlobIndex<VideoViews, HasPeriod>>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<VideoViews[]>(null)
   const [loading, setLoading] = useState(false)
-  const period = q.period ? parsePeriod(q.period) : idx?.periods.find(p => p.periodType == 'd7')
-
+  const periods = videoIdx ? indexPeriods(videoIdx) : []
+  const period = q.period ?
+    parsePeriod(q.period) :
+    channelIndexes ? periods.find(p => p.type == 'd7') : null
   const videoFilter: VideoFilter = filterFromQuery(q, ['tags', 'lr'])
   const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
-    indexTopVideos().then(setIdx)
+    blobIndex<VideoViews, HasPeriod>('top_videos').then(setVideoIdx)
     indexChannelViews().then(setChannelIndexes)
   }, [])
 
@@ -53,15 +50,15 @@ const TopVideosPage = () => {
   }, [JSON.stringify(q)])
 
   useEffect(() => {
-    if (!idx || !channels) return
+    if (!videoIdx || !channels) return
     setLoading(true)
-    idx.topVideos.getRows(period).then(vids => {
+    videoIdx.getRows({ period: periodString(period) }).then(vids => {
       const vidsEx = vids.map(v => videoWithEx(v, channels))
         .filter(v => videoFilterIncludes(videoFilter, v))
       setVideos(vidsEx)
       setLoading(false)
     })
-  }, [idx, channels, period ? periodString(period) : null, q.lr, JSON.stringify(q.tags)])
+  }, [videoIdx, channels, period ? periodString(period) : null, q.lr, JSON.stringify(q.tags)])
 
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
@@ -74,7 +71,7 @@ const TopVideosPage = () => {
     </PurposeBanner>
     <MinimalPage>
       <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-    <PeriodSelect periods={idx?.periods} period={period} onPeriod={(p) => {
+    <PeriodSelect periods={periods} period={period} onPeriod={(p) => {
           setQuery({ period: periodString(p) })
         }} />
   filtered to <InlineValueFilter md={md} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />

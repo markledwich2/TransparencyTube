@@ -6,8 +6,8 @@ import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
 import { Spinner } from './Spinner'
 import { Videos } from './Video'
-import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes, VideoViews } from '../common/RecfluenceApi'
-import { PeriodSelect, StatsPeriod } from './Period'
+import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes, VideoViews, indexPeriods } from '../common/RecfluenceApi'
+import { PeriodSelect, HasPeriod, Period, periodString } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
 import Highlighter from "react-highlight-words"
@@ -16,7 +16,7 @@ export interface TopVideosProps {
   channel: Channel
   mode: 'min' | 'max'
   indexes?: ChannelViewIndexes
-  defaultPeriod?: StatsPeriod
+  defaultPeriod?: Period
 }
 
 export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVideosProps) => {
@@ -26,23 +26,24 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
   const [videos, setVideos] = useState<VideoViews[]>(null)
 
   useEffect(() => {
-    if (mode != 'max' || (stats?.periodType == period.periodType && stats?.periodValue == period.periodValue))
+    if (mode != 'max')
       return
     setStatsLoading(true)
-    indexes.channelStatsById.getRows({ ...period, channelId: channel.channelId }).then(c => {
-      setStats(first(c))
+    indexes.channelStatsById.getRows({ channelId: channel.channelId }).then(chans => {
+      const c = chans.find(c => c.period == periodString(period))
+      setStats(c)
       setStatsLoading(false)
     })
-    indexes.channelVideo.getRows({ ...period, channelId: channel.channelId }).then(setVideos)
+    indexes.channelVideo.getRows({ period: periodString(period), channelId: channel.channelId }).then(setVideos)
     //TODO: build tooltips, set loading property on videos
-  }, [period])
+  }, [periodString(period)])
 
   if (!channel) return <></>
   const c = channel
   const desc = c?.description
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
-    <ChannelTitle c={{ ...c, ...period, ...stats }} tagsMode='show' showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
+    <ChannelTitle c={{ ...c, ...period, ...stats }} showTags showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
     <FlexCol space='1em' style={{ overflowY: 'auto' }}>
       <div style={{ color: 'var(--fg3)' }}>
         <p style={{ maxWidth: '50em' }}>
@@ -50,7 +51,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
         </p>
       </div>
       {mode == 'max' && <>
-        <h3>Top videos <PeriodSelect period={period} periods={indexes.periods} onPeriod={p => setPeriod(p)} /></h3>
+        <h3>Top videos <PeriodSelect period={period} periods={indexPeriods(indexes.channelVideo)} onPeriod={p => setPeriod(p)} /></h3>
         <Videos videos={videos} showThumb />
       </>}
     </FlexCol>
@@ -75,11 +76,10 @@ const MetricsStyle = styled(FlexRow)`
   }
 `
 
-
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
   statsLoading?: boolean
-  tagsMode?: 'show' | 'faded'
+  showTags?: boolean
   showCollectionStats?: boolean
   showReviewInfo?: boolean
   tipId?: string
@@ -92,7 +92,7 @@ export interface ChannelTitleProps {
 
 const tags = indexBy(md.channel.tags.values, t => t.value)
 
-export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
@@ -129,7 +129,7 @@ export const ChannelTitle = ({ c, tagsMode, showCollectionStats, showReviewInfo,
         </span>
         }
       </MetricsStyle>
-      {tagsMode && <TagDiv style={{ margin: '0.2em 0', filter: tagsMode == 'faded' ? 'grayscale(80%)' : null }} >
+      {showTags && <TagDiv style={{ margin: '0.2em 0' }}>
         {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>}
