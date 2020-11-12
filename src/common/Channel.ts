@@ -115,6 +115,12 @@ Click on a channel to see more detail about the collection of video statistics.
     } as ColumnMd,
     copyrightHolder: {
       label: 'Copyright holder'
+    } as ColumnMd,
+    narrative: {
+      label: 'Narrative'
+    } as ColumnMd,
+    label: {
+      label: 'Label'
     } as ColumnMd
   }
 }

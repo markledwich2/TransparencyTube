@@ -12,6 +12,7 @@
     "Jsonl",
     "Vals",
     "camelcase",
+    "chans",
     "ngraph",
     "purry",
     "remeda",
@@ -42,4 +43,9 @@
   "javascript.preferences.quoteStyle": "single",
   "typescript.tsdk": "node_modules\\typescript\\lib",
   "svg.preview.background": "transparent",
+  "workbench.colorCustomizations": {
+    "[Default Dark+]": {
+      "activityBar.background": "#223f3f",
+    }
+  },
 }

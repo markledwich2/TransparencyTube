@@ -77,7 +77,6 @@ export const ChannelViewsPage = () => {
         <ChannelDetails channel={openChannel} mode='max' indexes={indexes} defaultPeriod={defaultPeriod} />
       </Popup>
     </>}
-
   </div >
 }
 
@@ -116,7 +115,6 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       setLoading(false)
       await delay(1000) // wait a sec before rebuilding tooltips. This makes it work more consistently but i'm not sure why
       ReactTooltip.rebuild()
-      await delay(1000) // wait a sec before allowing other things to load
       onLoad?.()
     }
     go()
@@ -200,7 +198,6 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
     <TagTip channels={values(channels)} />
   </div>
 }
-
 
 const MeasureOptionStyle = styled.div`
   padding: 0.1em 0 0.2em 0;

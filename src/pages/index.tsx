@@ -1,6 +1,6 @@
 import React from "react"
 import Layout from "../components/Layout"
-import { ChannelViewsPage } from '../components/ChannelViewsPage'
+import { ChannelViewsPage } from '../components/ChannelViews'
 import SEO from '../components/SEO'
 import { Footer } from '../components/Footer'
 import styled from 'styled-components'
