@@ -1,4 +1,4 @@
-import React, { memo, ReactNode, useEffect } from 'react'
+import React, { memo, MouseEventHandler, ReactNode, useEffect } from 'react'
 import styled from 'styled-components'
 import { measureFormat } from '../common/Channel'
 import { GroupedNodes, BubblesSelectionState, getZoomToFit, BubbleNode, buildBubbleNodes } from '../common/Bubble'
@@ -114,9 +114,17 @@ const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOp
     {isOpen && <div style={{ marginBottom: '1em' }}>{groupRender(group, rows)}</div>}
   </div>
 
-  const commonProps = { ...groupNodes, ...pack, onSelect, showImg, dataCfg }
+  const commonProps = {
+    ...groupNodes,
+    ...pack,
+    onSelect,
+    showImg,
+    dataCfg,
+  }
 
-  if (!isOpen) return <BubbleDiv className='inline'>
+  const onDeselect = () => onSelect(null)
+
+  if (!isOpen) return <BubbleDiv className='inline' onClick={onDeselect}>
     {info}
     <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
       <BubbleSvg {...commonProps} />
@@ -126,7 +134,7 @@ const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOp
 
   return <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
     <ContainerDimensions >
-      {({ width, height }) => <BubbleDiv key={group}>
+      {({ width, height }) => <BubbleDiv key={group} onClick={onDeselect}>
         <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
           {info}
           <BubbleSvg {...commonProps} zoom={getZoomToFit(groupNodes, Math.min(width, height) - 20)} />
@@ -144,7 +152,7 @@ const SVGStyle = styled.svg`
     }
 
     &.deselected {
-      filter:opacity(50%);
+      opacity: 0.3
     }
   }
 `
@@ -181,9 +189,13 @@ const BubbleSvg = memo(({ nodes, dim, zoom, onSelect, showImg, dataCfg }
         const props = {
           'data-for': 'bubble',
           'data-tip': dataCfg.key(n.data.row),
-          onClick: (_) => onSelect(n.data.row),
+          onClick: (e) => {
+            e.stopPropagation()
+            onSelect(n.data.row)
+          },
           className: compact(['node', selectedClass]).join(' ')
         }
+
         return <g key={id} transform={`translate(${x}, ${y})`}>
           <circle r={r} fill={color ?? 'var(--bg3)'} {...props} />
           {showImg && showImage(n) &&

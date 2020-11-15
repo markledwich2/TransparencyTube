@@ -155,7 +155,7 @@ const NarrativesPage = () => {
           loading={loading}
           groupRender={(g, rows) => <></>}
           onSelect={(r) => {
-            setQuery({ selectedKeys: [r.bubbleKey] })
+            setQuery({ selectedKeys: r == null ? null : [r.bubbleKey] })
           }}
           onOpenGroup={g => setQuery({ openGroup: g })}
           tipContent={r => <ChannelDetails
