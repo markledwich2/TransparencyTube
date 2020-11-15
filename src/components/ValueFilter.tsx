@@ -44,7 +44,7 @@ export const filterIncludes = <T,>(filter: FilterState<T>, row: T) => {
       return false
     }
     if (Array.isArray(rv)) return filterValues.every(fv => rv.includes(fv))
-    if (typeof rv == 'string') return filterValues.includes(rv)
+    if (typeof rv == 'string' || rv == null) return filterValues.includes(rv as any as string | null)
     throw 'not implemented. Only support string[] | string'
   }
   return keys(filter).every(colTest)
