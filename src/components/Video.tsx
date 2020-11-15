@@ -6,14 +6,13 @@ import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
-import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoRemoved } from '../common/RecfluenceApi'
+import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
 import { groupBy, indexBy, pipe } from 'remeda'
 import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
-import { isVideoNarrative, VideoNarrative } from '../pages/narratives'
 
 const tipId = 'video-tip'
 
@@ -181,7 +180,14 @@ interface VideoProps extends StyleProps {
   highlightWords?: string[]
 }
 
-const errorTypeMd = indexBy(colMd(md, 'errorType', 'video').values, c => c.value)
+const getMdValues = (col: string, table = 'video') => indexBy(colMd(md, col, table).values, c => c.value)
+
+const mdValues = {
+  errorType: getMdValues('errorType'),
+  support: getMdValues('support'),
+  supplement: getMdValues('supplement')
+}
+
 const vidCaptionChunk = 3
 
 export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords }: VideoProps) => {
@@ -190,7 +196,9 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
-  const errorTypeOpt = isVideoRemoved(v) ? errorTypeMd[v.errorType] : null
+  const errorTypeOpt = isVideoError(v) ? mdValues.errorType[v.errorType] : null
+  const supportOpt = isVideoNarrative(v) ? mdValues.support[v.support] : null
+  const supplementOpt = isVideoNarrative(v) ? mdValues.supplement[v.supplement] : null
 
   const captions = isVideoNarrative(v) ?
     showAllCaps ? v.captions : v.captions.slice(0, vidCaptionChunk)
@@ -224,22 +232,27 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
             </div>}
             {!fPeriodViews && <div><BMetric>{fViews}</BMetric> views</div>}
             {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
-            {isVideoRemoved(v) && <>
+            {isVideoError(v) && <>
               <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
               <span><b>{numFormat(v.videoViews)} views</b></span>
               <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>
             </>}
           </FlexRow>
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-          {isVideoNarrative(v) && captions && <>
-            <div>{captions.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-              <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offset}>{secondsFormat(s.offset, 2)}</VideoA>{s.caption}</div>)}
-              {showAllCapsAction != null && <a onClick={_ => setShowAllCaps(showAllCapsAction)}>
-                {showAllCapsAction ? `show all ${v.captions.length} captions` : `show less captions`}
-              </a>}
-            </div>
+          {isVideoNarrative(v) && <>
+            <FlexRow>
+              {v.support && <Tag label={supportOpt?.label ?? v.support} />}
+              {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} />}
+            </FlexRow>
+            {captions &&
+              <div>{captions.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
+                <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offset}>{secondsFormat(s.offset, 2)}</VideoA>{s.caption}</div>)}
+                {showAllCapsAction != null && <a onClick={_ => setShowAllCaps(showAllCapsAction)}>
+                  {showAllCapsAction ? `show all ${v.captions.length} captions` : `show less captions`}
+                </a>}
+              </div>}
           </>}
-          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoRemoved(v)} />}
+          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
         </FlexCol>
       </FlexRow>
     </FlexRow>

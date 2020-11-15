@@ -3,7 +3,7 @@ import { groupBy, indexBy, map, pick, pipe, uniq } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelStats, VideoChannelExtra, VideoCommon, VideoViews } from '../common/RecfluenceApi'
+import { ChannelStats, VideoChannelExtra, VideoCommon, VideoNarrative, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout, { MinimalPage, styles } from "../components/Layout"
 import { Videos } from '../components/Video'
@@ -26,16 +26,8 @@ interface QueryState extends DateRangeQueryState, BubblesSelectionState<Narrativ
   tags?: string,
   lr?: string,
   support?: string,
+  supplement?: string,
   narrative?: string
-}
-
-export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
-export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
-  narrative: string,
-  captions: { offset: number, caption: string }[],
-  support: string,
-  supplement: string
-  bubbleKey: string
 }
 
 type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string }
@@ -64,10 +56,10 @@ const NarrativesPage = () => {
 
   const narrative = q.narrative ?? idx?.videos.cols.find(c => c.name == 'narrative')?.distinct[0] ?? ''
 
-  const bubbleFilter = { ...filterFromQuery(q, ['tags', 'lr', 'support']) }
+  const bubbleFilter = { ...filterFromQuery(q, ['tags', 'lr', 'support', 'supplement']) }
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
-  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(filterToQuery(pick(f, ['tags', 'lr', 'support', 'channelId'])))
+  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(filterToQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement'])))
   const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
 
   // aggregate videos into channel/group-by granularity. Use these rows for bubbles
@@ -133,8 +125,12 @@ const NarrativesPage = () => {
       <p style={{ margin: '2em' }}>TODO: packed channel bubbles grouped by label/lr/tag. Click to filter videos</p>
       <FilterHeader style={{ marginBottom: '2em', display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <FilterPart>
-          Videos filtered to
-          <InlineValueFilter md={md} filter={pick(videoFilter, ['tags', 'lr', 'support'])} onFilter={setVideoFilter} rows={videos} />
+          Narrative related videos filtered by
+          <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement'])} onFilter={setVideoFilter} rows={videos} />
+        </FilterPart>
+        <FilterPart>
+          channel type
+          <InlineValueFilter md={md} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} />
         </FilterPart>
         in period
         <FilterPart>

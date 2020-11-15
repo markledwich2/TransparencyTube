@@ -33,12 +33,21 @@ export interface VideoViews extends HasPeriod, VideoCommon {
   rank: number
 }
 
-export const isVideoRemoved = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
+export const isVideoError = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
 export interface VideoRemoved extends VideoCommon {
   errorType: string
   copyrightHolder?: string
   lastSeen: string
   errorUpdated: string
+}
+
+export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
+export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
+  narrative: string,
+  captions: { offset: number, caption: string }[],
+  support: string,
+  supplement: string
+  bubbleKey: string
 }
 
 export type ChannelKey = { channelId: string }

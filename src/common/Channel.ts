@@ -125,11 +125,21 @@ Click on a channel to see more detail about the collection of video statistics.
       label: 'Narrative'
     } as ColumnMd,
     support: {
-      label: 'Support',
+      label: 'Narrative Support',
       values: [
         { value: 'claim', label: 'Supporting' },
         { value: 'denial', label: 'Disputing' },
         { value: 'other', label: 'Other' }
+      ]
+    } as ColumnMd,
+    supplement: {
+      label: 'Narrative Supplement',
+      values: [
+        { value: 'heur_chan', label: 'Automatic - channel heuristic' },
+        { value: 'heur_tag', label: 'Automatic - channel tag heuristic' },
+        { value: 'giuliani', label: 'Rudy Giuliani' },
+        { value: 'giuliani', label: 'Donald Trump' },
+        { value: 'second_opinion', label: 'Second opinion' },
       ]
     } as ColumnMd
   }
