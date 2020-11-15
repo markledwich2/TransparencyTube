@@ -9,6 +9,9 @@ import { keys } from './Pipe'
 import { useEffect, useState } from 'react'
 
 
+
+export const parseJson = <T>(json: string) => JSON.parse(json) as T
+
 /** GET a json object and deserialize it */
 export async function getJson<T>(url: RequestInfo, cfg?: RequestInit): Promise<T> {
   const res = await fetch(url, Object.assign({ method: 'GET' }, cfg))
@@ -93,15 +96,15 @@ export const dateFormat = (date: Date | string, tz?: string | 'UTC') => {
 }
 
 export const numFormat = (n: number) =>
-  n ? numeral(n).format(Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
+  n != null ? numeral(n).format(Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
 
 export const delay = (ms: number) => new Promise(_ => setTimeout(_, ms))
 
 const daySeconds = 24 * 60 * 60
-type TimeUnitType = 'sec' | 'min' | 'hr' | 'day' | 'year'
+type TimeUnitType = 's' | 'm' | 'hr' | 'day' | 'year'
 const timeUnits: { [key in TimeUnitType]: TimeUnit } = {
-  sec: { s: 1 },
-  min: { s: 60 },
+  s: { s: 1 },
+  m: { s: 60 },
   hr: { s: 60 * 60 },
   day: { s: daySeconds },
   year: { s: 365 * daySeconds }
@@ -109,7 +112,10 @@ const timeUnits: { [key in TimeUnitType]: TimeUnit } = {
 
 interface TimeUnit { s: number, plural?: string }
 
-const labelUnit = (u: string, v: number) => ((v == 1) ? u : (timeUnits[u].plural ?? `${u}s`))
+const labelUnit = (u: string, v: number) => ((v == 1 || u.length == 1) ? u : (timeUnits[u].plural ?? `${u}s`))
+
+export const secondsFormat = (secs: number, numUnits: number = 1, maxUnit: TimeUnitType | null = null) =>
+  hoursFormat(secs / timeUnits.hr.s, numUnits, maxUnit)
 
 export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit: TimeUnitType | null = 'hr') => {
   let remainingSecs = hours * timeUnits.hr.s
@@ -125,12 +131,15 @@ export const hoursFormat = (hours: number, numUnits: number = 1, maxUnit: TimeUn
         remainingSecs = remainingSecs - val * s
         parts.push({ unit, val })
       }
+      // <1s needs to end with 0s.
+      if (unit == 's' && parts.length == 0)
+        return parts.push({ unit, val: remainingSecs })
     })
-
 
   const r = parts.map(u => {
     const fNum = numFormat(u.val)
-    const space = u.unit.length > 2 || !Number.isInteger(fNum[fNum.length - 1]) ? ' ' : ''
+    // use a space between the unit if the formatted number/unit string is lengthy/decimal/end-in-unit
+    const space = u.unit.length > 2 || !/^[0-9]+$/.test(fNum) ? ' ' : ''
     return `${fNum}${space}${labelUnit(u.unit, u.val)}`
   }).join(' ')
   return r

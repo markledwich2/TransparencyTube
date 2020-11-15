@@ -1,78 +1,131 @@
 import React, { useEffect, useState } from "react"
-import { indexBy } from 'remeda'
+import { groupBy, indexBy, map, pick, pipe } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelStats, VideoCommon, VideoViews } from '../common/RecfluenceApi'
+import { ChannelStats, VideoChannelExtra, VideoCommon, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout, { MinimalPage } from "../components/Layout"
 import { Videos } from '../components/Video'
-import { VideoChannelExtra, VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
-import { delay, navigateNoHistory } from '../common/Utils'
-import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
+import { delay, navigateNoHistory, parseJson } from '../common/Utils'
+import { filterFromQuery, filterFromState, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import PurposeBanner from '../components/PurposeBanner'
 import ReactTooltip from 'react-tooltip'
+import { DateRangeQueryState, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
+import { entries, sumBy } from '../common/Pipe'
+import { BubbleCharts } from '../components/BubbleChart'
+import ContainerDimensions from 'react-container-dimensions'
+import { ChannelDetails } from '../components/Channel'
+import { BubblesSelectionState } from '../common/Bubble'
 
-interface QueryState extends Record<string, string> {
+interface QueryState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
   channel?: string
   tags?: string,
   lr?: string,
-  label?: string,
+  support?: string,
   narrative?: string
 }
 
+export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
 export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
   narrative: string,
-  labels: string
+  label: string,
+  captions: { offset: number, caption: string }[],
+  support: string,
+  bubbleKey: string
 }
 
-type NarrativeChannel = Channel & ChannelStats & NarrativeKey
-interface NarrativeCaption {
-  narrative: string,
-  videoId: string,
-  captions: { offset: number, caption: string }[]
-}
-type NarrativeKey = { narrative: string }
-type NarrativeCaptionKey = NarrativeKey & { videoId: string }
+type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string }
+
+type NarrativeKey = { narrative?: string, uploadDate?: string }
 type NarrativeIdx = {
   videos: BlobIndex<VideoNarrative, NarrativeKey>,
-  captions: BlobIndex<NarrativeCaption, NarrativeCaptionKey>,
   channels: BlobIndex<NarrativeChannel, NarrativeKey>,
+}
+
+interface BubbleGrouping {
+  channelId: string,
+  group: string
+}
+
+const bubbleKeyString = <T extends { channelId: string }>(r: T, groupBy: keyof T) => `${r.channelId}|${r[groupBy]}`
+const bubbleKeyObject = (key: string) => {
+  if (!key) return { channelId: null, group: null }
+  const [channelId, group] = key.split('|')
+  return { channelId, group }
 }
 
 const NarrativesPage = () => {
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
-  const [videos, setVideos] = useState<VideoNarrative[]>(null)
+  const [videos, setVideos] = useState<(VideoNarrative)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
+  const groupCol = 'support'
+
   const narrative = q.narrative ?? idx?.videos.cols.find(c => c.name == 'narrative')?.distinct[0] ?? ''
-  const videoFilter: VideoFilter = filterFromQuery(q, ['tags', 'lr', 'narrative', 'label'])
-  const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
+
+  const bubbleFilter = { ...filterFromQuery(q, ['tags', 'lr', 'support']) }
+  const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
+
+  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(filterToQuery(pick(f, ['tags', 'lr', 'support'])))
+  const dateRange = rangeFromQuery(q, new Date(2020, 10 - 1, 22))
+
+  // aggregate videos into channel/group-by granularity. Use these rows for bubbles
+  const bubbleRows = videos && channels && entries(
+    groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
+  )
+    .map(([g, vids]) => {
+      const { channelId, group } = bubbleKeyObject(g)
+      return ({
+        bubbleKey: g,
+        ...channels[channelId],
+        [groupCol]: group,
+        views: vids ? sumBy(vids, v => v.videoViews) : 0
+      }) as NarrativeChannel
+    })
+
+  const videoRows = videos?.filter(v => filterIncludes(videoFilter, v))
 
   useEffect(() => {
     Promise.all([
       blobIndex<VideoNarrative, NarrativeKey>('narrative_videos'),
-      blobIndex<NarrativeCaption, NarrativeCaptionKey>('narrative_captions'),
       blobIndex<NarrativeChannel, NarrativeKey>('narrative_channels')
-    ]).then(([videos, captions, channels]) => setIdx({ videos, captions, channels }))
+    ]).then(([videos, channels]) => setIdx({ videos, channels }))
   }, [])
 
-  useEffect(() => {
-    idx?.channels.getRows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId)))
-  }, [idx, q.narrative])
+  useEffect(() => { idx?.channels.getRows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, q.narrative])
 
   useEffect(() => {
-    if (!idx) return
+    if (!idx || !channels) return
     setLoading(true)
-    idx.videos.getRows({ narrative }).then(vids => {
-      setVideos(vids.filter(v => videoFilterIncludes(videoFilter, v)))
-      setLoading(false)
-      delay(200).then(() => ReactTooltip.rebuild())
-    })
-  }, [idx, JSON.stringify(q)])
+    idx.videos
+      .getRows(
+        { narrative },
+        { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
+      ).then(vids => {
+        const vidsExtra = vids.map(v => {
+          const c = channels[v.channelId]
+          if (!c) return v
+          const vExtra = { ...v, ...pick(c, ['tags', 'lr']), support: v.label?.split('_')[0] }
+          vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
+          return vExtra
+        })
+        setVideos(vidsExtra)
+        setLoading(false)
+        delay(200).then(() => ReactTooltip.rebuild())
+      })
+  }, [idx, channels, JSON.stringify(q)])
+
+  const selections: BubblesSelectionState<NarrativeChannel> = {
+    groupBy: groupCol,
+    colorBy: 'tags',
+    measure: 'views',
+    openGroup: q.openGroup,
+    selectedKeys: q.selectedKeys
+  }
 
   return <Layout>
     <PurposeBanner>
@@ -81,9 +134,37 @@ const NarrativesPage = () => {
     <MinimalPage>
       <p style={{ margin: '2em' }}>TODO: packed channel bubbles grouped by label/lr/tag. Click to filter videos</p>
       <FilterHeader style={{ marginBottom: '2em' }}>Videos filtered to
-        <InlineValueFilter md={md} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />
+        <InlineValueFilter md={md} filter={pick(videoFilter, ['tags', 'lr', 'support'])} onFilter={setVideoFilter} rows={videos} />
+        in period
+        <InlineDateRange
+          range={dateRange}
+          onChange={r => setQuery(rangeToQuery(r))}
+        />
       </FilterHeader>
-      <Videos channels={channels} videos={videos} showChannels showThumb loading={loading} />
+      <ContainerDimensions>
+        {({ width }) => bubbleRows && <BubbleCharts<NarrativeChannel>
+          rows={bubbleRows}
+          bubbleWidth={width > 800 ? 400 : 200}
+          selections={selections}
+          dataCfg={{
+            key: r => `${r.channelId}|${r[groupCol]}`,
+            image: r => r.logoUrl,
+            title: r => r.channelTitle
+          }}
+          showImg
+          loading={loading}
+          groupRender={(g, rows) => <></>}
+          onSelect={(r) => {
+            setQuery({ selectedKeys: [r.bubbleKey] })
+          }}
+          onOpenGroup={g => setQuery({ openGroup: g })}
+          tipContent={r => <ChannelDetails
+            channel={r}
+            mode='min'
+          />}
+        />}
+      </ContainerDimensions>
+      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading} />
     </MinimalPage>
   </Layout>
 }

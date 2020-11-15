@@ -3,17 +3,16 @@ import { indexBy } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, indexChannelViews, indexPeriods, VideoViews } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexPeriods, VideoChannelExtra, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout, { MinimalPage } from "../components/Layout"
 import { parsePeriod, PeriodSelect, periodString, HasPeriod } from '../components/Period'
 import { Videos } from '../components/Video'
-import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'
-import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
+import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import ReactTooltip from 'react-tooltip'
@@ -24,6 +23,8 @@ interface QueryState extends Record<string, string> {
   tags?: string,
   lr?: string,
 }
+
+type VideoRow = VideoViews & VideoChannelExtra
 
 const TopVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
@@ -36,8 +37,8 @@ const TopVideosPage = () => {
   const period = q.period ?
     parsePeriod(q.period) :
     channelIndexes ? periods.find(p => p.type == 'd7') : null
-  const videoFilter: VideoFilter = filterFromQuery(q, ['tags', 'lr'])
-  const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
+  const videoFilter = filterFromQuery(q, ['tags', 'lr']) as FilterState<VideoRow>
+  const setVideoFilter = (f: FilterState<VideoRow>) => setQuery(filterToQuery(f))
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
@@ -54,7 +55,7 @@ const TopVideosPage = () => {
     setLoading(true)
     videoIdx.getRows({ period: periodString(period) }).then(vids => {
       const vidsEx = vids.map(v => videoWithEx(v, channels))
-        .filter(v => videoFilterIncludes(videoFilter, v))
+        .filter(v => filterIncludes(videoFilter, v))
       setVideos(vidsEx)
       setLoading(false)
     })

@@ -119,8 +119,12 @@ Click on a channel to see more detail about the collection of video statistics.
     narrative: {
       label: 'Narrative'
     } as ColumnMd,
-    label: {
-      label: 'Label'
+    support: {
+      label: 'Support',
+      values: [
+        { value: 'claim', label: 'Supporting' },
+        { value: 'denial', label: 'Disputing' },
+      ]
     } as ColumnMd
   }
 }

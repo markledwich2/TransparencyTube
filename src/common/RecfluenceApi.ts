@@ -2,7 +2,6 @@ import { getJsonl } from './Utils'
 import { BlobIndex, blobIndex, noCacheReq } from './BlobIndex'
 import { Channel } from './Channel'
 import { HasPeriod, parsePeriod, Period } from '../components/Period'
-import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 
 export interface videoViewsQuery {
   channelId?: string
@@ -19,6 +18,12 @@ export interface VideoCommon {
   videoViews: number
   durationSecs: number
   uploadDate: string
+}
+
+export interface VideoChannelExtra {
+  lr: string
+  tags: string[]
+  media?: string
 }
 
 export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews).periodViews != undefined

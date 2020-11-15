@@ -3,21 +3,20 @@ import React from 'react'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
-import { buildChannelBubbleNodes, BubblesSelectionState, TagNodes } from '../common/ChannelBubble'
+import { BubblesSelectionState } from '../common/Bubble'
 import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelTitle } from './Channel'
 import { orderBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
 import ContainerDimensions from 'react-container-dimensions'
-import { Tip } from './Tooltip'
 import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews, indexPeriods } from '../common/RecfluenceApi'
-import { loadingFilter, NormalFont } from './Layout'
+import { NormalFont } from './Layout'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
-import { parsePeriod, PeriodSelect, periodString, HasPeriod, Period } from './Period'
-import { TagTip } from './TagInfo'
+import { parsePeriod, PeriodSelect, periodString, Period } from './Period'
+import { TagInfo, TagTip } from './TagInfo'
 import { Markdown } from './Markdown'
 import { SearchSelect } from './SearchSelect'
 import { Popup } from './Popup'
@@ -25,7 +24,7 @@ import { BubbleCharts } from './BubbleChart'
 import { FilterHeader } from './FilterCommon'
 import { ColumnValueMd } from '../common/Metadata'
 
-interface QueryState extends Record<string, string>, BubblesSelectionState {
+interface QueryState extends BubblesSelectionState<Channel> {
   videoPeriod?: string
 }
 
@@ -45,7 +44,7 @@ export const ChannelViewsPage = () => {
         setDefaultPeriod(periods.find(p => p.type == 'd7'))
       }
       catch (e) {
-        console.log('error getting view indexes', e)
+        console.error('error getting view indexes', e)
       }
       const channels = indexBy(await channelsTask, c => c.channelId)
       setChannels(channels)
@@ -53,10 +52,9 @@ export const ChannelViewsPage = () => {
     go()
   }, [])
 
-  const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
-  const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId, openGroup: null })
-  const onCloseChannel = () => setQuery({ openChannelId: null })
-  const onQuery = (s: Partial<BubblesSelectionState>) => setQuery(s)
+  const openChannel = q.openRowKey ? channels?.[q.openRowKey] : null
+  const onOpenChannel = (c: Channel) => setQuery({ openRowKey: c.channelId, openGroup: null })
+  const onCloseChannel = () => setQuery({ openRowKey: null })
 
   return <div style={{ minHeight: '100vh' }}>
     {channels && defaultPeriod && indexes && <>
@@ -65,9 +63,9 @@ export const ChannelViewsPage = () => {
           channels={channels}
           width={width}
           onOpenChannel={onOpenChannel}
+          onSelection={setQuery}
           indexes={indexes}
           selections={q}
-          onSelection={onQuery}
           defaultPeriod={defaultPeriod}
         />}
       </ContainerDimensions>
@@ -82,10 +80,11 @@ export const ChannelViewsPage = () => {
 
 interface BubblesProps {
   channels: Record<string, Channel>
-  width: number, onOpenChannel: (c: ChannelWithStats) => void
+  width: number,
+  onOpenChannel: (c: ChannelWithStats) => void
   indexes: ChannelViewIndexes
-  selections: BubblesSelectionState
-  onSelection?: (d: BubblesSelectionState) => void
+  selections: BubblesSelectionState<Channel>
+  onSelection: (d: BubblesSelectionState<ChannelWithStats>) => void
   defaultPeriod?: Period
   onLoad?: () => void
 }
@@ -96,15 +95,12 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   const [showImg] = useState(true) // always render sans image first
 
   const period = parsePeriod(selections.period) ?? defaultPeriod
-  const derivedSelections = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections } as BubblesSelectionState
+  const derivedSelections: BubblesSelectionState<Channel> = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections }
   const { measure, colorBy, groupBy } = derivedSelections
 
-  const bubbleWidth = width > 800 ? 800 : 400
+  const stats = rawStats ? rawStats.map(s => ({ ...channels[s.channelId], ...s })) : null
 
-  const stats = rawStats ? indexBy(rawStats.map(s => ({ ...channels[s.channelId], ...s })), c => c.channelId) : null
-  const { groupedNodes, zoom, packSize } = stats ?
-    buildChannelBubbleNodes(Object.values(stats), derivedSelections, bubbleWidth) :
-    { groupedNodes: [], zoom: 1, packSize: 1 } as TagNodes
+  const bubbleWidth = width > 800 ? 800 : 400
 
   useEffect(() => {
     const go = async () => {
@@ -141,7 +137,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
         <InlineSelect
           options={md.channel.measures.values}
           selected={measure}
-          onChange={o => onSelection({ measure: o as any })}
+          onChange={o => onSelection?.({ measure: o as any })}
           itemRender={MeasureOption}
         />
         {['views', 'watchHours'].includes(measure) && <PeriodSelect
@@ -165,7 +161,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       </FilterHeader>
       <SearchSelect
         popupStyle={{ right: filterOnRight ? '0px' : null }}
-        onSelect={(c: Channel) => onSelection({ openChannelId: c.channelId })}
+        onSelect={(c: Channel) => onSelection({ openRowKey: c.channelId })}
         search={(q) => new Promise((resolve) => resolve(
           orderBy(
             values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
@@ -178,22 +174,31 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       />
     </div>
 
-    <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
-      <BubbleCharts
-        {... {
-          groupedNodes, selections: derivedSelections, channels: values(channels),
-          pack: { zoom, packSize, channelClick, showImg, key: JSON.stringify(period) }
-        }}
-        onOpenGroup={(g) => onSelection({ openGroup: g })}
-      />
-    </div>
 
-    <Tip id='bubble' getContent={(id: string) => id ? <ChannelDetails
-      channel={stats[id]}
-      mode='min'
-      indexes={indexes}
-      defaultPeriod={period}
-    /> : <></>} />
+    <BubbleCharts<ChannelWithStats>
+      {... {
+
+      }}
+      onSelect={channelClick}
+      bubbleWidth={bubbleWidth}
+      dataCfg={{
+        key: r => r.channelId,
+        image: r => r.logoUrl,
+        title: r => r.channelTitle
+      }}
+      groupRender={(g, rows) => groupBy == 'tags' && <TagInfo tag={g} channels={rows} />}
+      onOpenGroup={(g) => onSelection({ openGroup: g })}
+      rows={stats}
+      loading={loading}
+      showImg={showImg}
+      selections={derivedSelections}
+      tipContent={c => <ChannelDetails
+        channel={c}
+        mode='min'
+        indexes={indexes}
+        defaultPeriod={period}
+      />}
+    />
 
     <TagTip channels={values(channels)} />
   </div>

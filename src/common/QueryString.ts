@@ -20,14 +20,14 @@ export const useQuery = <T>(
   stringifyOptions?: StringifyOptions
 ): QsResult<T> => {
   const [state, setState] = useState<T>(parse(location.search, parseOptions) as any as T)
-
+  const options: StringifyOptions = { arrayFormat: 'separator', arrayFormatSeparator: '|', ...stringifyOptions }
   const setQuery = (values: Partial<T>): void => {
     const newQuery: T = {
       ...state,
       ...values
     }
     setState(newQuery)
-    navigate(location.pathname + '?' + stringify(newQuery as any, stringifyOptions))
+    navigate(location.pathname + '?' + stringify(newQuery as any, options))
   }
 
   return [state, setQuery]

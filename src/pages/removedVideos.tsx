@@ -3,22 +3,21 @@ import { filter, indexBy, map, pipe, pick } from 'remeda'
 import { BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoRemoved } from '../common/RecfluenceApi'
+import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoChannelExtra, VideoRemoved } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
 import Layout, { FlexRow, MinimalPage } from "../components/Layout"
 import { Videos } from '../components/Video'
-import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 import { useLocation } from '@reach/router'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
 import { orderBy } from '../common/Pipe'
 import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
-import { InlineDateRange } from '../components/DateRange'
+import { DateRangeQueryState, InlineDateRange, rangeFromQuery } from '../components/DateRange'
 import SearchText from '../components/SearchText'
 import { Period } from '../components/Period'
 import ReactTooltip from 'react-tooltip'
-import { filterFromQuery, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
+import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import { colMd, ColumnValueMd } from '../common/Metadata'
@@ -26,7 +25,7 @@ import ReactMarkdown from 'react-markdown'
 import styled from 'styled-components'
 
 
-interface QueryState {
+interface QueryState extends DateRangeQueryState {
   openChannelId?: string
   start?: string
   end?: string
@@ -48,6 +47,8 @@ const FilterPart = styled.span`
   margin-right:1em;
 `
 
+type VideoRow = VideoRemoved & VideoChannelExtra
+
 const RemovedVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [idx, setIdx] = useState<BlobIndex<VideoRemoved, { lastSeen?: string }>>(null)
@@ -57,13 +58,10 @@ const RemovedVideosPage = () => {
   const [loading, setLoading] = useState(false)
   const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
 
-  const videoFilter: VideoFilter = filterFromQuery(q, ['errorType', 'copyrightHolder', 'tags', 'lr'])
-  const setVideoFilter = (f: VideoFilter) => setQuery(filterToQuery(f))
+  const videoFilter: FilterState<VideoRow> = filterFromQuery(q, ['errorType', 'copyrightHolder', 'tags', 'lr'])
+  const setVideoFilter = (f: FilterState<VideoRow>) => setQuery(filterToQuery(f))
 
-  const dateRange = {
-    startDate: q.start ? parseISO(q.start) : addDays(startOfToday(), -7),
-    endDate: q.end ? parseISO(q.end) : endOfToday()
-  }
+  const dateRange = rangeFromQuery(q)
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
@@ -97,7 +95,7 @@ const RemovedVideosPage = () => {
 
   const vidsFiltered = videos ? pipe(videos,
     map(v => ({ ...videoWithEx(v, channels), copyrightHolder: v.copyrightHolder?.substring(0, 15) })), //TODO: use css. This is a shortcut for now
-    filter(v => videoFilterIncludes(videoFilter, v) && searchIncludes(q.search, v)),
+    filter(v => filterIncludes(videoFilter, v) && searchIncludes(q.search, v)),
     orderBy(v => v.videoViews, 'desc')
   ) : null
 
@@ -106,7 +104,7 @@ const RemovedVideosPage = () => {
       <p>YouTube  <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines without providing information about what is removed or why. We fill the gap: here you'll find transparency on what videos are removed. While we don't know all of YouTube's moderation process, we hope this transparency will enable anyone and everyone to try to understand and/or scrutinize it with higher fidelity.</p>
       <p className="subtle">We show videos removed by both the creator or by YouTube. Here are the reason's that you can filter by:</p>
       <FlexRow wrap style={{ margin: 'auto' }}>
-        {colMd(md, 'video', 'errorType').values.map(v => <ErrorTag
+        {colMd(md, 'errorType', 'video').values.map(v => <ErrorTag
           v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}
       </FlexRow>
     </PurposeBanner>
