@@ -57,7 +57,7 @@ export const parsePeriod = (s: string): Period => {
   return { type: p[0], value: p[1] }
 }
 
-export const periodString = (p: Period) => `${p.type}|${p.value}`
+export const periodString = (p: Period) => p ? `${p.type}|${p.value}` : null
 
 interface PeriodSelectProps {
   periods: Period[]
