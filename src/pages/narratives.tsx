@@ -144,7 +144,7 @@ const NarrativesPage = () => {
       <ContainerDimensions>
         {({ width }) => bubbleRows && <BubbleCharts<NarrativeChannel>
           rows={bubbleRows}
-          bubbleWidth={width > 800 ? 400 : 200}
+          bubbleWidth={width > 800 ? 600 : 200}
           selections={selections}
           dataCfg={{
             key: r => `${r.channelId}|${r[groupCol]}`,
