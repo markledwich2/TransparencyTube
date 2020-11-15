@@ -131,6 +131,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
   const filterOnRight = width > 800
   const colOptions = getColOptions('channel')
 
+
   return <div>
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
       <FilterHeader style={{ padding: '0.5em 1em' }}>Political YouTube channel
