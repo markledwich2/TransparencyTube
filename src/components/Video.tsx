@@ -8,8 +8,8 @@ import styled from 'styled-components'
 import { Tip } from './Tooltip'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoRemoved } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
-import { groupBy, indexBy } from 'remeda'
-import { entries, minBy, sumBy } from '../common/Pipe'
+import { groupBy, indexBy, pipe } from 'remeda'
+import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
@@ -39,7 +39,10 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
 
   if (!videos) return <Spinner />
 
-  const groupedVids = groupChannels ? entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: e[1] })) : null
+  const groupedVids = groupChannels && pipe(
+    entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: e[1] })),
+    orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc')
+  )
 
   return <div>
     <div style={{

@@ -30,9 +30,9 @@ interface QueryState extends DateRangeQueryState, BubblesSelectionState<Narrativ
 export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
 export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
   narrative: string,
-  label: string,
   captions: { offset: number, caption: string }[],
   support: string,
+  supplement: string
   bubbleKey: string
 }
 
@@ -109,7 +109,7 @@ const NarrativesPage = () => {
         const vidsExtra = vids.map(v => {
           const c = channels[v.channelId]
           if (!c) return v
-          const vExtra = { ...v, ...pick(c, ['tags', 'lr']), support: v.label?.split('_')[0] }
+          const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
           vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
           return vExtra
         })

@@ -124,6 +124,7 @@ Click on a channel to see more detail about the collection of video statistics.
       values: [
         { value: 'claim', label: 'Supporting' },
         { value: 'denial', label: 'Disputing' },
+        { value: 'other', label: 'Other' }
       ]
     } as ColumnMd
   }
