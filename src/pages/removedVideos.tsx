@@ -4,7 +4,7 @@ import { BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoChannelExtra, VideoRemoved } from '../common/RecfluenceApi'
-import { FilterHeader } from '../components/FilterCommon'
+import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout, { FlexRow, MinimalPage } from "../components/Layout"
 import { Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
@@ -41,11 +41,6 @@ const searchIncludes = (search: string, v: VideoRemoved) => {
   const re = new RegExp(`${search}`, 'i')
   return v.videoTitle?.search(re) >= 0 || v.channelTitle?.search(re) >= 0
 }
-
-const FilterPart = styled.span`
-  white-space:nowrap;
-  margin-right:1em;
-`
 
 type VideoRow = VideoRemoved & VideoChannelExtra
 

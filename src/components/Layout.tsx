@@ -49,6 +49,11 @@ export const styles = {
     position: 'relative',
     top: '-0.15em',
     paddingRight: '0.2em'
+  } as CSSProperties,
+  normalFont: {
+    fontSize: '1rem',
+    fontWeight: 'normal',
+    lineHeight: '1.2rem'
   } as CSSProperties
 }
 

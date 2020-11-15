@@ -5,7 +5,7 @@ import { InlineSelect } from './InlineSelect'
 import ReactTooltip from 'react-tooltip'
 import { BubblesSelectionState } from '../common/Bubble'
 import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
-import { ChannelDetails, ChannelTitle } from './Channel'
+import { ChannelDetails, ChannelSearch, ChannelTitle } from './Channel'
 import { orderBy, values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
@@ -159,19 +159,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
           itemRender={ColOption}
         />
       </FilterHeader>
-      <SearchSelect
-        popupStyle={{ right: filterOnRight ? '0px' : null }}
-        onSelect={(c: Channel) => onSelection({ openRowKey: c.channelId })}
-        search={(q) => new Promise((resolve) => resolve(
-          orderBy(
-            values(channels).filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
-            c => c.channelViews, 'desc')
-        ))}
-        itemRender={(c: Channel) => <ChannelTitle c={c} style={{ width: filterOnRight ? '50em' : '95vw' }} />}
-        getKey={c => c.channelId}
-        getLabel={c => c.channelTitle}
-        placeholder='find channel'
-      />
+      <ChannelSearch onSelect={c => onSelection({ openRowKey: c.channelId })} channels={values(channels)} sortBy='channelViews' />
     </div>
 
 

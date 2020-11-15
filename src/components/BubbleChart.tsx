@@ -129,7 +129,10 @@ const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOp
     <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
       <BubbleSvg {...commonProps} />
     </div>
-    <FullscreenIcon onClick={() => onOpenGroup(group)} />
+    <FullscreenIcon onClick={e => {
+      e.stopPropagation()
+      onOpenGroup(group)
+    }} />
   </BubbleDiv>
 
   return <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
@@ -151,8 +154,12 @@ const SVGStyle = styled.svg`
       cursor:pointer;
     }
 
+    &.selected {
+      box-shadow: 0 0 60px 30px var(--fg)
+    }
+
     &.deselected {
-      opacity: 0.3
+      opacity: 0.2
     }
   }
 `
