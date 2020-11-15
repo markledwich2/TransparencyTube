@@ -19,15 +19,16 @@ export const useQuery = <T>(
   parseOptions?: ParseOptions,
   stringifyOptions?: StringifyOptions
 ): QsResult<T> => {
-  const [state, setState] = useState<T>(parse(location.search, parseOptions) as any as T)
-  const options: StringifyOptions = { arrayFormat: 'separator', arrayFormatSeparator: '|', ...stringifyOptions }
+  const defaultOptions: StringifyOptions = { arrayFormat: 'bracket' }
+  const initState = parse(location.search, { ...defaultOptions, ...parseOptions }) as any as T
+  const [state, setState] = useState<T>(initState)
   const setQuery = (values: Partial<T>): void => {
     const newQuery: T = {
       ...state,
       ...values
     }
     setState(newQuery)
-    navigate(location.pathname + '?' + stringify(newQuery as any, options))
+    navigate(location.pathname + '?' + stringify(newQuery as any, { ...defaultOptions, ...stringifyOptions }))
   }
 
   return [state, setQuery]

@@ -9,7 +9,7 @@ import { Popup } from './Popup'
 import ContainerDimensions from 'react-container-dimensions'
 import { HierarchyCircularNode } from 'd3'
 import ReactTooltip from 'react-tooltip'
-import { delay, jsonEquals } from '../common/Utils'
+import { delay, jsonEquals, toJson } from '../common/Utils'
 import { loadingFilter } from './Layout'
 import { Tip } from './Tooltip'
 import { compact } from 'remeda'
@@ -157,6 +157,9 @@ const SVGStyle = styled.svg`
   }
 `
 
+
+const getSelected = (nodes: HierarchyCircularNode<BubbleNode<any>>[]) => compact(nodes.filter(n => n.data?.selected).map(n => n.id))
+
 const BubbleSvg = memo(({ nodes, dim, zoom, onSelect, showImg, dataCfg }
   : { dataCfg: BubbleDataCfg<any>, onSelect: (row: any) => void, showImg: boolean } & GroupedNodes<any> & BubblePackProps) => {
   const dx = -dim.x.min.x + dim.x.min.r
@@ -206,6 +209,10 @@ const BubbleSvg = memo(({ nodes, dim, zoom, onSelect, showImg, dataCfg }
       )}
     </g>
   </SVGStyle>
-}, (a, b) => a.zoom == b.zoom && a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data) && a?.dim.w == b?.dim.w && a?.showImg == b?.showImg)
+}, (a, b) => a.zoom == b.zoom &&
+  a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data)
+  && a?.dim.w == b?.dim.w
+  && a?.showImg == b?.showImg
+  && toJson(getSelected(a.nodes)) == toJson(getSelected(b.nodes)))
 
 

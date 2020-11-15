@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 
 
 export const parseJson = <T>(json: string) => JSON.parse(json) as T
+export const toJson = (o: any) => JSON.stringify(o)
 
 /** GET a json object and deserialize it */
 export async function getJson<T>(url: RequestInfo, cfg?: RequestInit): Promise<T> {

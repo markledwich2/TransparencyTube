@@ -44,8 +44,8 @@ export interface BubblesSelectionState<T> {
   selectedKeys?: string[]
 }
 
-export const getGroupData = <T>(rows: T[], display: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>) => {
-  const { measure, groupBy, colorBy, selectedKeys } = display
+export const getGroupData = <T>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>) => {
+  const { measure, groupBy, colorBy, selectedKeys } = selections
   const val = (c: T) => c[measure] ?? 0
 
   const groupValues = colMdValues(md, groupBy, rows)
@@ -89,9 +89,9 @@ export interface GroupNodes<T> {
   containerWidth: number
 }
 
-export const buildBubbleNodes = <T>(rows: T[], display: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
+export const buildBubbleNodes = <T>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
   : GroupNodes<T> => {
-  const groupData = getGroupData(rows, display, dataCfg)
+  const groupData = getGroupData(rows, selections, dataCfg)
   const packSize = Math.min(containerWidth - 20, 800)
   const groupedNodes: GroupedNodes<T>[] = groupData.map(t => {
 
