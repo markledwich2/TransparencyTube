@@ -63,6 +63,7 @@ type NarrativeIdx = {
   channels: BlobIndex<NarrativeChannel, NarrativeKey>,
 }
 
+
 const bubbleKeyString = <T extends { channelId: string }>(r: T, groupBy: keyof T) => `${r.channelId}|${r[groupBy]}`
 const bubbleKeyObject = (key: string) => {
   if (!key) return { channelId: null, group: null }
@@ -125,8 +126,7 @@ const NarrativesPage = () => {
           const c = channels[v.channelId]
           if (!c) return v
           const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
-          if (['second_opinion'].includes(v.supplement)) vExtra.supplement = null
-
+          vExtra.supplement = (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual'
           vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
           return vExtra
         })
@@ -148,8 +148,7 @@ const NarrativesPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant voter fraud. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “voter fraud” and label whether the discussions <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claims. Our experiments used videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,760 videos uploaded by 1,443 channels between 10/27 and 11/15. In total these accounted for 642M views.)</p>
-
+      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant voter fraud. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “voter fraud” and label whether the discussions <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claims. Our experiments used videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,760 videos uploaded by 1,443 channels between 10/27 and 11/15. In total these accounted for 642M views.</p>
       {copySections.map((s, i) => {
         const open = copyOpen.includes(i)
         return <p key={i}>
