@@ -26,7 +26,7 @@ The model used to generate automatic labels for channels that haven’t been man
 
 ## **How can I report a mislabeled channel?**
 
-First, please understand that _channels_ are given labels based on the _content_ of their _videos_, not the _identity_ of the content creator. Channel creators can report any _channels_ that appear to be misclassified to hello@transparency.tube .
+First, please understand that _channels_ are given labels based on the _content_ of their _videos_, not the _identity_ of the content creator. Please report any _channels_ that appear to be misclassified to hello@transparency.tube .
 
 
 ## **How are left, center, and right labels assigned if a channel doesn’t discuss politics?**
