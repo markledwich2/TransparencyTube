@@ -127,9 +127,9 @@ Click on a channel to see more detail about the collection of video statistics.
     support: {
       label: 'Narrative Support',
       values: [
-        { value: 'claim', label: 'Supporting narrative', color: '#56b881' },
-        { value: 'denial', label: 'Disputing narrative', color: '#aa557f' },
-        { value: 'other', label: 'Other' }
+        { value: 'claim', label: 'Supporting', color: '#56b881', desc: `Videos that support the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. This includes cases in which significant “election fraud” claims are made during a speech or interview, but not challenged afterwards. This also includes language that clearly insinuates or implies that this narrative is true.` },
+        { value: 'denial', label: 'Disputing', color: '#aa557f', desc: `Videos that dispute the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. If significant “election fraud” is mentioned during a speech or interview, the dispute might be made clear after the speaker is finished or through text on the screen. Easily interpreted forms of insinuation and parody count as well.` },
+        { value: 'other', label: 'Other', desc: `This covers cases where “election fraud” is being discussed, but in a manner that does not clear dispute or support the narrative that it has had a significant impact on the 2020 election.` }
       ]
     } as ColumnMd,
     supplement: {

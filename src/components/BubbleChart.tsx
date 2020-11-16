@@ -10,9 +10,10 @@ import ContainerDimensions from 'react-container-dimensions'
 import { HierarchyCircularNode } from 'd3'
 import ReactTooltip from 'react-tooltip'
 import { delay, jsonEquals, toJson } from '../common/Utils'
-import { loadingFilter } from './Layout'
+import { loadingFilter, StyleProps, styles } from './Layout'
 import { Tip } from './Tooltip'
 import { compact } from 'remeda'
+import { HelpOutline } from 'styled-icons/material'
 
 
 const FullscreenIcon = styled(Fullscreen)`
@@ -76,6 +77,7 @@ export const BubbleCharts = <T,>({ selections, rows, onOpenGroup, onSelect, bubb
       const r = rows.find(r => dataCfg.key(r) == key)
       return r ? tipContent(r) : <></>
     }} />
+    {groupRender && <GroupTip rows={rows} groupRender={groupRender} />}
   </>
 }
 
@@ -108,7 +110,7 @@ const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOp
   const info = <div style={{ padding: '2px' }}>
     <h4>
       <span style={{ paddingRight: '0.5em' }}>{groupNodes.group.label ?? group}</span>
-      {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupBy == 'tags' && <TagHelp tag={group} showTitle />}</span>}
+      {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupRender && <GroupHelp value={group} />}</span>}
       <b style={{ fontSize: '1.5em' }}>{fMeasure}</b>
     </h4>
     {isOpen && <div style={{ marginBottom: '1em' }}>{groupRender(group, rows)}</div>}
@@ -221,5 +223,18 @@ const BubbleSvg = memo(({ nodes, dim, zoom, onSelect, showImg, dataCfg }
   && a?.dim.w == b?.dim.w
   && a?.showImg == b?.showImg
   && toJson(getSelected(a.nodes)) == toJson(getSelected(b.nodes)))
+
+
+const groupTipId = 'group'
+
+export const GroupTip = <T,>({ rows, groupRender }
+  : { rows: T[], groupRender: (group: string, rows: T[]) => JSX.Element }) => <Tip
+    id={groupTipId}
+    getContent={value => groupRender(value, rows)} />
+
+export const GroupHelp = ({ value, style }: { value: string } & StyleProps) => <HelpOutline
+  style={{ ...styles.inlineIcon, ...style }}
+  data-tip={value}
+  data-for={groupTipId} />
 
 

@@ -42,3 +42,6 @@ export const colMdValues = <T,>(md: TablesMetadata, col: string, rows: T[] | nul
   })
   return Object.values(values) ?? []
 }
+
+export const colMdValuesObj = <T,>(md: TablesMetadata, col: string, rows: T[] | null = null): Record<string, ColumnValueMd<string>> =>
+  indexBy(colMdValues(md, col, rows), v => v.value)

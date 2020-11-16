@@ -10,11 +10,12 @@ const PurposeDiv = styled.div<PurposeDivProps>`
   &, p {
     color: ${p => p.feature ? '#fff' : 'var(--fg1)'};
   }
-  p {
+  p, ul, ol {
     margin-bottom:1em;
   }
   padding:1em;
   font-size:1.3em;
+  line-height:1.6em;
   margin-bottom:1em;
   background-image:url('/bubble-bg.svg');
   background-image:${p => p.feature ? `url('/bubble-bg.svg')` : 'none'};
