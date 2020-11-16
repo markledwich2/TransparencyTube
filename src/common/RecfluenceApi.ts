@@ -43,11 +43,12 @@ export interface VideoRemoved extends VideoCommon {
 
 export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
 export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
-  narrative: string,
-  captions: { offset: number, caption: string }[],
-  support: string,
+  narrative: string
+  captions: { offset: number, caption: string }[]
+  support: string
   supplement: string
   bubbleKey: string
+  errorType: string
 }
 
 export type ChannelKey = { channelId: string }

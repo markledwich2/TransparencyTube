@@ -35,10 +35,9 @@ export const ChannelViewsPage = () => {
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
 
   useEffect(() => {
-    const go = async () => {
-      const channelsTask = getChannels()
+    getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))
+    indexChannelViews().then(idx => {
       try {
-        const idx = await indexChannelViews()
         setIndexes(idx)
         const periods = idx ? indexPeriods(idx.channelStatsByPeriod) : []
         setDefaultPeriod(periods.find(p => p.type == 'd7'))
@@ -46,10 +45,7 @@ export const ChannelViewsPage = () => {
       catch (e) {
         console.error('error getting view indexes', e)
       }
-      const channels = indexBy(await channelsTask, c => c.channelId)
-      setChannels(channels)
-    }
-    go()
+    })
   }, [])
 
   const openChannel = q.openRowKey ? channels?.[q.openRowKey] : null

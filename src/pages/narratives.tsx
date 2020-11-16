@@ -22,12 +22,13 @@ import { Tip } from '../components/Tooltip'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 
 interface QueryState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
-  channelId?: string
-  tags?: string,
-  lr?: string,
-  support?: string,
-  supplement?: string,
-  narrative?: string
+  channelId?: string[]
+  tags?: string[],
+  lr?: string[],
+  support?: string[],
+  supplement?: string[],
+  narrative?: string,
+  errorType?: string[]
 }
 
 type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string }
@@ -52,14 +53,12 @@ const NarrativesPage = () => {
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
+  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
+  const videoFilter = { ...bubbleFilter, ...pick(q, ['selectedKeys']) }
+  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement', 'errorType']))
+
   const groupCol = 'support'
-
   const narrative = q.narrative ?? idx?.videos.cols.find(c => c.name == 'narrative')?.distinct[0] ?? ''
-
-  const bubbleFilter = { ...filterFromQuery(q, ['tags', 'lr', 'support', 'supplement']) }
-  const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
-
-  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(filterToQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement'])))
   const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
 
   // aggregate videos into channel/group-by granularity. Use these rows for bubbles
@@ -100,8 +99,8 @@ const NarrativesPage = () => {
           const c = channels[v.channelId]
           if (!c) return v
           const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
-          if(['second_opinion'].includes(v.supplement)) vExtra.supplement = null
-          
+          if (['second_opinion'].includes(v.supplement)) vExtra.supplement = null
+
           vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
           return vExtra
         })
@@ -128,7 +127,7 @@ const NarrativesPage = () => {
       <FilterHeader style={{ marginBottom: '2em', display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <FilterPart>
           Narrative related videos filtered by
-          <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement'])} onFilter={setVideoFilter} rows={videos} />
+          <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} />
         </FilterPart>
         <FilterPart>
           channel type

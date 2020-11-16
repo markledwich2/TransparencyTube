@@ -127,8 +127,8 @@ Click on a channel to see more detail about the collection of video statistics.
     support: {
       label: 'Narrative Support',
       values: [
-        { value: 'claim', label: 'Supporting', color: '#56b881' },
-        { value: 'denial', label: 'Disputing', color: '#aa557f' },
+        { value: 'claim', label: 'Supporting narrative', color: '#56b881' },
+        { value: 'denial', label: 'Disputing narrative', color: '#aa557f' },
         { value: 'other', label: 'Other' }
       ]
     } as ColumnMd,
