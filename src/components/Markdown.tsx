@@ -7,7 +7,7 @@ export const Markdown = styled(ReactMarkdown)`
   white-space:normal;
 
   p {
-    line-height:1.4em;
+    line-height:1.2em;
     margin: 0.1em 0 0.4em 0;
   }
 

@@ -164,7 +164,7 @@ const NarrativesPage = () => {
     </PurposeBanner>
     <MinimalPage>
       <p style={{ margin: '2em' }}></p>
-      <FilterHeader style={{ marginBottom: '2em', display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+      <FilterHeader style={{ marginBottom: '2em' }}>
         <FilterPart>
           Videos filter
           <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} />

@@ -16,6 +16,7 @@ import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValu
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import ReactTooltip from 'react-tooltip'
+import { orderBy } from '../common/Pipe'
 
 interface QueryState extends Record<string, string> {
   period?: string
@@ -54,8 +55,9 @@ const TopVideosPage = () => {
     if (!videoIdx || !channels) return
     setLoading(true)
     videoIdx.getRows({ period: periodString(period) }).then(vids => {
-      const vidsEx = vids.map(v => videoWithEx(v, channels))
-        .filter(v => filterIncludes(videoFilter, v))
+      const vidsEx = orderBy(
+        vids.map(v => videoWithEx(v, channels)).filter(v => filterIncludes(videoFilter, v)),
+        v => v.rank, 'asc')
       setVideos(vidsEx)
       setLoading(false)
     })

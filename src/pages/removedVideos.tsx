@@ -131,7 +131,7 @@ const RemovedVideosPage = () => {
           />
         </FilterPart>
         <FilterPart>
-          search <SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
+          <span>search</span><SearchText search={q.search} onSearch={s => setQuery({ search: s })} style={{ width: '15em' }} placeholder={'channel/video title'} />
         </FilterPart>
       </FilterHeader>
 
