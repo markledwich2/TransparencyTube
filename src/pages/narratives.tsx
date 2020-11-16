@@ -54,7 +54,7 @@ const NarrativesPage = () => {
   const [loading, setLoading] = useState(false)
 
   const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
-  const videoFilter = { ...bubbleFilter, ...pick(q, ['selectedKeys']) }
+  const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
   const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement', 'errorType']))
 
   const groupCol = 'support'
@@ -126,14 +126,14 @@ const NarrativesPage = () => {
       <p style={{ margin: '2em' }}>TODO: packed channel bubbles grouped by label/lr/tag. Click to filter videos</p>
       <FilterHeader style={{ marginBottom: '2em', display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
         <FilterPart>
-          Narrative related videos filtered by
+          Videos filter
           <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} />
         </FilterPart>
         <FilterPart>
-          channel type
+          channel filter
           <InlineValueFilter md={md} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} />
         </FilterPart>
-        in period
+          in period
         <FilterPart>
           <InlineDateRange
             range={dateRange}
@@ -155,7 +155,8 @@ const NarrativesPage = () => {
             return c ? <ChannelDetails channel={c} mode='min' /> : <></>
           }} />
           {channels && !q.selectedKeys && <ChannelSearch onSelect={c => {
-            setQuery({ selectedKeys: bubbleRows.filter(b => b.channelId == c.channelId).map(b => bubbleKeyString(b, groupCol)) })
+            const keys = bubbleRows.filter(b => b.channelId == c.channelId).map(b => bubbleKeyString(b, groupCol))
+            setQuery({ selectedKeys: keys })
           }} channels={values(channels)} sortBy='views' style={styles.normalFont} />}
         </FilterPart>
       </FilterHeader>
