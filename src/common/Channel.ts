@@ -127,8 +127,8 @@ Click on a channel to see more detail about the collection of video statistics.
     support: {
       label: 'Narrative Support',
       values: [
-        { value: 'claim', label: 'Supporting' },
-        { value: 'denial', label: 'Disputing' },
+        { value: 'claim', label: 'Supporting', color: '#56b881' },
+        { value: 'denial', label: 'Disputing', color: '#aa557f' },
         { value: 'other', label: 'Other' }
       ]
     } as ColumnMd,
@@ -138,8 +138,10 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'heur_chan', label: 'Automatic - channel heuristic' },
         { value: 'heur_tag', label: 'Automatic - channel tag heuristic' },
         { value: 'giuliani', label: 'Rudy Giuliani' },
-        { value: 'giuliani', label: 'Donald Trump' },
-        { value: 'second_opinion', label: 'Second opinion' },
+        { value: 'trump', label: 'Donald Trump' },
+        { value: 'before', label: 'Pertinent content after shown captions' },
+        { value: 'after', label: 'Pertinent content before shown captions' },
+        { value: 'parody', label: 'Parody' },
       ]
     } as ColumnMd
   }

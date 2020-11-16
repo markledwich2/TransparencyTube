@@ -100,6 +100,8 @@ const NarrativesPage = () => {
           const c = channels[v.channelId]
           if (!c) return v
           const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
+          if(['second_opinion'].includes(v.supplement)) vExtra.supplement = null
+          
           vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
           return vExtra
         })

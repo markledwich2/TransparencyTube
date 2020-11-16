@@ -241,8 +241,8 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
           {isVideoNarrative(v) && <>
             <FlexRow>
-              {v.support && <Tag label={supportOpt?.label ?? v.support} />}
-              {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} />}
+              {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
+              {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
             </FlexRow>
             {captions &&
               <div>{captions.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
