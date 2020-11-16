@@ -153,11 +153,11 @@ const NarrativesPage = () => {
       {copySections.map((s, i) => {
         const open = copyOpen.includes(i)
         return <p key={i}>
-          <h3>
+          <h3 style={{ cursor: 'pointer' }} onClick={() => setCopyOpen(open ? copyOpen.filter(n => n != i) : [...copyOpen, i])}>
             {s.title}
             {open
-              ? <ChevronUpOutline className="clickable" onClick={() => setCopyOpen(copyOpen.filter(n => n != i))} />
-              : <ChevronDownOutline className="clickable" onClick={() => setCopyOpen([...copyOpen, i])} />}
+              ? <ChevronUpOutline className="clickable" />
+              : <ChevronDownOutline className="clickable" />}
           </h3>
           {open && <Markdown>{s.md}</Markdown>}
         </p>
