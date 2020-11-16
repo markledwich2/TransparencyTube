@@ -76,7 +76,7 @@ const pagesMd: NavItem[] = [
       { path: '/', label: 'Channels' },
       { path: '/topVideos', label: 'Top Videos' },
       { path: '/removedVideos', label: 'Removed Videos' },
-      { path: '/narratives', label: 'Narratives' }
+      { path: '/narratives', label: 'Election Fraud Narrative' }
     ]
   },
   { path: '/about', label: 'How it works' },
