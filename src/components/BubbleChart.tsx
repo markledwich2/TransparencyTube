@@ -64,11 +64,11 @@ interface BubbleChartsProps<T> extends BubbleChartPropsCommon<T> {
   tipContent: (row: T) => ReactNode
 }
 
-export const BubbleCharts = <T,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, tipContent, dataCfg, showImg }: BubbleChartsProps<T>) => {
+export const BubbleCharts = <T,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, tipContent, dataCfg, showImg, style }: BubbleChartsProps<T> & StyleProps) => {
   const { groupedNodes, zoom, packSize } = rows ? buildBubbleNodes(rows, selections, dataCfg, bubbleWidth) : { groupedNodes: [] as GroupedNodes<T>[], zoom: 1, packSize: 1 }
   const openNodes = selections.openGroup && groupedNodes ? groupedNodes.find(g => g.group.value == selections.openGroup) : null
   const commonProps = { selections, rows, pack: { zoom, packSize }, onOpenGroup, onSelect, groupRender, dataCfg, showImg }
-  return <><div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null }}>
+  return <><div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null, ...style }}>
     {groupedNodes && groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...commonProps} />)}
     {openNodes && <BubbleChart groupNodes={openNodes} {...commonProps} isOpen />}
   </div>

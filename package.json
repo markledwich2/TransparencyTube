@@ -6,6 +6,7 @@
   "author": "",
   "dependencies": {
     "@stardazed/streams-polyfill": "^2.2.0",
+    "@types/d3-sankey": "^0.11.1",
     "@types/humanize-duration": "^3.18.1",
     "@types/lodash.orderby": "^4.6.6",
     "@types/lodash.sortby": "^4.7.6",
@@ -19,6 +20,7 @@
     "camelcase-keys": "^6.2.2",
     "change-case": "^4.1.1",
     "d3": "^6.2.0",
+    "d3-sankey": "^0.12.3",
     "date-fns": "^2.16.1",
     "date-fns-tz": "^1.0.12",
     "elastic-ts": "^0.2.0",
