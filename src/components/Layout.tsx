@@ -156,7 +156,7 @@ export const TextPage = styled.div`
 `
 
 export const MinimalPage = styled.div`
-  margin: 1em;
+  margin: 1.5em;
   min-height: 80vh;
 `
 

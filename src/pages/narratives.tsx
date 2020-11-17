@@ -20,22 +20,22 @@ import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/C
 import { BubblesSelectionState } from '../common/Bubble'
 import { Tip } from '../components/Tooltip'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
-import { Markdown, TextSection } from '../components/Markdown'
+import { Markdown, TextSection, TextStyle } from '../components/Markdown'
 import { colMdValuesObj } from '../common/Metadata'
 import { ChevronDownOutline, ChevronUpOutline } from '@styled-icons/evaicons-outline'
 import { blobCfg } from '../common/Cfg'
 import { LinkData, NodeData, Sankey } from '../components/Sankey'
 import { SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
+import { Tab, Tabs } from '../components/Tab'
 
-const copySections = [
+const copySections: { title: string, md: string, open?: boolean }[] = [
   {
     title: `Key Findings`,
     md: `
 *   YouTube’s is correct that videos disputing “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 180M views and 34% of all traffic to videos discussing “election fraud”.**
 *   Despite being the largest “partisan right” channel by far, FoxNews has received less traffic on videos discussing “election fraud” than other news outlets. They are also one of the few “partisan right” channels to regularly “dispute” claims of widespread election fraud and videos “supporting” such claims have been limited to interviews of the president and his campaign staff.
-*   TODO - Add description of video recommendation findings.`,
-    open: true
+*   TODO - Add description of video recommendation findings.`
   },
   {
     title: `Important Notes`,
@@ -188,57 +188,30 @@ const NarrativesPage = () => {
     selectedKeys: q.selectedKeys
   }
 
-
-
   return <Layout>
     <PurposeBanner>
       <p>Post election news has been dominated by President Trump’s claim that he lost due to significant voter fraud. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “voter fraud” and label whether the discussions <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claims. Our experiments used videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,760 videos uploaded by 1,443 channels between 10/27 and 11/15. In total these accounted for 642M views.</p>
       {copySections.map((s, i) => {
         const open = copyOpen.includes(s.title)
         return <p key={i}>
-          <h3 style={{ cursor: 'pointer' }}
+          <b style={{ cursor: 'pointer', marginTop: '1.5em' }}
             onClick={() => setCopyOpen(open ? copyOpen.filter(t => t != s.title) : [...copyOpen, s.title])}>
             {s.title}
             {open
               ? <ChevronUpOutline className="clickable" />
               : <ChevronDownOutline className="clickable" />}
-          </h3>
+          </b>
           {open && <Markdown>{s.md}</Markdown>}
         </p>
       })}
     </PurposeBanner>
     <PageStyle>
       <ContainerDimensions>
-        {({ width }) => {
-          const sectionWidth = Math.min(width, 800)
-          return <>
-            <div style={{ width: sectionWidth, marginBottom: '2em' }}>
-              <TextSection>
-                <h3>Recommendation Impressions</h3>
-                <p style={{ marginBottom: '1em' }}>
-                  <p>Estimated recommendation impressions to video's related to US 2020 election fraud</p>
-                  <p><b>Left Side:</b> Number of times people have been shown recommendations from a video</p>
-                  <p><b>Right Side:</b> Number of times a recommendation was shown to this video</p>
-                </p>
-              </TextSection>
-              <Sankey
-                graph={getRecSupportGraph(recs)}
-                size={{ w: Math.min(width, 800), h: 600 }}
-                className='sankey'
-                textRender={d => <>
-                  {d.title}
-                  <tspan className={'subtitle bold'} dy={'1.3em'} x={0}>
-                    {numFormat(d.impressions)}
-                  </tspan>
-                  <tspan className={'subtitle'}> impressions {d.dir == 'from' ? 'sent' : 'received'}</tspan>
-                </>} />
-            </div>
-            <TextSection>
-              <h3>Videos related to US 2020 election fraud</h3>
-              <p style={{ marginBottom: '1em' }}>
-                <p><b>Bubbles</b> are sized by the number of narrative-related video views for the each channel.</p>
-                <p>The <b>videos</b> and their captions are displayed bellow. Change filters, or select channels to filter this list</p>
-              </p>
+        {({ width }) => <Tabs>
+          <Tab label='Videos'>
+            <TextSection style={{ marginBottom: '1em' }}>
+              <p>Videos discussing US 2020 election fraud. At the top, channel <b>Bubbles</b> are sized by the number of narrative-related video views for the each channel.</p>
+              <p>Bellow, <b>videos</b> and their captions are displayed bellow. Change filters, or select channels to filter this list</p>
             </TextSection>
             <FilterHeader style={{ marginBottom: '2em' }}>
               <FilterPart>
@@ -295,10 +268,34 @@ const NarrativesPage = () => {
               }}
               tipContent={r => <ChannelDetails channel={r} mode='min' />}
               style={{ marginBottom: '2em' }} />}
-          </>
-        }}
+            <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading} />
+          </Tab>
+          <Tab label='Recommendations'>
+            <TextSection>
+              <h3></h3>
+              <p style={{ marginBottom: '1em' }}>
+                <p>Estimated recommendation impressions to videos discussing US 2020 election fraud</p>
+                <ul>
+                  <li><b>Left:</b> Amount people have been shown recommendations from a video</li>
+                  <li><b>Right:</b> Amount recommendations were shown to this video</li>
+                </ul>
+                <p>YouTube favours the "disputed" videos which receive more than (TODO: finalize numbers) times the supporting videos despite having similar amount of views.</p>
+              </p>
+              <Sankey
+                graph={getRecSupportGraph(recs)}
+                size={{ w: Math.min(width, 800), h: 800 }}
+                className='sankey'
+                textRender={d => <>
+                  {d.title}
+                  <tspan className={'subtitle bold'} dy={'1.3em'} x={0}>
+                    {numFormat(d.impressions)}
+                  </tspan>
+                  <tspan className={'subtitle'}> impressions {d.dir == 'from' ? 'sent' : 'received'}</tspan>
+                </>} />
+            </TextSection>
+          </Tab>
+        </Tabs>}
       </ContainerDimensions>
-      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading} />
     </PageStyle>
   </Layout>
 }

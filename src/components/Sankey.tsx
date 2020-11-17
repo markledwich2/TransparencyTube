@@ -39,13 +39,14 @@ export const Sankey = <TNode extends NodeData, TLink extends LinkData>({ graph, 
 
   const { nodes, links } = sankey<TNode, TLink>()
     .size([size.w, size.h])
+    .nodeWidth(10)
     .nodeId(d => d.id)
     (graph)
 
   const makeLink = sankeyLinkHorizontal<TNode, TLink>()
 
   return <SvgStyled width={size.w} height={size.h} style={style} className={className}>
-    <g>
+    <g className='rectangle'>
       {nodes.map(d => <g key={d.id}>
         <rect x={d.x0} y={d.y0} height={d.y1 - d.y0} width={d.x1 - d.x0} fill={d.color}>
           <title>{d.value}</title>
@@ -53,14 +54,14 @@ export const Sankey = <TNode extends NodeData, TLink extends LinkData>({ graph, 
       </g>
       )}
     </g>
-    <g fill='none'>
+    <g fill='none' className='link'>
       {links.map(d => <path key={d.index}
         d={makeLink(d)}
         stroke={(d.source as any).color}
         strokeWidth={d.width}
-        style={{ opacity: 0.5 }} />)}
+        style={{ opacity: 0.4 }} />)}
     </g>
-    <g>
+    <g className='text'>
       {nodes.map(d => {
         const x = d.x0 < size.w / 2 ? d.x1 + 6 : d.x0 - 6
         const y = (d.y1 + d.y0) / 2
