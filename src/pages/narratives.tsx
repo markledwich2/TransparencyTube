@@ -207,7 +207,7 @@ const NarrativesPage = () => {
     </PurposeBanner>
     <PageStyle>
       <ContainerDimensions>
-        {({ width }) => <Tabs>
+        {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
             <TextSection style={{ marginBottom: '1em' }}>
               <p>Videos discussing US 2020 election fraud. At the top, channel <b>bubbles</b> are sized by the number of narrative-related video views for the each channel. Select a channel, to filter the videos below.</p>

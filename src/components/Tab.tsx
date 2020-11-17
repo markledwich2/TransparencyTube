@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, ReactElement, ReactNode, useState } from 'react'
+import React, { CSSProperties, FC, PropsWithChildren, ReactElement, ReactNode, useState } from 'react'
 import { compact, first, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { values } from '../common/Pipe'
@@ -21,13 +21,14 @@ const TabA = styled.a`
   }
 `
 
-interface TabsProps { children: ReactElement[] }
-export const Tabs = ({ children }: TabsProps) => {
+interface TabsProps { children: ReactElement[], titleStyle?: CSSProperties }
+export const Tabs = ({ children, titleStyle }: TabsProps) => {
   const [selectedTab, setSelectedTab] = useState<number>(0)
   return <>
     <TabsStyle>
       {children.map((c, i) => <TabTitle
         className={selectedTab == i && 'selected'}
+        style={titleStyle}
         label={c.props.label}
         onClick={() => setSelectedTab(i)} />)}
     </TabsStyle>
@@ -41,8 +42,8 @@ interface TabTitleProps {
   label: string
   onClick: () => void
 }
-export const TabTitle: FC<TabTitleProps & StyleProps> = ({ label, onClick, className }) =>
-  <TabA className={className} onClick={() => onClick()}>{label}</TabA>
+export const TabTitle: FC<TabTitleProps & StyleProps> = ({ label, onClick, className, style }) =>
+  <TabA className={className} style={style} onClick={() => onClick()}>{label}</TabA>
 
 interface TabProps { label: string }
 export const Tab: FC<StyleProps & TabProps> = ({ children, style, label }) => <div style={style}>{children}</div>
