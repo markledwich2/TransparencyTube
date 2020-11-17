@@ -52,7 +52,7 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
     title: `Manual and Heuristic Labeling of Videos`,
     md: `Manual labeling of videos was limited to those uploaded between 11/3 and 11/10 and only the first mention of “election fraud” in each video was reviewed. In total 370 mentions of election fraud were labeled including the top 160 viewed “partisan right” videos and top 110 viewed videos from all other channels. These manually labeled videos account for a small portion of the 4,885 videos discussing “election fraud” during this period. However, with a combined 280M views, they cover 64% of the overall “election fraud” video traffic during the period.
 
-The 370 reviewed channels consisted of 201 “supporting”, 124 “disputting”, and 45 “other”. The distribution is impacted by the decision to label more “partisan right” videos than.
+The 370 reviewed channels consisted of 201 “supporting”, 124 “disputing”, and 45 “other”. The distribution is impacted by the decision to label more “partisan right” videos than.
 
 In order to label the remaining videos we use the following heuristic:
 * If other videos by the channel have been manually labeled, use the majority label
@@ -210,8 +210,7 @@ const NarrativesPage = () => {
         {({ width }) => <Tabs>
           <Tab label='Videos'>
             <TextSection style={{ marginBottom: '1em' }}>
-              <p>Videos discussing US 2020 election fraud. At the top, channel <b>Bubbles</b> are sized by the number of narrative-related video views for the each channel.</p>
-              <p>Bellow, <b>videos</b> and their captions are displayed bellow. Change filters, or select channels to filter this list</p>
+              <p>Videos discussing US 2020 election fraud. At the top, channel <b>bubbles</b> are sized by the number of narrative-related video views for the each channel. Select a channel, to filter the videos below.</p>
             </TextSection>
             <FilterHeader style={{ marginBottom: '2em' }}>
               <FilterPart>
@@ -268,6 +267,9 @@ const NarrativesPage = () => {
               }}
               tipContent={r => <ChannelDetails channel={r} mode='min' />}
               style={{ marginBottom: '2em' }} />}
+            <TextSection>
+              <p><b>Videos</b> with the relevant captions for context. Change filters, or select channels above to filter this list.</p>
+            </TextSection>
             <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading} />
           </Tab>
           <Tab label='Recommendations'>
