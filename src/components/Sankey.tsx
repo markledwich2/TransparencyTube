@@ -48,7 +48,7 @@ export const Sankey = <TNode extends NodeData, TLink extends LinkData>({ graph, 
   return <SvgStyled width={size.w} height={size.h} style={style} className={className}>
     <g className='rectangle'>
       {nodes.map(d => <g key={d.id}>
-        <rect x={d.x0} y={d.y0} height={d.y1 - d.y0} width={d.x1 - d.x0} fill={d.color}>
+        <rect x={d.x0} y={d.y0} height={d.y1 - d.y0} width={d.x1 - d.x0} fill={d.color} rx='3'>
           <title>{d.value}</title>
         </rect>
       </g>

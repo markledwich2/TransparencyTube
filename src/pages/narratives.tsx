@@ -31,6 +31,15 @@ import { Tab, Tabs } from '../components/Tab'
 
 const copySections: { title: string, md: string, open?: boolean }[] = [
   {
+    title: `Label Definitions`,
+    md: `**Disputing**: This label is given to videos that dispute the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. If significant “election fraud” is mentioned during a speech or interview, the dispute might be made clear after the speaker is finished or through text on the screen. Easily interpreted forms of insinuation and parody count as well.
+
+**Supporting**: This label is given to videos that support the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. This includes cases in which significant “election fraud” claims are made during a speech or interview, but not challenged afterwards. This also includes language that clearly insinuates or implies that this narrative is true.
+
+**Other**: This covers cases where “election fraud” is being discussed, but in a manner that does not clear dispute or support the narrative that it has had a significant impact on the 2020 election or in a context not related to the 2020 election.
+`
+  },
+  {
     title: `Key Findings`,
     md: `
 *   YouTube’s is correct that videos disputing “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 138M views and 34% of all traffic to videos discussing “election fraud”.**
@@ -106,6 +115,7 @@ const PageStyle = styled(MinimalPage)`
         }
         &.bold {
           font-weight: bold;
+          font-size: 1.2rem;
         }
       }
     }
