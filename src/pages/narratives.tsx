@@ -33,7 +33,7 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
   {
     title: `Key Findings`,
     md: `
-*   YouTube’s is correct that videos disputing “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 180M views and 34% of all traffic to videos discussing “election fraud”.**
+*   YouTube’s is correct that videos disputing “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 138M views and 34% of all traffic to videos discussing “election fraud”.**
 *   Despite being the largest “partisan right” channel by far, FoxNews has received less traffic on videos discussing “election fraud” than other news outlets. They are also one of the few “partisan right” channels to regularly “dispute” claims of widespread election fraud and videos “supporting” such claims have been limited to interviews of the president and his campaign staff.
 *   TODO - Add description of video recommendation findings.`
   },
