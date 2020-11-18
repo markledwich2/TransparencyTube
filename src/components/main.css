@@ -115,3 +115,8 @@ mark {
     background-color: var(--bg-feature);
     color: #fff;
 }
+
+p.subtle {
+    font-size: 0.9em;
+    color: var(--fg3);
+}

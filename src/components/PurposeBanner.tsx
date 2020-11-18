@@ -1,20 +1,17 @@
 
 import React, { PropsWithChildren } from "react"
 import styled from 'styled-components'
+import { TextStyle } from './Markdown'
 
 interface PurposeDivProps {
   feature?: boolean
 }
 
-const PurposeDiv = styled.div<PurposeDivProps>`
+const PurposeDiv = styled(TextStyle) <PurposeDivProps>`
   &, p {
     color: ${p => p.feature ? '#fff' : 'var(--fg1)'};
   }
-  p {
-    margin-bottom:1em;
-  }
   padding:1em;
-  font-size:1.3em;
   margin-bottom:1em;
   background-image:url('/bubble-bg.svg');
   background-image:${p => p.feature ? `url('/bubble-bg.svg')` : 'none'};

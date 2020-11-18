@@ -11,7 +11,7 @@ export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   cols: IndexCol<TRow>[]
   baseUri: Uri
   fileRowsCache: { [key: string]: TRow[] }
-  getRows: (filter: TKey | FilterRange<TKey>) => Promise<TRow[]>
+  getRows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
 }
 
 interface IndexCol<TRow> {
@@ -51,7 +51,7 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
     index = await getJson<BlobIndex<TRow, TKey>>(indexUrl, noCacheReq)
   }
   catch (err) {
-    console.log(`unable to to load json index (${indexUrl})`, err)
+    console.error(`unable to to load json index (${indexUrl})`, err)
     throw err
   }
 
@@ -78,28 +78,27 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
       rows = await getJsonl<TRow>(path)
     }
     catch (err) {
-      console.log(`Error loading index file ${path}`)
+      console.error(`Error loading index file ${path}`)
     }
     if (rows && enableLocalCache)
       fileRowsCache[file] = rows
     return rows
   }
 
-  const getRows = async (filter: TKey | FilterRange<TKey>) => {
-    const fileOverlap = (f: IndexFile<TKey>) =>
-      isFilterRange(filter) ?
-        compare(f.first, filter.to) <= 0 && compare(f.last, filter.from) >= 0
-        : compare(f.first, filter) <= 0 && compare(f.last, filter) >= 0
+  const getRows = async (...filters: [TKey | FilterRange<TKey>]) => {
+    const fileOverlap = (f: IndexFile<TKey>) => filters.every(q => isFilterRange(q) ?
+      compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
+      : compare(f.first, q) <= 0 && compare(f.last, q) >= 0)
 
     const files = index.keyFiles.filter(fileOverlap)
     console.log(`index files in ${indexUrl} loaded`, files)
     const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
-    const filtered = rows.filter((r: TKey) => {
-      if (isFilterRange(filter)) {
-        return compare(r, filter.from) >= 0 && compare(r, filter.to) <= 0 // ensure row falls within range. files will have some that don't match
+    const filtered = rows.filter((r: TKey) => filters.every(q => {
+      if (isFilterRange(q)) {
+        return compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
       }
-      return entries(filter).every(e => r[e[0]] == e[1]) // ensure each value of row matches
-    })
+      return entries(q).every(e => r[e[0]] == e[1]) // ensure each value of row matches
+    }))
     return filtered
   }
 

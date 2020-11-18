@@ -53,7 +53,12 @@ export const md = {
         { value: 'ReligiousConservative', label: 'Religious Conservative', color: '#41afa5', desc: 'A channel with a focus on promoting traditional major religion (i.e. Christianity, Judaism, Islam) in the context of politics and culture.' },
         { value: 'SocialJustice', label: 'Social Justice', color: '#56b881', desc: 'Focused on the problems of racism and sexism. Places a particular importance on grievances from historically oppressed identities. Skeptical of the role genetics in human behavior and concerned about speech that might cause harm. Content in reaction to Anti-SJW or conservative content.' },
         { value: 'Socialist', color: '#6ec9e0', desc: 'Focus on the problems of capitalism. Endorse the view that capitalism is the source of most problems in society. Critiques of aspects of capitalism that are more specific (i.e. promotion of fee healthcare or a large welfare system or public housing) don’t qualify for this tag. Promotes alternatives to capitalism. Usually some form of either  Social Anarchist  (stateless egalitarian communities) or Marxist (nationalized production and a way of viewing society though class relations and social conflict).' },
-        { value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500', desc: 'Identifies-with/is-proud-of the superiority of “whites” and western Civilization. An example of identifying with “western heritage”  would be to refer to the sistine chapel, or bach as “our culture”.Promotes or defends: An ethno-state where residence or citizenship would be limited to “whites” OR a type of nationalist that seek to maintain a white national identity (white nationalism), historical narratives focused on the “white” lineage and its superiority, Essentialist concepts of racial differences. Are concerned about whites becoming a minority population in the US.' },
+        {
+          value: 'WhiteIdentitarian', label: 'White Identitarian', color: '#b8b500', desc: `Identifies-with and is-proud-of White ancestry or strongly with a supreme western civilization. An example of identifying with “western heritage”  would be an american to referring to the sistine chapel, or bach as “our culture”. Promotes or defends any of the following: 
+* An ethno-state where residence or citizenship would be limited to “whites” OR a type of nationalist that seek to maintain a white national identity (white nationalism)
+* Historical narratives focused on the White lineage and its superiority
+* Essentialist concepts of racial differences
+* concerned about whites becoming a minority population in their country.` },
         { value: 'StateFunded', label: 'State Funded' },
         { value: 'MissingLinkMedia', label: 'Missing Link Media' }
       ]
@@ -115,6 +120,26 @@ Click on a channel to see more detail about the collection of video statistics.
     } as ColumnMd,
     copyrightHolder: {
       label: 'Copyright holder'
+    } as ColumnMd,
+    narrative: {
+      label: 'Narrative'
+    } as ColumnMd,
+    support: {
+      label: 'Narrative Support',
+      values: [
+        { value: 'claim', label: 'Supporting', color: '#56b881', desc: `Videos that support the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. This includes cases in which significant “election fraud” claims are made during a speech or interview, but not challenged afterwards. This also includes language that clearly insinuates or implies that this narrative is true.` },
+        { value: 'denial', label: 'Disputing', color: '#aa557f', desc: `Videos that dispute the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. If significant “election fraud” is mentioned during a speech or interview, the dispute might be made clear after the speaker is finished or through text on the screen. Easily interpreted forms of insinuation and parody count as well.` },
+        { value: 'other', label: 'Other', desc: `This covers cases where “election fraud” is being discussed, but in a manner that does not clear dispute or support the narrative that it has had a significant impact on the 2020 election.` },
+        { value: 'unrelated_political', label: 'Unrelated Politics', color: '#6ec9e0', desc: `Political video's unrelated to this narrative` }
+      ]
+    } as ColumnMd,
+    supplement: {
+      label: 'Review Type',
+      values: [
+        { value: 'heur_chan', label: `Auto - video's in channel` },
+        { value: 'heur_tag', label: 'Auto - similar channels' },
+        { value: 'manual', label: 'Manual review' },
+      ]
     } as ColumnMd
   }
 }

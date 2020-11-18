@@ -38,7 +38,7 @@ const darkValues = css`
 --fg3: #999;
 --bg: #000;
 --bgRgb: 0,0,0;
---bg1: #111;
+--bg1: #181818;
 --bg2: #222;
 --bg3: #444;
 --bg4: #666;
@@ -49,6 +49,11 @@ export const styles = {
     position: 'relative',
     top: '-0.15em',
     paddingRight: '0.2em'
+  } as CSSProperties,
+  normalFont: {
+    fontSize: '1rem',
+    fontWeight: 'normal',
+    lineHeight: '1.2rem'
   } as CSSProperties
 }
 
@@ -151,7 +156,7 @@ export const TextPage = styled.div`
 `
 
 export const MinimalPage = styled.div`
-  margin: 1em;
+  margin: 1.5em;
   min-height: 80vh;
 `
 

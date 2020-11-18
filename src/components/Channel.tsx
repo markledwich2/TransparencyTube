@@ -11,6 +11,9 @@ import { PeriodSelect, HasPeriod, Period, periodString } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
 import Highlighter from "react-highlight-words"
+import { SearchSelect } from './SearchSelect'
+import orderBy from 'lodash.orderby'
+import { values } from '../common/Pipe'
 
 export interface TopVideosProps {
   channel: Channel
@@ -60,7 +63,6 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
 
 const ChannelTitleStyle = styled.div`
   display: flex;
-  max-width: 40em;
   .logo {
     :hover {
       cursor: pointer;
@@ -75,6 +77,18 @@ const MetricsStyle = styled(FlexRow)`
     white-space: nowrap;
   }
 `
+
+export interface ChannelLogoProps {
+  c: ChannelWithStats | Channel
+  tipId?: string
+  onClick?: (c: Channel) => void
+}
+
+export const ChannelLogo = ({ c, tipId, style, onClick }: StyleProps & ChannelLogoProps) => <img
+  src={c.logoUrl}
+  data-for={tipId} data-tip={c.channelId}
+  onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
+  style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...style }} />
 
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
@@ -94,21 +108,14 @@ const tags = indexBy(md.channel.tags.values, t => t.value)
 
 export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
-  const fPeriodViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
+  const fViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
   //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
   //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
   //console.log('faded', faded)
   //style={{ opacity: faded ? 0.5 : null }}
   return <ChannelTitleStyle style={style}>
-    <div><img src={c.logoUrl} data-for={tipId} data-tip={c.channelId}
-      onClick={_ => onLogoClick ? onLogoClick(c) : openYtChannel(c.channelId)}
-      // onMouseOver={_ => {
-      //   inter.hover = { col: 'lr', value: c.lr }
-      // }}
-      className='logo'
-      style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...logoStyle }} />
-    </div>
+    <div><ChannelLogo c={c} tipId={tipId} onClick={onLogoClick} className='logo' style={logoStyle} /></div>
     <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>
         {highlightWords ? <Highlighter
@@ -119,8 +126,8 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
         /> : c.channelTitle}</h2>
       <MetricsStyle space='2em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
-          {fPeriodViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fPeriodViews}</b>}
-          {fPeriodViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fPeriodViews && '/'}{fChannelViews}</span>}&nbsp;views
+          {fViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fViews}</b>}
+          {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}&nbsp;views
         </span>
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
@@ -192,3 +199,24 @@ interface TagProps { color?: string, label: string }
 
 export const Tag = ({ color, label, style, className }: TagProps & StyleProps) =>
   <TagStyle style={{ ...style, backgroundColor: color, color: '#fff' }} className={className}>{label}</TagStyle>
+
+
+interface ChannelSearchProps<T extends Channel> {
+  onSelect: (T) => void
+  channels: T[]
+  sortBy: keyof T
+}
+
+export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 'channelViews', style }: ChannelSearchProps<T> & StyleProps) => <SearchSelect
+  style={{ width: '14em', ...style }}
+  onSelect={onSelect}
+  search={(q) => new Promise((resolve) => resolve(
+    orderBy(
+      channels.filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
+      c => c[sortBy], 'desc')
+  ))}
+  itemRender={(c: Channel) => <ChannelTitle c={c} showTags style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect} />}
+  getKey={c => c.channelId}
+  getLabel={c => c.channelTitle}
+  placeholder='search'
+/>

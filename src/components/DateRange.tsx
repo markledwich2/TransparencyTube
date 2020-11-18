@@ -1,4 +1,5 @@
 
+import { parseISO, addDays, startOfToday, endOfToday } from 'date-fns'
 import React, { useEffect, useState } from 'react'
 import { DateRangePicker, DateRangeProps } from 'react-date-range'
 import 'react-date-range/dist/styles.css'
@@ -14,6 +15,17 @@ export interface DateRangeValue {
   endDate: Date
 }
 
+export interface DateRangeQueryState {
+  start?: string
+  end?: string
+}
+
+export const rangeFromQuery = (q: DateRangeQueryState, defaultStart: Date = null, defaultEnd: Date = null): DateRangeValue => ({
+  startDate: q.start ? parseISO(q.start) : (defaultStart ?? addDays(startOfToday(), -7)),
+  endDate: q.end ? parseISO(q.end) : defaultEnd ?? endOfToday()
+})
+
+export const rangeToQuery = (r: DateRangeValue): DateRangeQueryState => ({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })
 
 const DateRangeStyle = styled.div`
   .rdrDateRangePickerWrapper, .rdrDateDisplayWrapper, .rdrDefinedRangesWrapper, .rdrStaticRange, .rdrMonths, .rdrMonthAndYearWrapper, .rdrCalendarWrapper  {
@@ -101,7 +113,13 @@ const DateRangeStyle = styled.div`
   
 `
 
-export const InlineDateRange = ({ onClose, onChange, range, style, className, ...dateRageProps }: DateRangeProps & { range: DateRangeValue, onClose?: () => void } & StyleProps) => {
+interface InlineDateRangeProps extends StyleProps, DateRangeProps {
+  range: DateRangeValue
+  onClose?: () => void
+  onChange?: (r: DateRangeValue) => void
+}
+
+export const InlineDateRange = ({ onClose, onChange, range, style, className, ...dateRageProps }: InlineDateRangeProps) => {
   const [openValue, setOpenValue] = useState<DateRangeValue>(null)
   const currentRange = openValue ?? range
   const debounceRange = useDebounce(currentRange, 300)
