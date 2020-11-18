@@ -39,7 +39,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
   if (!videos) return <Spinner />
 
   const groupedVids = groupChannels && pipe(
-    entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: e[1] })),
+    entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: orderBy(e[1], v => v.videoViews, 'desc') })),
     orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc')
   )
 

@@ -66,7 +66,7 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
   },
   {
     title: `Manual and Heuristic Labeling of Videos`,
-    md: `Manual labeling of videos was limited to those uploaded between 11/3 and 11/10 and only the first mention of “election fraud” in each video was reviewed. If the label for the first snippet in a video is unclear, then subsequent snippets are analyzed. In total 378 mentions of election fraud were labeled including the top 160 viewed “partisan right” videos and top 110 viewed videos from all other channels. These manually labeled videos account for a small portion of the 4,895 videos discussing “election fraud” during this period. However, they have a combined 282M views, they cover 64% of the overall “election fraud” video traffic during the period.
+    md: `Manual labeling of videos was limited to those uploaded between the 3rd and 10th November 2020 and only the first mention of “election fraud” in each video was reviewed. If the label for the first snippet in a video is unclear, then subsequent snippets are analyzed. In total 378 mentions of election fraud were labeled including the top 160 viewed “partisan right” videos and top 110 viewed videos from all other channels. These manually labeled videos account for a small portion of the 4,895 videos discussing “election fraud” during this period. However, they have a combined 282M views, they cover 64% of the overall “election fraud” video traffic during the period.
 
 The 378 reviewed channels consisted of 203 “supporting”, 129 “disputing”, and 46 “other”. The distribution is impacted by the decision to label more “partisan right” videos than non-”partisan right” videos.
 
@@ -220,7 +220,7 @@ const NarrativesPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions are <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claim. These experiments use videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 10/27 and 11/15. As of 11/16 these videos have generated 680M views combined. Data and more detailed documentation can be found <a href="https://github.com/markledwich2/TransparencyTube/tree/master/research/us_2020_election_fraud_narrative">here</a>.</p>
+      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions are <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claim. These experiments use videos uploaded between the 3rd and 10th November 2020, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 27th October and 15th November 2020. As of 16th November these videos have generated 680M views combined. Data and more detailed documentation can be found <a href="https://github.com/markledwich2/TransparencyTube/tree/master/research/us_2020_election_fraud_narrative">here</a>.</p>
       {copySections.map((s, i) => {
         const open = copyOpen.includes(s.title)
         return <p key={i}>
@@ -240,7 +240,7 @@ const NarrativesPage = () => {
         {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
             <TextSection style={{ marginBottom: '1em' }}>
-              <p>Videos discussing US 2020 election fraud. At the top, channel <b>bubbles</b> are sized by the number of narrative-related video views for the each channel. Select a channel, to filter the videos below.</p>
+              <p>Channel <b>bubbles</b> are sized by views of their videos discussing voter fraud. Select a channel to filter the videos below.</p>
             </TextSection>
             <FilterHeader style={{ marginBottom: '2em' }}>
               <FilterPart>
