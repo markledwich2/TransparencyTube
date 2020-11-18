@@ -38,7 +38,7 @@ export const Sankey = <TNode extends NodeData, TLink extends LinkData>({ graph, 
   if (graph.nodes.length == 0) return <svg width={size.w} height={size.h} />
 
   const { nodes, links } = sankey<TNode, TLink>()
-    .size([size.w, size.h])
+    .size([size.w, size.h - 15])
     .nodeWidth(10)
     .nodeId(d => d.id)
     (graph)

@@ -71,7 +71,17 @@ In order to label the remaining videos we use the following heuristic:
 
 Due to the small number of videos labeled “other”, the heuristic only uses “supporting” and “disputing” labels when making predictions.
 
-We use hold-one-out cross validation to measure the performance of the heuristic and find that it has an accuracy of 83%. For the “supporting” label the precision is 0.85 and the recall is 0.95. For the “disputing” label the precision is 0.80 and the recall is 0.94.`}
+We use hold-one-out cross validation to measure the performance of the heuristic and find that it has an accuracy of 83%. For the “supporting” label the precision is 0.85 and the recall is 0.95. For the “disputing” label the precision is 0.80 and the recall is 0.94.`},
+  {
+    title: `Recommendation Data`,
+    md: `Recommendations that appear to the side of videos are collected periodically for recent videos in a channel. From these recommendations, we estimate impressions (the number of times a person was displayed a recommendation).
+
+**Notes:**
+* Recommendations are collected anonymously (i.e. not logged in)
+* We do not collect recommendations for all videos. When recommendations data is missing, we estimate impressions based on the typical recommendations for that channel. 
+* Impressions are calculated assuming that each view of a video sees the top 10 recommendations
+`
+  }
 ]
 
 interface QueryState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
@@ -287,12 +297,12 @@ const NarrativesPage = () => {
             <TextSection>
               <h3></h3>
               <p style={{ marginBottom: '1em' }}>
-                <p>Estimated recommendation impressions to videos discussing US 2020 election fraud</p>
+                <p>Estimated recommendation impressions to videos discussing US 2020 election fraud appearing on videos from 3rd-11th November 2020.</p>
                 <ul>
                   <li><b>Left:</b> Amount people have been shown recommendations from a video</li>
                   <li><b>Right:</b> Amount recommendations were shown to this video</li>
                 </ul>
-                <p>YouTube favours the "disputed" videos which receive more than (TODO: finalize numbers) times the supporting videos despite having similar amount of views.</p>
+                <p>YouTube seems to be reducing the amount of recommendations to videos supporting election fraud. Accourding to our estimates, "Supporting" videos receive about 26% of the impressions they send (100% would be neutral). "Disputing" videos are also disadvantaged - receiving about 64% of the impressions they send.</p>
               </p>
               <Sankey
                 graph={getRecSupportGraph(recs)}
