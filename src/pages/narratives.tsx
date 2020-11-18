@@ -34,7 +34,7 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
     title: `Label Definitions`,
     md: `**Disputing**: This label is given to videos that dispute the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. If significant “election fraud” is mentioned during a speech or interview, the dispute might be made clear after the speaker is finished or through text on the screen. Easily interpreted forms of insinuation and parody count as well.
 
-**Supporting**: This label is given to videos that support the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. This includes cases in which significant “election fraud” claims are made during a speech or interview, but not challenged afterwards. This also includes language that clearly insinuates or implies that this narrative is true.
+**Supporting**: This label is given to videos that support the narrative being pushed by President Trump that the 2020 presidential election was rigged, stolen, and/or impacted by significant fraud. This includes cases in which significant “election fraud” claims are made during a speech or interview, but not challenged afterwards. This also includes language or additional text that clearly insinuates or implies that this narrative is true.
 
 **Other**: This covers cases where “election fraud” is being discussed, but in a manner that does not clear dispute or support the narrative that it has had a significant impact on the 2020 election or in a context not related to the 2020 election.
 `
@@ -42,15 +42,16 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
   {
     title: `Key Findings`,
     md: `
-*   YouTube’s is correct that videos disputing “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 138M views and 34% of all traffic to videos discussing “election fraud”.**
-*   Despite being the largest “partisan right” channel by far, FoxNews has received less traffic on videos discussing “election fraud” than other news outlets. They are also one of the few “partisan right” channels to regularly “dispute” claims of widespread election fraud and videos “supporting” such claims have been limited to interviews of the president and his campaign staff.
+*   YouTube’s is correct that videos “disputing” “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 137M views and 34% of all traffic to videos discussing “election fraud”.**
+*   Despite being the largest “partisan right” channel by far, FoxNews has received less traffic on videos discussing “election fraud” than other news outlets. They are also one of the few “partisan right” channels to regularly “dispute” claims of widespread “election fraud” and videos “supporting” such claims have been limited to interviews of the president and his campaign staff.
 *   TODO - Add description of video recommendation findings.`
   },
   {
     title: `Important Notes`,
     md: `
 *   Due to issues with YouTube’s default transcripts, a small percentage of the video links go to a portion of the video that is not aligned with the section of the transcript displayed on this page. You may have to manually select an earlier spot in the video inorder to watch the portion the snippet should be aligned with.
-*   Evidence for whether the video is supporting or disputing claims of “voter fraud” may come some time after the specific portion of the video in which “voter fraud” is discussed. Such as at the end of a speech.
+*   Evidence for whether the video is supporting or disputing claims of “election fraud” may come some time after the specific portion of the video in which “election fraud” is discussed. Such as at the end of a speech.
+*   There are a small number of channels that don’t have transcripts enabled. One prominent example is CNN. Further analysis needs to be done to estimate how including channels with disabled transcripts would increase “supporting” and “disputing” view aggregates.
 *   There is some subjectivity involved in the process of manually labeling videos and errors can be made. Please notify us if you find any labels you believe are incorrect.`
   },
   {
@@ -59,9 +60,9 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
   },
   {
     title: `Manual and Heuristic Labeling of Videos`,
-    md: `Manual labeling of videos was limited to those uploaded between 11/3 and 11/10 and only the first mention of “election fraud” in each video was reviewed. In total 370 mentions of election fraud were labeled including the top 160 viewed “partisan right” videos and top 110 viewed videos from all other channels. These manually labeled videos account for a small portion of the 4,885 videos discussing “election fraud” during this period. However, with a combined 280M views, they cover 64% of the overall “election fraud” video traffic during the period.
+    md: `Manual labeling of videos was limited to those uploaded between 11/3 and 11/10 and only the first mention of “election fraud” in each video was reviewed. If the label for the first snippet in a video is unclear, then subsequent snippets are analyzed. In total 378 mentions of election fraud were labeled including the top 160 viewed “partisan right” videos and top 110 viewed videos from all other channels. These manually labeled videos account for a small portion of the 4,895 videos discussing “election fraud” during this period. However, they have a combined 282M views, they cover 64% of the overall “election fraud” video traffic during the period.
 
-The 370 reviewed channels consisted of 201 “supporting”, 124 “disputing”, and 45 “other”. The distribution is impacted by the decision to label more “partisan right” videos than.
+The 378 reviewed channels consisted of 203 “supporting”, 129 “disputing”, and 46 “other”. The distribution is impacted by the decision to label more “partisan right” videos than non-”partisan right” videos.
 
 In order to label the remaining videos we use the following heuristic:
 * If other videos by the channel have been manually labeled, use the majority label
@@ -70,7 +71,7 @@ In order to label the remaining videos we use the following heuristic:
 
 Due to the small number of videos labeled “other”, the heuristic only uses “supporting” and “disputing” labels when making predictions.
 
-We use hold-one-out cross validation to measure the performance of the heuristic and find that it has an accuracy of 80%. For the “supporting” label the precision is 0.82 and the recall is 0.92. For the “disputing” label the precision is 0.77 and the recall is 0.90.`}
+We use hold-one-out cross validation to measure the performance of the heuristic and find that it has an accuracy of 83%. For the “supporting” label the precision is 0.85 and the recall is 0.95. For the “disputing” label the precision is 0.80 and the recall is 0.94.`}
 ]
 
 interface QueryState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
@@ -200,7 +201,7 @@ const NarrativesPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant voter fraud. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “voter fraud” and label whether the discussions <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claims. Our experiments used videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,760 videos uploaded by 1,443 channels between 10/27 and 11/15. In total these accounted for 642M views.</p>
+      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions <Tag label={supportValues.claim.label} color={supportValues.claim.color} /> or <Tag label={supportValues.denial.label} color={supportValues.denial.color} /> the president’s claim. These experiments use videos uploaded between 11/3 and 11/10, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 10/27 and 11/15. As of 11/16 these videos have generated 680M views combined.</p>
       {copySections.map((s, i) => {
         const open = copyOpen.includes(s.title)
         return <p key={i}>
