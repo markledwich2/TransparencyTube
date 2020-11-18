@@ -312,6 +312,7 @@ const NarrativesPage = () => {
                   <li><b>Right:</b> Amount recommendations were shown to this video</li>
                 </ul>
                 <p>{findings.rec}</p>
+                <p className="subtle">Note: Only the fraud narrative related recommendation from "Unrelated Politics" are included in this chart.</p>
               </p>
               <Sankey
                 graph={getRecSupportGraph(recs)}
