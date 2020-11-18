@@ -2,7 +2,6 @@ import { getJsonl } from './Utils'
 import { BlobIndex, blobIndex, noCacheReq } from './BlobIndex'
 import { Channel } from './Channel'
 import { HasPeriod, parsePeriod, Period } from '../components/Period'
-import { VideoFilter, videoFilterIncludes } from '../components/VideoFilter'
 
 export interface videoViewsQuery {
   channelId?: string
@@ -21,6 +20,12 @@ export interface VideoCommon {
   uploadDate: string
 }
 
+export interface VideoChannelExtra {
+  lr: string
+  tags: string[]
+  media?: string
+}
+
 export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews).periodViews != undefined
 export interface VideoViews extends HasPeriod, VideoCommon {
   periodViews: number
@@ -28,12 +33,22 @@ export interface VideoViews extends HasPeriod, VideoCommon {
   rank: number
 }
 
-export const isVideoRemoved = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
+export const isVideoError = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
 export interface VideoRemoved extends VideoCommon {
   errorType: string
   copyrightHolder?: string
   lastSeen: string
   errorUpdated: string
+}
+
+export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
+export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
+  narrative: string
+  captions: { offset: number, caption: string }[]
+  support: string
+  supplement: string
+  bubbleKey: string
+  errorType: string
 }
 
 export type ChannelKey = { channelId: string }
@@ -73,5 +88,6 @@ export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => 
 export const indexPeriods = (index: BlobIndex<any, HasPeriod>) => index.cols?.find(c => c.name == 'period')?.distinct.map(d => parsePeriod(d))
 
 export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
+
 
 

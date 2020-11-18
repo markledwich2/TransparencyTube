@@ -23,13 +23,13 @@ export const retry = async <T>(fn: () => Promise<T>, options?: Options<T>) => {
     try {
       const res = await fn()
       if (o.shouldRetryResult(res))
-        console.log('retry-able result:', attempts, res)
+        console.error('retry-able result:', attempts, res)
       else
         return res
     }
     catch (e) {
       if (o.shouldRetryError)
-        console.log('retry-able error:', attempts, e)
+        console.error('retry-able error:', attempts, e)
       else
         throw e
     }

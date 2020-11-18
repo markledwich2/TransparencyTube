@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, CSSProperties } from 'react'
 import { keepInView, PopupStyle } from './InlineForm'
 import { Search } from '@styled-icons/boxicons-regular'
-import { Opt, UlStyled } from './InlineSelect'
+import { UlStyled } from './InlineSelect'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { useDebounce } from '../common/Utils'
+import { StyleProps } from './Layout'
 
 interface SearchSelectOptions<T> {
   onSelect: (item: T) => void
@@ -15,7 +16,7 @@ interface SearchSelectOptions<T> {
   popupStyle?: CSSProperties
 }
 
-export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRender, placeholder, popupStyle }: SearchSelectOptions<T>) => {
+export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRender, placeholder, popupStyle, style }: SearchSelectOptions<T> & StyleProps) => {
   const [results, setResults] = useState<T[]>(null)
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, 200)
@@ -52,7 +53,10 @@ export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRende
       scrollIntoView(node, { scrollMode: 'if-needed' })
   }, [idxFocused])
 
-  //useEffect(() => keepInView(popupRef.current))
+
+  useEffect(() => {
+    keepInView(popupRef.current)
+  }, [results != null])
 
   const handleSelect = (r: T) => {
     setResults(null)
@@ -67,7 +71,7 @@ export const SearchSelect = <T,>({ onSelect, search, getKey, getLabel, itemRende
     'Enter': () => idxFocused != null ? handleSelect(results[idxFocused]) : null
   }
 
-  return <div style={{ position: 'relative' }} >
+  return <div style={{ position: 'relative', ...style }} >
     <input
       type="text"
       placeholder={placeholder}

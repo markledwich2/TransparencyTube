@@ -1,16 +1,19 @@
-import React, { memo, useEffect } from 'react'
+import React, { memo, MouseEventHandler, ReactNode, useEffect } from 'react'
 import styled from 'styled-components'
-import { measureFormat, Channel } from '../common/Channel'
-import { GroupedNodes, BubblesSelectionState, getZoomToFit, ChannelNode } from '../common/ChannelBubble'
+import { measureFormat } from '../common/Channel'
+import { GroupedNodes, BubblesSelectionState, getZoomToFit, BubbleNode, buildBubbleNodes } from '../common/Bubble'
 import { sumBy } from '../common/Pipe'
-import { ChannelStats } from '../common/RecfluenceApi'
-import { TagHelp, TagInfo } from './TagInfo'
+import { TagHelp } from './TagInfo'
 import { Fullscreen } from '@styled-icons/boxicons-regular'
 import { Popup } from './Popup'
 import ContainerDimensions from 'react-container-dimensions'
 import { HierarchyCircularNode } from 'd3'
 import ReactTooltip from 'react-tooltip'
-import { delay, jsonEquals } from '../common/Utils'
+import { delay, jsonEquals, toJson } from '../common/Utils'
+import { loadingFilter, StyleProps, styles } from './Layout'
+import { Tip } from './Tooltip'
+import { compact } from 'remeda'
+import { HelpOutline } from 'styled-icons/material'
 
 
 const FullscreenIcon = styled(Fullscreen)`
@@ -39,43 +42,60 @@ const BubbleDiv = styled.div`
   }
 `
 
-interface PackProps {
-  zoom: number,
-  packSize: number,
-  channelClick: (c: ChannelStats) => void,
-  showImg: boolean,
-  key: string
+interface BubbleChartPropsCommon<T> {
+  selections: BubblesSelectionState<T>
+  onSelect: (row: T) => void
+  onOpenGroup?: (group: string) => void
+  groupRender: (group: string, rows: T[]) => JSX.Element
+  dataCfg: BubbleDataCfg<T>
+  showImg: boolean
 }
 
-interface BubbleChartsProps {
-  channels: Channel[]
-  groupedNodes: GroupedNodes[],
-  selections: BubblesSelectionState
-  onOpenGroup: (group: string) => void
-  pack: PackProps
+export interface BubbleDataCfg<T> {
+  key: (r: T) => string
+  title: (r: T) => string
+  image: (R: T) => string
 }
 
-export const BubbleCharts = ({ groupedNodes, selections, channels, pack, onOpenGroup }: BubbleChartsProps) => {
-  const openNodes = selections.openGroup ? groupedNodes.find(g => g.group.value == selections.openGroup) : null
-  const commonProps = { selections, channels, pack, onOpenGroup }
-  return <>
+interface BubbleChartsProps<T> extends BubbleChartPropsCommon<T> {
+  rows: T[]
+  bubbleWidth: number
+  loading?: boolean
+  tipContent: (row: T) => ReactNode
+}
+
+export const BubbleCharts = <T,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, tipContent, dataCfg, showImg, style }: BubbleChartsProps<T> & StyleProps) => {
+  const { groupedNodes, zoom, packSize } = rows ? buildBubbleNodes(rows, selections, dataCfg, bubbleWidth) : { groupedNodes: [] as GroupedNodes<T>[], zoom: 1, packSize: 1 }
+  const openNodes = selections.openGroup && groupedNodes ? groupedNodes.find(g => g.group.value == selections.openGroup) : null
+  const commonProps = { selections, rows, pack: { zoom, packSize }, onOpenGroup, onSelect, groupRender, dataCfg, showImg }
+  return <><div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null, ...style }}>
     {groupedNodes && groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...commonProps} />)}
     {openNodes && <BubbleChart groupNodes={openNodes} {...commonProps} isOpen />}
+  </div>
+    <Tip id='bubble' getContent={(key: string) => {
+      if (!key || !rows) return
+      const r = rows.find(r => dataCfg.key(r) == key)
+      return r ? tipContent(r) : <></>
+    }} />
+    {groupRender && <GroupTip rows={rows} groupRender={groupRender} />}
   </>
 }
 
-interface BubbleChartProps {
-  groupNodes: GroupedNodes
-  selections: BubblesSelectionState
-  channels: Channel[]
-  pack: PackProps,
-  onOpenGroup: (group: string) => void
-  isOpen?: boolean
+interface BubblePackProps {
+  zoom: number
+  packSize: number
 }
 
-const BubbleChart = ({ groupNodes, selections, channels, pack, onOpenGroup, isOpen }: BubbleChartProps) => {
+interface BubbleChartProps<T> extends BubbleChartPropsCommon<T> {
+  groupNodes: GroupedNodes<T>
+  rows: T[]
+  pack: BubblePackProps,
+  isOpen?: boolean,
+}
+
+const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOpen, groupRender, dataCfg, onSelect, showImg }: BubbleChartProps<T>) => {
   const group = groupNodes.group.value
-  const groupBy = selections.groupBy ?? 'tags'
+  const groupBy = selections.groupBy
   const measureFmt = measureFormat(selections.measure)
   const fMeasure = measureFmt(sumBy(groupNodes.nodes, n => n.data.val ?? 0))
 
@@ -90,26 +110,39 @@ const BubbleChart = ({ groupNodes, selections, channels, pack, onOpenGroup, isOp
   const info = <div style={{ padding: '2px' }}>
     <h4>
       <span style={{ paddingRight: '0.5em' }}>{groupNodes.group.label ?? group}</span>
-      {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupBy == 'tags' && <TagHelp tag={group} showTitle />}</span>}
+      {!isOpen && <span style={{ paddingRight: '0.5em' }}>{groupRender && <GroupHelp value={group} />}</span>}
       <b style={{ fontSize: '1.5em' }}>{fMeasure}</b>
     </h4>
-    {isOpen && groupBy == 'tags' && <TagInfo tag={group} channels={channels} style={{ marginBottom: '1em' }} />}
+    {isOpen && <div style={{ marginBottom: '1em' }}>{groupRender(group, rows)}</div>}
   </div>
 
-  if (!isOpen) return <BubbleDiv key={group} className='inline'>
+  const commonProps = {
+    ...groupNodes,
+    ...pack,
+    onSelect,
+    showImg,
+    dataCfg,
+  }
+
+  const onDeselect = () => onSelect(null)
+
+  if (!isOpen) return <BubbleDiv className='inline' onClick={onDeselect}>
     {info}
     <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-      <BubbleSvg {...groupNodes} {...pack} />
+      <BubbleSvg {...commonProps} />
     </div>
-    <FullscreenIcon onClick={() => onOpenGroup(group)} />
+    <FullscreenIcon onClick={e => {
+      e.stopPropagation()
+      onOpenGroup(group)
+    }} />
   </BubbleDiv>
 
-  return <Popup key={group + '|open'} isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
+  return <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
     <ContainerDimensions >
-      {({ width, height }) => <BubbleDiv key={group}>
+      {({ width, height }) => <BubbleDiv key={group} onClick={onDeselect}>
         <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
           {info}
-          <BubbleSvg {...groupNodes} {...pack} zoom={getZoomToFit(groupNodes, Math.min(width, height) - 20)} />
+          <BubbleSvg {...commonProps} zoom={getZoomToFit(groupNodes, Math.min(width, height) - 20)} />
         </div>
         {!isOpen && <FullscreenIcon onClick={() => onOpenGroup(group)} />}
       </BubbleDiv>}
@@ -122,15 +155,28 @@ const SVGStyle = styled.svg`
     :hover {
       cursor:pointer;
     }
+
+    &.selected {
+      box-shadow: 0 0 60px 30px var(--fg)
+    }
+
+    &.deselected {
+      opacity: 0.2
+    }
   }
 `
 
-const BubbleSvg = memo(({ nodes, dim, zoom, channelClick: onChannelClick, showImg }: {} & GroupedNodes & PackProps) => {
+
+const getSelected = (nodes: HierarchyCircularNode<BubbleNode<any>>[]) => compact(nodes.filter(n => n.data?.selected).map(n => n.id))
+
+const BubbleSvg = memo(({ nodes, dim, zoom, onSelect, showImg, dataCfg }
+  : { dataCfg: BubbleDataCfg<any>, onSelect: (row: any) => void, showImg: boolean } & GroupedNodes<any> & BubblePackProps) => {
   const dx = -dim.x.min.x + dim.x.min.r
   const dy = -dim.y.min.y + dim.y.min.r
   const z = zoom
   const imgPad = 3
-  const channelNodes = nodes.filter(n => n.data.type == 'channel')
+  const displayNodes = nodes
+    .filter(n => n.data.type == 'node')
     .map(n => ({
       ...n,
       x: (n.x + dx) * zoom,
@@ -139,32 +185,56 @@ const BubbleSvg = memo(({ nodes, dim, zoom, channelClick: onChannelClick, showIm
       id: `${n.data.key}|${zoom}`
     }))
 
-  const showImage = (n: HierarchyCircularNode<ChannelNode>) => n.data.img && n.r > 10
+  const showImage = (n: HierarchyCircularNode<BubbleNode<any>>) => n.data.img && n.r > 10
 
   return <SVGStyle width={dim.w * z} height={dim.h * z} >
     <defs>
-      {showImg && channelNodes.filter(showImage)
+      {showImg && displayNodes.filter(showImage)
         .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath >)}
     </defs>
     <g>
-      {channelNodes.map(n => {
+      {displayNodes.filter(n => n.data?.row).map(n => {
         const { id, x, y, r } = n
+        const { selected, color, img } = n.data
+        const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
+
         const props = {
           'data-for': 'bubble',
-          'data-tip': n.data.channel.channelId,
-          onClick: (_) => onChannelClick(n.data.channel),
-          className: 'node'
+          'data-tip': dataCfg.key(n.data.row),
+          onClick: (e) => {
+            e.stopPropagation()
+            onSelect(n.data.row)
+          },
+          className: compact(['node', selectedClass]).join(' ')
         }
+
         return <g key={id} transform={`translate(${x}, ${y})`}>
-          <circle r={r} fill={n.data.color ?? 'var(--bg3)'} {...props} />
+          <circle r={r} fill={color ?? 'var(--bg3)'} {...props} />
           {showImg && showImage(n) &&
             <image x={- r + imgPad} y={- r + imgPad} width={(r - imgPad) * 2}
-              href={n.data.img} clipPath={`url(#clip-${n.id})`} {...props} />}
+              href={img} clipPath={`url(#clip-${n.id})`} {...props} />}
         </g>
       }
       )}
     </g>
   </SVGStyle>
-}, (a, b) => a.zoom == b.zoom && a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data) && a?.dim.w == b?.dim.w && a?.showImg == b?.showImg)
+}, (a, b) => a.zoom == b.zoom &&
+  a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data)
+  && a?.dim.w == b?.dim.w
+  && a?.showImg == b?.showImg
+  && toJson(getSelected(a.nodes)) == toJson(getSelected(b.nodes)))
+
+
+const groupTipId = 'group'
+
+export const GroupTip = <T,>({ rows, groupRender }
+  : { rows: T[], groupRender: (group: string, rows: T[]) => JSX.Element }) => <Tip
+    id={groupTipId}
+    getContent={value => groupRender(value, rows)} />
+
+export const GroupHelp = ({ value, style }: { value: string } & StyleProps) => <HelpOutline
+  style={{ ...styles.inlineIcon, ...style }}
+  data-tip={value}
+  data-for={groupTipId} />
 
 

@@ -1,23 +1,31 @@
-import React from 'react'
-import ReactMarkdown from 'react-markdown'
+import React, { PropsWithChildren } from 'react'
+import ReactMarkdown, { ReactMarkdownProps } from 'react-markdown'
 import styled from 'styled-components'
 
-export const Markdown = styled(ReactMarkdown)`
-  width: 100%;
-  white-space:normal;
 
+export const TextStyle = styled.div`
+  font-size: 1.4rem;
+  line-height:1.5em;
+  white-space:normal;
   p {
-    line-height:1.4em;
     margin: 0.1em 0 0.4em 0;
+  }
+
+  h1, h2, h3 {
+    margin: 1em 0;
   }
 
   ul {
     line-height:1.2em;
+    
     color:var(--fg2);
     list-style:disc;
     list-style-position: inside;
     white-space: normal;
     word-break: normal;
+    li {
+      margin:0.5em 0;
+    }
   }
 
   code, inlineCode  {
@@ -28,3 +36,11 @@ export const Markdown = styled(ReactMarkdown)`
       border-radius: 5px;
   }
 `
+
+export const TextSection = styled(TextStyle)`
+  width: 50em;
+  max-width: 100%;
+  margin:auto;
+`
+
+export const Markdown = (props: PropsWithChildren<ReactMarkdownProps>) => <TextStyle as={ReactMarkdown} {...props} />
