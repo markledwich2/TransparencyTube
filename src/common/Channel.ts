@@ -9,7 +9,7 @@ export interface Channel {
   channelId: string
   channelTitle: string
   description: string
-  tags: string[]
+  tags?: string[]
   logoUrl: string
   date_to: string
   lr: string
@@ -164,8 +164,8 @@ export async function getChannels(): Promise<Channel[]> {
   )
 
   channels.forEach(c => {
-    c.tags = orderBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
-    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
+    c.tags = orderBy(c.tags?.filter(t => !hiddenTags.includes(t)) ?? [], t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
+    c.media = c.tags?.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
   return channels
 }

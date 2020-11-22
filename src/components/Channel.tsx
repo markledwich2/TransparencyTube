@@ -138,7 +138,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
       </MetricsStyle>
       {showTags && <TagDiv style={{ margin: '0.2em 0' }}>
         {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
-        {c.tags.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
+        {c.tags?.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>}
       {showReviewInfo && c && c.reviewsHuman >= 0 && <span>{c.reviewsHuman ?
         <p><User style={styles.inlineIcon} /><b>{c.reviewsHuman}</b> manual reviews</p>
@@ -152,7 +152,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
 }
 
 const autoReviewNotes = (c: Channel) => {
-  if (c.tags.includes('AntiSJW') && c.lr == 'R' && !c.tags.some(t => ['PartisanRight', 'ReligiousConservative'].includes(t)))
+  if (c.tags?.includes('AntiSJW') && c.lr == 'R' && !c.tags.some(t => ['PartisanRight', 'ReligiousConservative'].includes(t)))
     return `Anti-woke content is considered a 'right' position in our [classification process](https://github.com/markledwich2/Recfluence#leftcenterright).  ${c.reviewsHuman ? 'Reviewers weighed this against center/left content and concluded it was predominantly  on this side of the left/right dimension.' : ''}`
   return null
 }

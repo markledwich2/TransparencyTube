@@ -279,7 +279,7 @@ const NarrativesPage = () => {
             </FilterHeader>
             {bubbleRows && <BubbleCharts<NarrativeChannel>
               rows={bubbleRows}
-              bubbleWidth={width > 800 ? 600 : 200}
+              bubbleWidth={width > 800 ? 800 : 300}
               selections={selections}
               dataCfg={{
                 key: r => `${r.channelId}|${r[groupCol]}`,
