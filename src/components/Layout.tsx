@@ -159,32 +159,6 @@ export const MinimalPage = styled.div`
   min-height: 80vh;
 `
 
-export const MdPageStyle = styled(TextPage)`
-  font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
-  h1, h2, h3 {
-    margin: 1em 0;
-    font-weight: 800;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--fg1);
-  }
-  p, ul {
-    margin-bottom: 2em;
-    color: var(--fg2);
-  }
-  ul {
-    list-style-position: outside;
-    margin-top: -1em;
-    margin-left: 1em;
-    li {
-      margin-bottom: 1em;
-    }
-  }
-
-  img {
-    width: 100%
-  }
-`
-
 export const fullFluidUrl = (aboutImg: FluidObject) =>
   uri(safeLocation()?.href ?? 'https://transparency.tube').with({ path: [aboutImg?.src] }).url
 

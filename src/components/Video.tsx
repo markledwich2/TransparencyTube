@@ -241,7 +241,7 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
             {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
           </FlexRow>}
           {(captions || showLoadCaptions) &&
-            <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '10em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
+            <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
               <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>{s.caption}</div>)}
               {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
             </div>

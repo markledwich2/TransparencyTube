@@ -1,12 +1,10 @@
 import React from "react"
 
-import Layout, { MdPageStyle } from "../components/Layout"
+import Layout, { TextPage } from "../components/Layout"
 import SEO from '../components/SEO'
-import { Footer } from '../components/Footer'
 import { Markdown } from '../components/Markdown'
 import { FluidImage } from '../components/FluidImage'
 import AboutImage from '../images/ttube-about.jpg'
-import ReactMarkdown from 'react-markdown'
 
 
 const aboutMd = `
@@ -53,8 +51,6 @@ We hope you find this as fascinating as we do and use our site to understand and
 Disclaimer - We believe the quality of the tags on Transparency.Tube are good enough to generate accurate aggregate statistics and useful insights, though the model and human reviewers who are responsible for the channel tags are not perfect. We welcome feedback from content creators on any incorrectly tagged channels.
 `
 
-
-
 const desc = "How it Works"
 
 const AboutPage = () => {
@@ -65,11 +61,11 @@ const AboutPage = () => {
         description={desc}
         image={AboutImage}
       />
-      <MdPageStyle>
+      <TextPage>
         <h2>{desc}</h2>
         <FluidImage path='ttube-about.jpg' style={{ marginBottom: '1em' }} />
-        <ReactMarkdown>{aboutMd}</ReactMarkdown>
-      </MdPageStyle>
+        <Markdown>{aboutMd}</Markdown>
+      </TextPage>
     </Layout>
   )
 }
