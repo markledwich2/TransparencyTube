@@ -6,7 +6,7 @@ import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
 import { Tip } from './Tooltip'
-import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative } from '../common/RecfluenceApi'
+import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative, VideoCaption } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
 import { groupBy, indexBy, pipe } from 'remeda'
 import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
@@ -27,14 +27,16 @@ interface VideosProps {
   showTags?: boolean
   defaultLimit?: number
   highlightWords?: string[]
+  loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
 }
 
 const chanVidChunk = 3
 const videoWidth = 400
 
-export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb, groupChannels, showTags, defaultLimit, highlightWords }: VideosProps) => {
+export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
+  groupChannels, showTags, defaultLimit, highlightWords, loadCaptions }: VideosProps) => {
   const [limit, setLimit] = useState(defaultLimit ?? 20)
-  const [showAlls, setShowAlls] = useState<Record<string, boolean>>()
+  const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
 
   if (!videos) return <Spinner />
 
@@ -78,12 +80,11 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
               colG.push({ channelId: channelId, channel, vidsToShow, showAll, showLess, totalVids: vids.length, showChannel })
             }
 
-            if (groupedVids.length == 1) { // just one channel so lets show all its videos in colulumns
+            if (groupedVids.length == 1) { // just one channel so lets show all its videos in columns
               const g = groupedVids[0]
               g.vids.forEach((v, i) => addVids(g.channelId, [v], i == 0))
             }
             else groupedVids.slice(0, limit).forEach(g => addVids(g.channelId, g.vids))
-
 
             return <FlexRow>
               {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
@@ -102,6 +103,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
                     v={v}
                     style={{ width: (videoWidth) }}
                     highlightWords={highlightWords}
+                    loadCaptions={loadCaptions}
                   />
                   {i == vidsToShow.length - 1 && (showLess || showAll) &&
                     <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
@@ -178,6 +180,7 @@ interface VideoProps extends StyleProps {
   showThumb?: boolean
   showChannel?: boolean
   highlightWords?: string[]
+  loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
 }
 
 const getMdValues = (col: string, table = 'video') => indexBy(colMd(md, col, table).values, c => c.value)
@@ -190,9 +193,8 @@ const mdValues = {
 
 const vidCaptionChunk = 3
 
-export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords }: VideoProps) => {
-
-  const [showAllCaps, setShowAllCaps] = useState(false)
+export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions }: VideoProps) => {
+  const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
@@ -200,13 +202,8 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
   const supportOpt = isVideoNarrative(v) ? mdValues.support[v.support] : null
   const supplementOpt = isVideoNarrative(v) ? mdValues.supplement[v.supplement] : null
 
-  const captions = isVideoNarrative(v) ?
-    showAllCaps ? v.captions : v.captions.slice(0, vidCaptionChunk)
-    : null
-
-  const showAllCapsAction: boolean | null = !isVideoNarrative(v) || captions == null
-    ? null
-    : v.captions.length <= vidCaptionChunk ? null : !showAllCaps
+  const captions = v?.captions ?? loadedCaps
+  const showLoadCaptions = !captions && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
   return <VideoStyle style={style}>
     <FlexRow>
@@ -239,19 +236,16 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
             </>}
           </FlexRow>
           {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-          {isVideoNarrative(v) && <>
-            <FlexRow>
-              {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
-              {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
-            </FlexRow>
-            {captions &&
-              <div>{captions.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-                <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offset}>{secondsFormat(s.offset, 2)}</VideoA>{s.caption}</div>)}
-                {showAllCapsAction != null && <a onClick={_ => setShowAllCaps(showAllCapsAction)}>
-                  {showAllCapsAction ? `show all ${v.captions.length} captions` : `show less captions`}
-                </a>}
-              </div>}
-          </>}
+          {isVideoNarrative(v) && <FlexRow>
+            {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
+            {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
+          </FlexRow>}
+          {(captions || showLoadCaptions) &&
+            <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '10em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
+              <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>{s.caption}</div>)}
+              {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
+            </div>
+          }
           {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
         </FlexCol>
       </FlexRow>

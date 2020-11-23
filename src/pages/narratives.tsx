@@ -293,7 +293,7 @@ const NarrativesPage = () => {
                 setQuery({ selectedKeys: r == null ? null : [r.bubbleKey] })
               }}
               onOpenGroup={g => {
-                return setQuery({ openGroup: g })
+                setQuery({ openGroup: g })
               }}
               tipContent={r => <ChannelDetails channel={r} mode='min' />}
               style={{ marginBottom: '2em' }} />}

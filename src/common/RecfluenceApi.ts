@@ -18,6 +18,12 @@ export interface VideoCommon {
   videoViews: number
   durationSecs: number
   uploadDate: string
+  captions?: VideoCaption[]
+}
+
+export interface VideoCaption {
+  offsetSeconds: number,
+  caption: string
 }
 
 export interface VideoChannelExtra {
@@ -39,17 +45,19 @@ export interface VideoRemoved extends VideoCommon {
   copyrightHolder?: string
   lastSeen: string
   errorUpdated: string
+  hasCaptions?: boolean
 }
 
 export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
 export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
   narrative: string
-  captions: { offset: number, caption: string }[]
   support: string
   supplement: string
   bubbleKey: string
   errorType: string
 }
+
+
 
 export type ChannelKey = { channelId: string }
 export type ChannelAndPeriodKey = ChannelKey & HasPeriod
@@ -73,9 +81,9 @@ export interface ChannelViewIndexes {
 
 export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => {
   const [channelVideo, channelStatsByPeriod, channelStatsById] = await Promise.all([
-    blobIndex<VideoViews, ChannelAndPeriodKey>('top_channel_videos'),
+    blobIndex<VideoViews, ChannelAndPeriodKey>('top_channel_videos', false),
     blobIndex<ChannelStats, HasPeriod>('channel_stats_by_period'),
-    blobIndex<ChannelStats, ChannelKey>('channel_stats_by_id'),
+    blobIndex<ChannelStats, ChannelKey>('channel_stats_by_id', false),
   ])
   const indexes: ChannelViewIndexes = {
     channelVideo,

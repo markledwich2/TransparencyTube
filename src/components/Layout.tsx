@@ -121,10 +121,9 @@ const GlobalStyle = createGlobalStyle`
 
 export const loadingFilter = 'opacity(0.4)'
 
-export const FlexRow = styled.div<{ space?: string, wrap?: boolean }>`
+export const FlexRow = styled.div<{ space?: string }>`
   display:flex;
   flex-direction: row;
-  ${p => p.wrap && 'flex-wrap: wrap;'}
   > * {
     margin-right: ${p => p.space ?? '0.6em'};
   }

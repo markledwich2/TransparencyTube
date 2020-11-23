@@ -39,10 +39,10 @@ export const isFilterRange = <TKey>(f: any): f is FilterRange<TKey> => f.from !=
 export const noCacheReq = { headers: { 'Cache-Control': 'no-cache' } }
 const enableLocalCache = true
 
-export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRow, TKey>> => {
+export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<BlobIndex<TRow, TKey>> => {
   const subPath = [path, blobCfg.indexVersion]
   const baseUri = blobCfg.indexUri.addPath(...subPath)
-  const baseUriCdn = blobCfg.indexCdnUri.addPath(...subPath)
+  const baseUriCdn = cdn ? blobCfg.indexCdnUri.addPath(...subPath) : baseUri
   const fileRowsCache = {}
   const indexUrl = baseUri.addPath('index.json.gz').url
 
@@ -94,11 +94,12 @@ export const blobIndex = async <TRow, TKey>(path: string): Promise<BlobIndex<TRo
     console.log(`index files in ${indexUrl} loaded`, files)
     const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
     const filtered = rows.filter((r: TKey) => filters.every(q => {
-      if (isFilterRange(q)) {
+      if (isFilterRange(q))
         return compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
-      }
-      return entries(q).every(e => r[e[0]] == e[1]) // ensure each value of row matches
+      return entries(q).every(([p, v]) => r[p] == v) // ensure each value of row matches
     }))
+    console.log(`${filtered.length} index rows returned`)
+    console.table(filtered.slice(0, 10))
     return filtered
   }
 

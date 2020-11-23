@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { filter, indexBy, map, pipe, pick } from 'remeda'
-import { BlobIndex } from '../common/BlobIndex'
+import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoChannelExtra, VideoRemoved } from '../common/RecfluenceApi'
@@ -36,6 +36,12 @@ interface QueryState extends DateRangeQueryState {
   copyrightHolder?: string
 }
 
+interface CaptionData {
+  videoId: string,
+  caption: string,
+  offsetSeconds: number
+}
+
 const searchIncludes = (search: string, v: VideoRemoved) => {
   if (!search) return true
   const re = new RegExp(`${search}`, 'i')
@@ -46,7 +52,8 @@ type VideoRow = VideoRemoved & VideoChannelExtra
 
 const RemovedVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
-  const [idx, setIdx] = useState<BlobIndex<VideoRemoved, { lastSeen?: string }>>(null)
+  const [removedIdx, setRemovedIdx] = useState<BlobIndex<VideoRemoved, { lastSeen?: string }>>(null)
+  const [captionIdx, setCaptionIdx] = useState<BlobIndex<CaptionData, { videoId?: string }>>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
@@ -64,13 +71,16 @@ const RemovedVideosPage = () => {
       setChannelIndexes(ci)
       setDefaultPeriod(indexPeriods(ci.channelStatsByPeriod).find(p => p.type == 'd7'))
     })
-    indexRemovedVideos().then(setIdx)
+    indexRemovedVideos().then(setRemovedIdx)
+    blobIndex<CaptionData, { videoId: string }>('video_removed_caption', false).then(i => {
+      setCaptionIdx(i)
+    })
   }, [])
 
   useEffect(() => {
-    if (!idx || !channels) return
+    if (!removedIdx || !channels) return
     setLoading(true)
-    idx.getRows(
+    removedIdx.getRows(
       {
         from: { lastSeen: dateRange.startDate.toISOString() },
         to: { lastSeen: dateRange.endDate.toISOString() }
@@ -78,7 +88,7 @@ const RemovedVideosPage = () => {
         setVideos(vids)
         setLoading(false)
       })
-  }, [idx, channels, q.start, q.end])
+  }, [removedIdx, channels, q.start, q.end])
 
 
   useEffect(() => {
@@ -98,15 +108,15 @@ const RemovedVideosPage = () => {
     <PurposeBanner>
       <p>YouTube  <a href='https://transparencyreport.google.com/youtube-policy/removals'>removes millions</a> of videos each month to enforce their community guidelines without providing information about what is removed or why. We fill the gap: here you'll find transparency on what videos are removed. While we don't know all of YouTube's moderation process, we hope this transparency will enable anyone and everyone to try to understand and/or scrutinize it with higher fidelity.</p>
       <p className="subtle">We show videos removed by both the creator or by YouTube. Here are the reason's that you can filter by:</p>
-      <FlexRow wrap style={{ margin: 'auto' }}>
-        {colMd(md, 'errorType', 'video').values.map(v => <ErrorTag
+      <FlexRow style={{ margin: 'auto', flexWrap: 'wrap' }}>
+        {colMd(md, 'errorType', 'video').values.map(v => <ErrorTag key={v.value}
           v={v} onErrorType={e => setVideoFilter({ ...videoFilter, errorType: [e] })} />)}
       </FlexRow>
     </PurposeBanner>
     <MinimalPage>
       <FilterHeader>
         <FilterPart>
-          Removed videos on
+          Removed videos last seen
           <InlineDateRange
             range={dateRange}
             onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
@@ -135,8 +145,15 @@ const RemovedVideosPage = () => {
         </FilterPart>
       </FilterHeader>
 
-      <Videos channels={channels} onOpenChannel={onOpenChannel} videos={vidsFiltered}
-        showChannels loading={loading} defaultLimit={100} groupChannels highlightWords={q.search ? [q.search] : null} />
+      <Videos
+        channels={channels}
+        onOpenChannel={onOpenChannel}
+        loadCaptions={videoId => captionIdx?.getRows({ videoId })}
+        videos={vidsFiltered}
+        showChannels groupChannels
+        loading={loading}
+        defaultLimit={100}
+        highlightWords={q.search ? [q.search] : null} />
     </MinimalPage>
     <Popup isOpen={openChannel != null} onRequestClose={() => setQuery({ openChannelId: null })}>
       {channelIndexes && <ChannelDetails channel={openChannel} mode='max' indexes={channelIndexes} defaultPeriod={defaultPeriod} />}
