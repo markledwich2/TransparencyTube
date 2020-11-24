@@ -191,8 +191,6 @@ const mdValues = {
   supplement: getMdValues('supplement')
 }
 
-const vidCaptionChunk = 3
-
 export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions }: VideoProps) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
@@ -202,7 +200,7 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
   const supportOpt = isVideoNarrative(v) ? mdValues.support[v.support] : null
   const supplementOpt = isVideoNarrative(v) ? mdValues.supplement[v.supplement] : null
 
-  const captions = v?.captions ?? loadedCaps
+  const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = !captions && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
   return <VideoStyle style={style}>
