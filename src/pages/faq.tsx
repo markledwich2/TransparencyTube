@@ -1,7 +1,6 @@
 import React from "react"
-import ReactMarkdown from 'react-markdown'
-import { Footer } from '../components/Footer'
-import Layout, { MdPageStyle } from "../components/Layout"
+import Layout, { TextPage } from "../components/Layout"
+import { Markdown } from '../components/Markdown'
 
 const md = `
 ## **Why did we create transparency.tube?**
@@ -49,9 +48,9 @@ As we have noted elsewhere on the site, this is not an attempt to label or categ
 const FaqPage = () => {
 
   return <Layout>
-    <MdPageStyle>
-      <ReactMarkdown>{md}</ReactMarkdown>
-    </MdPageStyle>
+    <TextPage>
+      <Markdown>{md}</Markdown>
+    </TextPage>
   </Layout>
 }
 

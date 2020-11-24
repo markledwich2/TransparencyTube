@@ -279,7 +279,7 @@ const NarrativesPage = () => {
             </FilterHeader>
             {bubbleRows && <BubbleCharts<NarrativeChannel>
               rows={bubbleRows}
-              bubbleWidth={width > 800 ? 600 : 200}
+              bubbleWidth={width > 800 ? 800 : 300}
               selections={selections}
               dataCfg={{
                 key: r => `${r.channelId}|${r[groupCol]}`,
@@ -293,7 +293,7 @@ const NarrativesPage = () => {
                 setQuery({ selectedKeys: r == null ? null : [r.bubbleKey] })
               }}
               onOpenGroup={g => {
-                return setQuery({ openGroup: g })
+                setQuery({ openGroup: g })
               }}
               tipContent={r => <ChannelDetails channel={r} mode='min' />}
               style={{ marginBottom: '2em' }} />}

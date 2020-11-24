@@ -1,6 +1,6 @@
 import React from "react"
 import { Footer } from '../components/Footer'
-import Layout, { MdPageStyle, TextPage } from "../components/Layout"
+import Layout, { TextPage } from "../components/Layout"
 import SEO from '../components/SEO'
 import { FlexRow, styles } from '../components/Layout'
 import { Twitter } from '@styled-icons/boxicons-logos'

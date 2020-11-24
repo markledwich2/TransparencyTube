@@ -121,10 +121,9 @@ const GlobalStyle = createGlobalStyle`
 
 export const loadingFilter = 'opacity(0.4)'
 
-export const FlexRow = styled.div<{ space?: string, wrap?: boolean }>`
+export const FlexRow = styled.div<{ space?: string }>`
   display:flex;
   flex-direction: row;
-  ${p => p.wrap && 'flex-wrap: wrap;'}
   > * {
     margin-right: ${p => p.space ?? '0.6em'};
   }
@@ -158,32 +157,6 @@ export const TextPage = styled.div`
 export const MinimalPage = styled.div`
   margin: 1.5em;
   min-height: 80vh;
-`
-
-export const MdPageStyle = styled(TextPage)`
-  font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
-  h1, h2, h3 {
-    margin: 1em 0;
-    font-weight: 800;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--fg1);
-  }
-  p, ul {
-    margin-bottom: 2em;
-    color: var(--fg2);
-  }
-  ul {
-    list-style-position: outside;
-    margin-top: -1em;
-    margin-left: 1em;
-    li {
-      margin-bottom: 1em;
-    }
-  }
-
-  img {
-    width: 100%
-  }
 `
 
 export const fullFluidUrl = (aboutImg: FluidObject) =>

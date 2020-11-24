@@ -9,7 +9,7 @@ export interface Channel {
   channelId: string
   channelTitle: string
   description: string
-  tags: string[]
+  tags?: string[]
   logoUrl: string
   date_to: string
   lr: string
@@ -116,6 +116,7 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'Community guidelines', color: '#e55e5e', desc: `YouTube decided the video violated their [community guidelines](https://www.youtube.com/howyoutubeworks/policies/community-guidelines/)` },
         { value: 'Sexual content', color: '#e0990b', desc: `YouTube decided the video violated their [policy on nudity or sexual content](https://support.google.com/youtube/answer/2802002?hl=en)` },
         { value: 'Copyright claim', color: '#41afa5', desc: `The video was removed because a copyright claim as made` },
+        { value: 'Channel Removed', color: '#e55e5e', desc: `YouTube or the channel owner removed this videos channel` }
       ]
     } as ColumnMd,
     copyrightHolder: {
@@ -164,8 +165,8 @@ export async function getChannels(): Promise<Channel[]> {
   )
 
   channels.forEach(c => {
-    c.tags = orderBy(c.tags.filter(t => !hiddenTags.includes(t)), t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
-    c.media = c.tags.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
+    c.tags = orderBy(c.tags?.filter(t => !hiddenTags.includes(t)) ?? [], t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
+    c.media = c.tags?.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
   return channels
 }

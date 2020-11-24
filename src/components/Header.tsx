@@ -81,7 +81,6 @@ const pagesMd: NavItem[] = [
   },
   { path: '/about', label: 'How it works' },
   { path: '/faq', label: 'FAQ' },
-  { path: '/press', label: 'Press' },
   { path: '/contact', label: 'Contact' },
 ]
 
