@@ -116,6 +116,7 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'Community guidelines', color: '#e55e5e', desc: `YouTube decided the video violated their [community guidelines](https://www.youtube.com/howyoutubeworks/policies/community-guidelines/)` },
         { value: 'Sexual content', color: '#e0990b', desc: `YouTube decided the video violated their [policy on nudity or sexual content](https://support.google.com/youtube/answer/2802002?hl=en)` },
         { value: 'Copyright claim', color: '#41afa5', desc: `The video was removed because a copyright claim as made` },
+        { value: 'Channel Removed', color: '#e55e5e', desc: `YouTube or the channel owner removed this videos channel` }
       ]
     } as ColumnMd,
     copyrightHolder: {
