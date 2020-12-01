@@ -150,7 +150,8 @@ const RemovedVideosPage = () => {
         onOpenChannel={onOpenChannel}
         loadCaptions={videoId => captionIdx?.getRows({ videoId })}
         videos={vidsFiltered}
-        showChannels groupChannels
+        showChannels
+        groupChannels
         loading={loading}
         defaultLimit={100}
         highlightWords={q.search ? [q.search] : null} />

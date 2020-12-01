@@ -1,7 +1,7 @@
 
 import React, { PropsWithChildren } from "react"
 import styled from 'styled-components'
-import { TextStyle } from './Markdown'
+import { TextSection, TextStyle } from './Markdown'
 
 interface PurposeDivProps {
   feature?: boolean
@@ -31,9 +31,9 @@ const PurposeDiv = styled(TextStyle) <PurposeDivProps>`
 `
 
 const PurposeBanner = ({ children, feature }: PropsWithChildren<PurposeDivProps>) => <PurposeDiv feature={feature}>
-  <div style={{ maxWidth: '50em', margin: 'auto' }}>
+  <TextSection style={{ maxWidth: '50em', margin: 'auto' }}>
     {children}
-  </div>
+  </TextSection>
 </PurposeDiv>
 
 export default PurposeBanner

@@ -88,6 +88,7 @@ export const ChannelLogo = ({ c, tipId, style, onClick }: StyleProps & ChannelLo
   src={c.logoUrl}
   data-for={tipId} data-tip={c.channelId}
   onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
+  className='logo'
   style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...style }} />
 
 export interface ChannelTitleProps {
@@ -115,7 +116,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
   //console.log('faded', faded)
   //style={{ opacity: faded ? 0.5 : null }}
   return <ChannelTitleStyle style={style}>
-    <div><ChannelLogo c={c} tipId={tipId} onClick={onLogoClick} className='logo' style={logoStyle} /></div>
+    <div><ChannelLogo c={c} tipId={tipId} onClick={onLogoClick} style={logoStyle} /></div>
     <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>
         {highlightWords ? <Highlighter

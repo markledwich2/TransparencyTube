@@ -45,6 +45,8 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
     orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc')
   )
 
+  const showMore = (groupedVids?.length ?? videos?.length) > limit
+
   return <div>
     <div style={{
       minHeight: '300px',
@@ -126,9 +128,9 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
         style={{ width: '45em', maxWidth: '100%' }}
         c={showChannels && channels && channels[v.channelId]} />)}
     </div>
-    <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
+    {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
       <a onClick={_ => setLimit(limit + 40)}>show more</a>
-    </div>
+    </div>}
     {showChannels && <Tip id={tipId} getContent={(id) => {
       if (!id || !channels[id]) return <></>
       return <ChannelDetails channel={channels[id] as ChannelWithStats} mode='min' />
@@ -201,7 +203,7 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
   const supplementOpt = isVideoNarrative(v) ? mdValues.supplement[v.supplement] : null
 
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
-  const showLoadCaptions = !captions && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
+  const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
   return <VideoStyle style={style}>
     <FlexRow>
