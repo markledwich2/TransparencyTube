@@ -27,6 +27,7 @@ export const Tabs = ({ children, titleStyle }: TabsProps) => {
   return <>
     <TabsStyle>
       {children.map((c, i) => <TabTitle
+        key={i}
         className={selectedTab == i && 'selected'}
         style={titleStyle}
         label={c.props.label}

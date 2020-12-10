@@ -47,6 +47,7 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
   let res: T[] = [], p: T = getParent(node)
   while (true) {
     if (!p) break
+    if (res.includes(p)) break
     res.push(p)
     p = getParent(p)
   }

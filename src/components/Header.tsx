@@ -106,13 +106,14 @@ const Header = ({ siteTitle }: { siteTitle: string }) => {
   const createPagesTree = (items: NavItem[], parentPath?: string): NavItemRun[] => items.map(n => ({
     ...n,
     active: n.path == path,
-    children: n.children && createPagesTree([{ path: n.path, label: n.subLabel ?? n.label }, ...n.children], n.path), parentPath
+    children: n.children && createPagesTree([{ path: n.path, label: n.subLabel ?? n.label }, ...n.children], n.path),
+    parentPath
   }))
 
   const pages = createPagesTree(pagesMd)
-  const pagesByPath = mapToObj(treeToList(pages, n => n.children), n => [n.path, n])
+  const pagesByPath = mapToObj(treeToList(pages, n => n.children).filter(n => !n.parentPath || n.parentPath != n.path), n => [n.path, n])
   const page = pagesByPath[path]
-  const topPage = first(treeParents(page, n => pagesByPath[n.parentPath])) ?? page
+  const topPage = page ? first(treeParents(page, n => pagesByPath[n.parentPath])) ?? page : null
   const subPages = topPage?.children ?? []
 
   return (
