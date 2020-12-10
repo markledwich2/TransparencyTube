@@ -1,8 +1,11 @@
 import { Link } from "gatsby"
 import PropTypes from "prop-types"
 import React, { Fragment } from "react"
-import { compact, flatMap } from 'remeda'
+import { compact, first, flatMap } from 'remeda'
 import styled from 'styled-components'
+import { Pages } from 'styled-icons/material'
+import { treeParents, treeToList } from '../common/Pipe'
+import { mapToObj } from '../common/remeda/mapToObj'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
 import { Burger } from './Burger'
@@ -66,20 +69,24 @@ const SubNavStyle = styled(NavStyle)`
 interface NavItem {
   path: string
   label?: string
+  subLabel?: string
   home?: boolean
-  subItems?: NavItem[]
+  children?: NavItem[]
 }
 
 const pagesMd: NavItem[] = [
   {
-    path: '/', label: 'Home', home: true, subItems: [
-      { path: '/', label: 'Channels' },
+    path: '/', label: 'Home', subLabel: 'Channels', home: true, children: [
       { path: '/topVideos', label: 'Top Videos' },
       { path: '/removedVideos', label: 'Removed Videos' },
       { path: '/narratives', label: 'Election Fraud Narrative' }
     ]
   },
-  { path: '/about', label: 'How it works' },
+  {
+    path: '/about', label: 'About', subLabel: 'How it works', children: [
+      { path: '/media', label: 'As seen on' }
+    ]
+  },
   { path: '/faq', label: 'FAQ' },
   { path: '/contact', label: 'Contact' },
 ]
@@ -89,20 +96,24 @@ interface NavItemRun extends NavItem {
   label?: string
   home?: boolean
   active?: boolean
-  subItems?: NavItemRun[]
+  children?: NavItemRun[]
+  parentPath?: string
 }
 
 const Header = ({ siteTitle }: { siteTitle: string }) => {
   const loc = safeLocation()
   const path = loc ? '/' + uri(loc.href).parts.path.join('/') : null
-  const createAllPages = (items: NavItem[]): NavItemRun[] => items.map(i => ({
-    ...i,
-    active: i.path == path,
-    subItems: i.subItems ? createAllPages(i.subItems) : null
+  const createPagesTree = (items: NavItem[], parentPath?: string): NavItemRun[] => items.map(n => ({
+    ...n,
+    active: n.path == path,
+    children: n.children && createPagesTree([{ path: n.path, label: n.subLabel ?? n.label }, ...n.children], n.path), parentPath
   }))
-  const pages = createAllPages(pagesMd)
-  const topPage = path ? pages.find(p => path?.startsWith(p.path)) : null
-  const subPages = topPage?.subItems
+
+  const pages = createPagesTree(pagesMd)
+  const pagesByPath = mapToObj(treeToList(pages, n => n.children), n => [n.path, n])
+  const page = pagesByPath[path]
+  const topPage = first(treeParents(page, n => pagesByPath[n.parentPath])) ?? page
+  const subPages = topPage?.children ?? []
 
   return (
     <header
@@ -126,8 +137,8 @@ const Header = ({ siteTitle }: { siteTitle: string }) => {
         <Burger collapseWidth={menuCollapseWidth}>
           {pages.map(p => <Fragment key={p.path}>
             <PageLink page={p} key={p.path} />
-            {p.subItems && <BurgerSubNavStyle>
-              {p.subItems.map(sp => <PageLink page={sp} key={`burger-sub-${p.path}-${sp.path}`} />)}
+            {p.children && <BurgerSubNavStyle>
+              {p.children.map(sp => <PageLink page={sp} key={`burger-sub-${p.path}-${sp.path}`} />)}
             </BurgerSubNavStyle>}
           </Fragment>)}
         </Burger>
