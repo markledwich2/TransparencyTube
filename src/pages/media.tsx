@@ -3,6 +3,7 @@ import { groupBy } from 'remeda'
 import styled from 'styled-components'
 import { entries } from '../common/Pipe'
 import { dateFormat } from '../common/Utils'
+import { videoThumb, videoUrl } from '../common/Video'
 import Layout, { FlexRow, TextPage } from "../components/Layout"
 import { Markdown } from '../components/Markdown'
 
@@ -13,13 +14,14 @@ interface Logo {
 }
 
 interface SeenIn {
-  url: string,
+  url?: string,
   title: string,
   publisher?: string,
   author?: string,
   authorImg?: string,
   date?: string,
   thumb?: string
+  videoId?: string
 }
 
 const seenIn: SeenIn[] = [
@@ -57,8 +59,7 @@ const seenIn: SeenIn[] = [
     publisher: 'YouTube',
     author: 'NowThis News',
     authorImg: 'https://yt3.ggpht.com/ytc/AAUvwniL7tpZNpVhiJMxIVOzAZ19IiIckhvoZPsgOH9KoA=s88-c-k-c0xffffffff-no-rj-mo',
-    url: 'https://youtu.be/BfYJeeSsiO4',
-    thumb: 'https://i.ytimg.com/an_webp/BfYJeeSsiO4/mqdefault_6s.webp?du=3000&sqp=CMqjxv4F&rs=AOn4CLCrsjQN9NtgSYu1vcY3bTkgTtYj1A',
+    videoId: 'BfYJeeSsiO4',
     title: 'False Voter Fraud Videos Receive Millions of Views on YouTube',
     date: '2020-11-05'
   },
@@ -66,8 +67,7 @@ const seenIn: SeenIn[] = [
     publisher: 'YouTube',
     author: 'Clownfish TV',
     authorImg: 'https://yt3.ggpht.com/ytc/AAUvwniq_94ZfitkRUVcEU13Tb0dzzHdejxlGlMDSnet=s176-c-k-c0x00ffffff-no-rj',
-    url: 'https://youtu.be/lK4OGFIhtco',
-    thumb: 'https://i.ytimg.com/an_webp/lK4OGFIhtco/mqdefault_6s.webp?du=3000&sqp=CJibxv4F&rs=AOn4CLCkGK9EkpIK5w1dbUE-FOuFL4oOjA',
+    videoId: 'lK4OGFIhtco',
     title: 'Transparency Tube could be CATASTROPHIC for YouTube Creators!',
     date: '2020-10-27'
   },
@@ -75,8 +75,7 @@ const seenIn: SeenIn[] = [
     publisher: 'YouTube',
     author: 'ADAM FRIENDED',
     authorImg: 'https://yt3.ggpht.com/ytc/AAUvwngum1biUFHFAW1O_LwtEBi1weJB04e5ksHQrIv1nQ=s88-c-k-c0xffffffff-no-rj-mo',
-    url: 'https://youtu.be/ZHEyuIZl-gU',
-    thumb: 'https://i.ytimg.com/vi/ZHEyuIZl-gU/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLBAIAqdFcfzNvK-nZ5_IU6Eq-dxTA',
+    videoId: 'ZHEyuIZl-gU',
     title: 'YOUTUBE POLITICS: Transparency Tube',
     date: '2020-10-26'
   },
@@ -84,8 +83,7 @@ const seenIn: SeenIn[] = [
     publisher: 'YouTube',
     author: 'Styxhexenhammer666',
     authorImg: 'https://yt3.ggpht.com/ytc/AAUvwnhmXwCHYHYcCxPRfHonF5m1mDBu7J1LsM-V_viR7Q=s88-c-k-c0xffffffff-no-rj-mo',
-    url: 'https://youtu.be/Jxjao3rI9GU',
-    thumb: 'https://i.ytimg.com/an_webp/Jxjao3rI9GU/mqdefault_6s.webp?du=3000&sqp=CO2Cxv4F&rs=AOn4CLBNuHa-1ARpNHzH8cH7QuAbh14ndA',
+    videoId: 'Jxjao3rI9GU',
     title: 'Transparency Tube is Pretty Interesting',
     date: '2020-10-28'
   },
@@ -93,8 +91,7 @@ const seenIn: SeenIn[] = [
     publisher: 'YouTube',
     author: 'Romanian TVee',
     authorImg: 'https://yt3.ggpht.com/ytc/AAUvwnhljL9TpgPNc_Qb7NUbVte-LmAQydvi60N-tNB7=s88-c-k-c0xffffffff-no-rj-mo',
-    url: 'https://youtu.be/zZfPFERaYr4',
-    thumb: 'https://i.ytimg.com/vi/zZfPFERaYr4/hqdefault.jpg?sqp=-oaymwEZCOADEI4CSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCtUoILXSmXYdNEtFEhH0Wr0tF_FA',
+    videoId: 'zZfPFERaYr4',
     title: 'Why are youtubers scared of Transparency Tube ?',
     date: '2020-10-29'
   }
@@ -155,7 +152,8 @@ const SeenStyle = styled.div`
 `
 
 const MediaPage = () => {
-  const byPublisher = entries(groupBy(seenIn, g => g.publisher)).map(([name, items]) => ({ name, items }))
+  const list = seenIn.map(s => s.videoId ? { ...s, url: s.url ?? videoUrl(s.videoId), thumb: s.thumb ?? videoThumb(s.videoId, 'high') } : s)
+  const byPublisher = entries(groupBy(list, g => g.publisher)).map(([name, items]) => ({ name, items }))
 
   return <Layout>
     <TextPage>
