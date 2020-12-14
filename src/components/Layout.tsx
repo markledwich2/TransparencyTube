@@ -85,11 +85,12 @@ const GlobalStyle = createGlobalStyle`
     position: absolute;
     padding: 1em;
     z-index: 10;
-    
     top:0;
     left:0;
     width: 100vw;
     height: 100vh;
+    border: none;
+    outline: none;
     @media screen and (min-width: 600px) {
       background-color: rgb(var(--bgRgb), 0.9);
       border: solid 1px var(--bg3);
@@ -148,14 +149,14 @@ export const TextPage = styled.div`
   margin: auto;
   font-size: 1.4em;
   min-height: 80vh;
-  padding: 2em;
+  padding: 1em;
   h2 {
     margin-bottom: 1em;
   }
 `
 
 export const MinimalPage = styled.div`
-  margin: 1.5em;
+  margin: 0.5em;
   min-height: 80vh;
 `
 

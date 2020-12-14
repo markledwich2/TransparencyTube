@@ -12,6 +12,7 @@ export const FilterPart = styled.span`
   white-space:nowrap;
   margin-right:0.5em;
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   > * {
     margin-right:0.5em;

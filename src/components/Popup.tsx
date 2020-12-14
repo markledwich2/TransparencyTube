@@ -8,7 +8,7 @@ export const popupClasses = {
   overlay: 'popup-overlay'
 }
 
-const Close = styled(CloseOutline)`
+export const Close = styled(CloseOutline)`
   position: absolute;
   right: 0.5em;
   top: 0.5em;

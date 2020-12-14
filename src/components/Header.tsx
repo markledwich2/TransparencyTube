@@ -17,7 +17,6 @@ const NavStyle = styled.nav`
   width:100%;
   padding: 0.5rem;
   font-size: 1.2em;
-
   color: var(--fg);
   
   a {
@@ -37,12 +36,12 @@ const NavStyle = styled.nav`
 `
 const menuCollapseWidth = '768px'
 
-const BurgerSubNavStyle = styled(NavStyle)`
+const BurgerSubNavStyle = styled.div`
   a {
     display:block;
     text-transform: none;
     font-size: 0.9em;
-    margin: 0.5em 0.5em 0.5em 1em;
+    margin: 0 0.5em 0.5em 2em;
     white-space: nowrap;
   }
 

@@ -49,7 +49,7 @@ export const ChannelViewsPage = () => {
   }, [])
 
   const openChannel = q.openRowKey ? channels?.[q.openRowKey] : null
-  const onOpenChannel = (c: Channel) => setQuery({ openRowKey: c.channelId, openGroup: null })
+  const onOpenChannel = (c: Channel) => setQuery({ openRowKey: c?.channelId, openGroup: null })
   const onCloseChannel = () => setQuery({ openRowKey: null })
 
   return <div style={{ minHeight: '100vh' }}>
@@ -96,7 +96,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
   const stats = rawStats ? rawStats.map(s => ({ ...channels[s.channelId], ...s })) : null
 
-  const bubbleWidth = width > 800 ? 800 : 400
+  const bubbleWidth = Math.min(800, width)
 
   useEffect(() => {
     const go = async () => {

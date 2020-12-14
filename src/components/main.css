@@ -5,10 +5,16 @@
     /* border: solid 1px red; */
 }
 
+
+/* * {
+    outline: 1px solid red;
+    outline-offset: -1px;
+} */
+
 html,
 body,
 input {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 @media (min-width: 1200px) {

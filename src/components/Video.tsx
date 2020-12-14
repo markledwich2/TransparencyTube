@@ -30,8 +30,7 @@ interface VideosProps {
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
 }
 
-const chanVidChunk = 3
-const videoWidth = 400
+const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, defaultLimit, highlightWords, loadCaptions }: VideosProps) => {
@@ -60,7 +59,9 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
       {groupedVids &&
         <ContainerDimensions >
           {({ width }) => {
-            const numCols = Math.max(Math.floor(width / videoWidth), 1)
+
+            const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
+            const videoWidth = width / numCols - videoPadding
             // flex doesn't do a column wrap. Se we do this ourselves
             var colGroups: {
               channelId: string,
@@ -88,7 +89,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
             }
             else groupedVids.slice(0, limit).forEach(g => addVids(g.channelId, g.vids))
 
-            return <FlexRow>
+            return <FlexRow space={numCols == 1 ? '0' : '1em'}>
               {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
                 const { vidsToShow, channelId, channel, showAll, showLess, totalVids, showChannel } = g
                 return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
@@ -140,7 +141,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
 
 const VideoStyle = styled.div`
   display:flex;
-  margin:0 10px 15px;
+  margin-bottom: 0.5em;
   flex-direction:row;
   .rank {
     font-size:1em;
@@ -206,49 +207,47 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
   return <VideoStyle style={style}>
-    <FlexRow>
-      <FlexRow style={{ flexWrap: 'wrap' }}>
-        {showThumb && <div style={{ position: 'relative' }}>
-          <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px', marginTop: '1em' }} /></VideoA>
-          {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
-          {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
-        </div>}
-        <FlexCol style={{ color: 'var(--fg1)', maxWidth: '31em' }} space='0.2em'>
-          <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>
-            {highlightWords ? <Highlighter
-              searchWords={highlightWords}
-              autoEscape
-              caseSensitive={false}
-              textToHighlight={v.videoTitle ?? ""}
-            /> : v.videoTitle}
-          </h4></VideoA>
-          <FlexRow space='0.7em' style={{ alignItems: 'baseline', flexWrap: 'wrap' }}>
-            {fPeriodViews && <div><BMetric>{fPeriodViews}</BMetric>
-              {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}
-              &nbsp;views
-            </div>}
-            {!fPeriodViews && <div><BMetric>{fViews}</BMetric> views</div>}
-            {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
-            {isVideoError(v) && <>
-              <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
-              <span><b>{numFormat(v.videoViews)} views</b></span>
-              <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>
-            </>}
-          </FlexRow>
-          {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-          {isVideoNarrative(v) && <FlexRow>
-            {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
-            {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
-          </FlexRow>}
-          {(captions || showLoadCaptions) &&
-            <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-              <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>{s.caption}</div>)}
-              {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
-            </div>
-          }
-          {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
-        </FlexCol>
-      </FlexRow>
+    <FlexRow style={{ flexWrap: 'wrap' }}>
+      {showThumb && <div style={{ position: 'relative' }}>
+        <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px', marginTop: '1em' }} /></VideoA>
+        {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
+        {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
+      </div>}
+      <FlexCol style={{ color: 'var(--fg1)', maxWidth: '31em' }} space='0.2em'>
+        <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>
+          {highlightWords ? <Highlighter
+            searchWords={highlightWords}
+            autoEscape
+            caseSensitive={false}
+            textToHighlight={v.videoTitle ?? ""}
+          /> : v.videoTitle}
+        </h4></VideoA>
+        <FlexRow style={{ alignItems: 'baseline', flexWrap: 'wrap' }}>
+          {fPeriodViews && <div><BMetric>{fPeriodViews}</BMetric>
+            {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}
+            &nbsp;views
+          </div>}
+          {!fPeriodViews && <div><BMetric>{fViews}</BMetric> views</div>}
+          {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
+          {isVideoError(v) && <>
+            <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
+            <span><b>{numFormat(v.videoViews)} views</b></span>
+            <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>
+          </>}
+        </FlexRow>
+        {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
+        {isVideoNarrative(v) && <FlexRow>
+          {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
+          {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
+        </FlexRow>}
+        {(captions || showLoadCaptions) &&
+          <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
+            <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>{s.caption}</div>)}
+            {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
+          </div>
+        }
+        {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
+      </FlexCol>
     </FlexRow>
   </VideoStyle>
 }

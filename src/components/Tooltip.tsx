@@ -29,5 +29,6 @@ export const Tip = ({ id, getContent }: TipProps) => <TipStyle>
     className='tip'
     borderColor='var(--bg2)'
     getContent={getContent}
+    globalEventOff='click'
   />
 </TipStyle>

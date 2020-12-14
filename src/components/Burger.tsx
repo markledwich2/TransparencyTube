@@ -1,53 +1,27 @@
 
 import React, { PropsWithChildren, useState } from 'react'
 import styled from 'styled-components'
+import { MenuOutline } from '@styled-icons/evaicons-outline'
+import { Close } from './Popup'
 
-const StyledBurger = styled.div<{ open: boolean, collapseWidth: string }>`
+const StyledBurger = styled(MenuOutline) <{ open: boolean, collapseWidth: string }>`
   width: 2rem;
   height: 2rem;
   position: absolute;
   top: 15px;
   right: 15px;
-  z-index: 20;
   display: none;
   @media (max-width: ${p => p.collapseWidth}) {
-    display: flex;
-    justify-content: space-around;
-    flex-flow: column nowrap;
-  }
-  div {
-    width: 2rem;
-    height: 0.25rem;
-    background-color: ${({ open }) => open ? 'var(--fg)' : 'var(--bg3)'};
-    border-radius: 10px;
-    transform-origin: 1px;
-    transition: all 0.1s linear;
-    &:nth-child(1) {
-      transform: ${({ open }) => open ? 'rotate(45deg)' : 'rotate(0)'};
-    }
-    &:nth-child(2) {
-      transform: ${({ open }) => open ? 'translateX(100%)' : 'translateX(0)'};
-      opacity: ${({ open }) => open ? 0 : 1};
-    }
-    &:nth-child(3) {
-      transform: ${({ open }) => open ? 'rotate(-45deg)' : 'rotate(0)'};
-    }
+    display: block;
   }
 `
 
 export const Burger = ({ children, collapseWidth }: PropsWithChildren<{ collapseWidth: string }>) => {
   const [open, setOpen] = useState(false)
-
-  return (
-    <>
-      <StyledBurger collapseWidth={collapseWidth} open={open} onClick={() => setOpen(!open)}>
-        <div />
-        <div />
-        <div />
-      </StyledBurger>
-      <RightNav open={open} children={children} />
-    </>
-  )
+  return <>
+    <StyledBurger collapseWidth={collapseWidth} open={open} onClick={() => setOpen(!open)} />
+    <RightNav open={open} children={children} setOpen={setOpen} />
+  </>
 }
 
 const MenuDiv = styled.div<{ open: boolean }>`
@@ -60,26 +34,25 @@ const MenuDiv = styled.div<{ open: boolean }>`
     }
   }
 
-   
   @media (max-width: 768px) {
+    display: ${({ open }) => open ? 'flex' : 'none'};
     flex-flow: column nowrap;
     background-color: var(--bg1);
     position: fixed;
-    transform: ${({ open }) => open ? 'translateX(0)' : 'translateX(100%)'};
     box-shadow:${({ open }) => open ? '-5px 0px 20px rgba(0, 0, 0, 0.2)' : 'none'};
     top: 0;
     right: 0;
     height: 100vh;
     width: 300px;
     padding-top: 3.5rem;
-    transition: transform 0.1s ease-in-out;
-    z-index: 5;
+    z-index: 4;
   }
 `
 
-const RightNav = ({ open, children }: PropsWithChildren<{ open: boolean }>) => {
+const RightNav = ({ open, children, setOpen }: PropsWithChildren<{ open: boolean, setOpen: (open: boolean) => void }>) => {
   return (
     <MenuDiv open={open}>
+      <Close onClick={() => setOpen(false)} style={{ display: open ? null : 'none' }} />
       {children}
     </MenuDiv>
   )

@@ -67,15 +67,16 @@ const ChannelTitleStyle = styled.div`
     :hover {
       cursor: pointer;
     }
+    margin: 0.5em;
+    @media (max-width: 600px) {
+      width:50px;
+    }
   }
 `
 
 const MetricsStyle = styled(FlexRow)`
   flex-flow:wrap;
   align-items:baseline;
-  > * {
-    white-space: nowrap;
-  }
 `
 
 export interface ChannelLogoProps {
@@ -89,7 +90,7 @@ export const ChannelLogo = ({ c, tipId, style, onClick }: StyleProps & ChannelLo
   data-for={tipId} data-tip={c.channelId}
   onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
   className='logo'
-  style={{ height: '100px', margin: '5px 5px', clipPath: 'circle()', ...style }} />
+  style={{ clipPath: 'circle()', ...style }} />
 
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
@@ -125,7 +126,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
           caseSensitive={false}
           textToHighlight={c.channelTitle ?? ""}
         /> : c.channelTitle}</h2>
-      <MetricsStyle space='2em' style={{ filter: statsLoading ? loadingFilter : null }}>
+      <MetricsStyle space='1em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
           {fViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fViews}</b>}
           {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}&nbsp;views
