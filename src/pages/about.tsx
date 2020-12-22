@@ -10,7 +10,7 @@ import AboutImage from '../images/ttube-about.jpg'
 const aboutMd = `
 YouTube is used by[ 71% of Americans](https://www.journalism.org/2020/09/28/youtube-news-consumers-about-as-likely-to-use-the-site-for-opinions-as-for-facts/) and is a source of news for[ 26% of US adults](https://www.journalism.org/2020/09/28/many-americans-get-news-on-youtube-where-news-organizations-and-independent-producers-thrive-side-by-side/). The platform is undoubtedly playing an important role in shaping America’s views on a range of political and cultural topics. While the impact of YouTube continues to grow, options for understanding the content and ideas being shared on the platform are lacking.
 
-That is why we built Transparency.tube. By categorizing, indexing, and analyzing over 8,000 of the largest English language YouTube channels actively discussing political and cultural issues, we aim to provide the data necessary to better understand this space.
+That is why we built Transparency.tube. By categorizing, indexing, and analyzing over 7,300 of the largest English language YouTube channels actively discussing political and cultural issues, we aim to provide the data necessary to better understand this space.
 
 The huge amount of politically oriented content on YouTube, 1.9M videos in 2020 alone in our dataset, makes it impossible for any individual to fully track what's occurring at any given moment. There has traditionally been an absence of reliable data when it comes to the internal and external workings of YouTube. 
 

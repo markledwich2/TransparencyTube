@@ -17,7 +17,7 @@ const ContactPage = () => <Layout>
       twitter="mark_ledwich" />
     <ContactCard
       name="Sam Clark" email="sclark.uw@gmail.com"
-      role="Automated channel discovery &amp; classification"
+      role="Automated channel discovery &amp; classification, narrative analysis"
       twitter="samuel_clark" />
   </TextPage>
   <Footer />
