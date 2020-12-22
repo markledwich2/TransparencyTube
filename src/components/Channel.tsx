@@ -63,6 +63,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
 
 const ChannelTitleStyle = styled.div`
   display: flex;
+  max-width:800px;
   .logo {
     :hover {
       cursor: pointer;
