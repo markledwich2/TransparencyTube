@@ -34,6 +34,14 @@ const seenIn: SeenIn[] = [
     date: '2020-12-10'
   },
   {
+    url: 'https://www.nytimes.com/2020/11/18/technology/election-misinformation-often-evaded-youtubes-efforts-to-stop-it.html',
+    title: 'Election misinformation often evaded YouTube’s efforts to stop it.',
+    publisher: 'New York Times',
+    author: 'Sheera Frenkel',
+    authorImg: 'https://static01.nyt.com/images/2018/06/14/multimedia/author-sheera-frenkel/author-sheera-frenkel-thumbLarge.png',
+    date: '2020-11-18'
+  },
+  {
     url: 'https://www.nytimes.com/2020/11/16/technology/fox-news-youtube-election.html',
     title: 'Fox News’s ‘partisan right’ audience on YouTube is dropping, researchers say.',
     publisher: 'New York Times',
