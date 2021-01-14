@@ -50,6 +50,13 @@ const seenIn: SeenIn[] = [
     date: '2020-11-16'
   },
   {
+    url: 'https://www.vox.com/recode/22188680/facebook-twitter-youtube-misinformation-anti-vaccine-covid-19',
+    title: 'Social media companies are already losing the vaccine misinformation fight',
+    publisher: 'Vox',
+    author: 'Rebecca Heilweil',
+    date: '2020-12-19'
+  },
+  {
     url: 'https://www.vox.com/recode/21551696/stolen-election-misinformation-youtube-trump-voter-fraud',
     title: 'YouTube is awash with election misinformation — and it isn’t taking it down',
     publisher: 'Vox',
