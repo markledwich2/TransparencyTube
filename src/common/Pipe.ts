@@ -32,7 +32,6 @@ export const values = <V>(o: Record<any, V>): V[] => Object.values(o)
 export const keys = <T>(o: T): (keyof T)[] => Object.keys(o) as unknown as (keyof T)[]
 export const entries = <X extends string, Y>(o: { [key in X]: Y }): [X, Y][] => Object.entries(o) as any
 
-
 export const treeToList = <T>(roots: T[], getChildren: (node: T) => T[]): T[] => {
   let working = [...roots], res: T[] = []
   while (working.length > 0) {
@@ -53,3 +52,7 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
   }
   return res
 }
+
+export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.includes(n))
+export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (key: string, values: T) => U): U[] => entries(group).map(([key, values]) => groupMap(key, values))
+export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null

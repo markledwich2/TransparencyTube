@@ -87,6 +87,7 @@ const RemovedVideosPage = () => {
       }).then(vids => {
         setVideos(vids)
         setLoading(false)
+        ReactTooltip.rebuild()
       })
   }, [removedIdx, channels, q.start, q.end])
 

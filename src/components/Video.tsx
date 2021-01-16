@@ -1,4 +1,4 @@
-import React, { useState, FunctionComponent, PropsWithChildren } from 'react'
+import React, { useState, FunctionComponent as FC, PropsWithChildren } from 'react'
 import { dateFormat, hoursFormat, numFormat, secondsFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
@@ -32,8 +32,8 @@ interface VideosProps {
 
 const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
-export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
-  groupChannels, showTags, defaultLimit, highlightWords, loadCaptions }: VideosProps) => {
+export const Videos: FC<(StyleProps & VideosProps)> = ({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
+  groupChannels, showTags, defaultLimit, highlightWords, loadCaptions, style }) => {
   const [limit, setLimit] = useState(defaultLimit ?? 20)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
 
@@ -46,9 +46,8 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
 
   const showMore = (groupedVids?.length ?? videos?.length) > limit
 
-  return <div>
+  return <div style={style}>
     <div style={{
-      minHeight: '300px',
       filter: loading ? loadingFilter : null,
       display: 'flex',
       flexDirection: 'row',
@@ -75,7 +74,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
               [...Array(numCols)].map(_ => [...new Array(0)])
 
             const addVids = (channelId: string, vids: VideoCommon[], showChannel: boolean = true) => {
-              const channel = channels[channelId]
+              const channel = channels?.[channelId]
               const showAll = showAlls?.[channelId] ?? false
               const showLess = vids.length > chanVidChunk
               const vidsToShow = showAll ? vids : vids.slice(0, chanVidChunk)
@@ -133,7 +132,7 @@ export const Videos = ({ onOpenChannel, videos, showChannels, channels, loading,
       <a onClick={_ => setLimit(limit + 40)}>show more</a>
     </div>}
     {showChannels && <Tip id={tipId} getContent={(id) => {
-      if (!id || !channels[id]) return <></>
+      if (!id || !channels?.[id]) return <></>
       return <ChannelDetails channel={channels[id] as ChannelWithStats} mode='min' />
     }} />}
   </div>
@@ -194,7 +193,7 @@ const mdValues = {
   supplement: getMdValues('supplement')
 }
 
-export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions }: VideoProps) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, children }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
@@ -227,7 +226,7 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
             {fPeriodViews != fViews && <span style={{ fontSize: '1em' }}> / {numFormat(v.videoViews)}</span>}
             &nbsp;views
           </div>}
-          {!fPeriodViews && <div><BMetric>{fViews}</BMetric> views</div>}
+          {!fPeriodViews && fViews && <div><BMetric>{fViews}</BMetric> views</div>}
           {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
           {isVideoError(v) && <>
             <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
@@ -247,11 +246,11 @@ export const Video = ({ v, style, c, onOpenChannel, showChannel, showThumb, high
           </div>
         }
         {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
+        {children}
       </FlexCol>
     </FlexRow>
   </VideoStyle>
 }
-
 
 interface VideoChannelProps {
   c: Channel
@@ -261,7 +260,8 @@ interface VideoChannelProps {
   showTags?: boolean
 }
 const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags }: VideoChannelProps) => {
-  if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
+  c ??= { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
+  //if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px' }} titleStyle={{ fontSize: '1em' }}
       tipId={tipId} onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} />

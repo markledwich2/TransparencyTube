@@ -2,6 +2,7 @@ import { getJsonl } from './Utils'
 import { BlobIndex, blobIndex, noCacheReq } from './BlobIndex'
 import { Channel } from './Channel'
 import { HasPeriod, parsePeriod, Period } from '../components/Period'
+import { blobCfg } from './Cfg'
 
 export interface videoViewsQuery {
   channelId?: string
@@ -13,11 +14,12 @@ export interface videoViewsQuery {
 export interface VideoCommon {
   channelId: string
   channelTitle: string
+  channelLogo?: string
   videoId: string
   videoTitle: string
-  videoViews: number
-  durationSecs: number
-  uploadDate: string
+  videoViews?: number
+  durationSecs?: number
+  uploadDate?: string
   captions?: VideoCaption[]
 }
 
@@ -93,9 +95,11 @@ export const indexChannelViews: () => Promise<ChannelViewIndexes> = async () => 
   return indexes
 }
 
-export const indexPeriods = (index: BlobIndex<any, HasPeriod>) => index.cols?.find(c => c.name == 'period')?.distinct.map(d => parsePeriod(d))
+export const indexPeriods = (index: BlobIndex<any, HasPeriod>) => index.cols?.period.distinct.map(d => parsePeriod(d))
 
 export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
 
+const getJsonlResult = <T,>(name: string): Promise<T[]> => getJsonl<T>(blobCfg.resultsUri.addPath(`${name}.jsonl.gz`).url,
+  { headers: { pragma: "no-cache", 'cache-control': 'no-cache' } })
 
 

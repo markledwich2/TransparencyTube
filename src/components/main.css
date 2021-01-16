@@ -109,7 +109,8 @@ a {
     text-decoration: none;
 }
 
-a:hover {
+a:hover,
+button:hover {
     cursor: pointer;
 }
 
@@ -125,4 +126,18 @@ mark {
 p.subtle {
     font-size: 0.9em;
     color: var(--fg3);
+}
+
+button {
+    color: var(--fg1);
+    background-color: var(--bg2);
+    border: none;
+    padding: 0.8em 1em;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background-color: var(--bg3);
 }

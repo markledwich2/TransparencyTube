@@ -130,7 +130,8 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
       <MetricsStyle space='1em' style={{ filter: statsLoading ? loadingFilter : null }}>
         <span>
           {fViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fViews}</b>}
-          {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}&nbsp;views
+          {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}
+          {fViews && '&nbsp;views'}
         </span>
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}

@@ -8,13 +8,13 @@ import { ColumnMd, Opt } from './Metadata'
 export interface Channel {
   channelId: string
   channelTitle: string
-  description: string
+  description?: string
   tags?: string[]
-  logoUrl: string
-  date_to: string
-  lr: string
-  subs: number
-  channelViews: number
+  logoUrl?: string
+  date_to?: string
+  lr?: string
+  subs?: number
+  channelViews?: number
   media?: string
   reviewsHuman?: number
   publicReviewerNotes?: string
@@ -60,7 +60,8 @@ export const md = {
 * Essentialist concepts of racial differences
 * concerned about whites becoming a minority population in their country.` },
         { value: 'StateFunded', label: 'State Funded' },
-        { value: 'MissingLinkMedia', label: 'Missing Link Media' }
+        { value: 'MissingLinkMedia', label: 'Missing Link Media' },
+        { value: 'Fresh', color: '#666', label: 'Fresh' }
       ]
     } as ColumnMd,
     lr: {

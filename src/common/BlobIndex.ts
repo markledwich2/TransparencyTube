@@ -3,15 +3,21 @@ import { toKey } from 'react-select/src/utils'
 import { blobCfg, webCfg } from './Cfg'
 import { Uri } from './Uri'
 import { getJson, getJsonl, PartialRecord } from './Utils'
-import { flatMap } from 'remeda'
+import { flatMap, indexBy } from 'remeda'
 import { entries } from './Pipe'
+import { isNamedExportBindings } from 'typescript'
 
 export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   keyFiles: IndexFile<TKey>[]
-  cols: IndexCol<TRow>[]
+  cols: Record<keyof TRow, IndexCol<TRow>>
   baseUri: Uri
   fileRowsCache: { [key: string]: TRow[] }
   getRows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
+}
+
+export interface BlobIndexFile<TRow, TKey extends Partial<TRow>> {
+  keyFiles: IndexFile<TKey>[]
+  cols: IndexCol<TRow>[]
 }
 
 interface IndexCol<TRow> {
@@ -46,9 +52,9 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
   const fileRowsCache = {}
   const indexUrl = baseUri.addPath('index.json.gz').url
 
-  let index: BlobIndex<TRow, TKey> = null
+  let index: BlobIndexFile<TRow, TKey> = null
   try {
-    index = await getJson<BlobIndex<TRow, TKey>>(indexUrl, noCacheReq)
+    index = await getJson<BlobIndexFile<TRow, TKey>>(indexUrl, noCacheReq)
   }
   catch (err) {
     console.error(`unable to to load json index (${indexUrl})`, err)
@@ -59,10 +65,12 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
 
   const compare = (file: TKey, filter: TKey) => {
     for (const key in file) {
-      const av = file[key]
-      const bv = filter[key]
-      if (bv == null) continue
-      const res = (av < bv ? -1 : (av > bv ? 1 : 0))
+      const fileValue = file[key]
+      const filterValue = filter[key]
+      if (filterValue == null) continue
+      if (fileValue == null)
+        return 1 // nulls last to match default ordering by DB
+      const res = (fileValue < filterValue ? -1 : (fileValue > filterValue ? 1 : 0))
       if (res != 0) return res
     }
     return 0
@@ -86,9 +94,11 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
   }
 
   const getRows = async (...filters: [TKey | FilterRange<TKey>]) => {
-    const fileOverlap = (f: IndexFile<TKey>) => filters.every(q => isFilterRange(q) ?
-      compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
-      : compare(f.first, q) <= 0 && compare(f.last, q) >= 0)
+    const fileOverlap = (f: IndexFile<TKey>) => filters.every(q => {
+      if (isFilterRange(q))
+        return compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
+      return compare(f.first, q) <= 0 && compare(f.last, q) >= 0
+    })
 
     const files = index.keyFiles.filter(fileOverlap)
     console.log(`index files in ${indexUrl} loaded`, files)
@@ -98,12 +108,18 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
         return compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
       return entries(q).every(([p, v]) => r[p] == v) // ensure each value of row matches
     }))
-    console.log(`${filtered.length} index rows returned`)
+    console.log(`${filtered.length} index rows returned for filter:`, filters)
     console.table(filtered.slice(0, 10))
     return filtered
   }
 
-  return { ...index, baseUri, fileRowsCache, getRows }
+  return {
+    keyFiles: index.keyFiles,
+    cols: indexBy(index.cols, c => c.name) as Record<keyof TRow, IndexCol<TRow>>,
+    baseUri,
+    fileRowsCache,
+    getRows
+  }
 }
 
 

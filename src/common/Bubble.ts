@@ -1,4 +1,4 @@
-import { pack, hierarchy } from 'd3'
+import { pack, hierarchy, HierarchyCircularNode } from 'd3'
 import orderBy from 'lodash.orderby'
 import { pipe, map, indexBy, flatMap, filter, first } from 'remeda'
 import { BubbleDataCfg } from '../components/BubbleChart'
@@ -89,6 +89,31 @@ export interface GroupNodes<T> {
   containerWidth: number
 }
 
+/**
+ * calculates dimensions to help resizing/zooming to fit containers
+ * @param nodes circle packing nodes
+ */
+export const getPackDim = <T>(nodes: HierarchyCircularNode<T>[]) => {
+  let { x, y } = {
+    x: {
+      min: minBy(nodes, n => n.x - n.r),
+      max: maxBy(nodes, n => n.x + n.r)
+    },
+    y: {
+      min: minBy(nodes, n => n.y - n.r),
+      max: maxBy(nodes, n => n.y + n.r)
+    },
+  }
+
+  let dim = {
+    x, y,
+    w: (x.max.x + x.max.r) - (x.min.x - x.min.r),
+    h: (y.max.y + y.max.r) - (y.min.y - y.min.r)
+  }
+
+  return dim
+}
+
 export const buildBubbleNodes = <T>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
   : GroupNodes<T> => {
   const groupData = getGroupData(rows, selections, dataCfg)
@@ -111,24 +136,7 @@ export const buildBubbleNodes = <T>(rows: T[], selections: BubblesSelectionState
       (hierarchy(root, n => n.children))
       .descendants()
 
-    let { x, y } = {
-      x: {
-        min: minBy(nodes, n => n.x - n.r),
-        max: maxBy(nodes, n => n.x + n.r)
-      },
-      y: {
-        min: minBy(nodes, n => n.y - n.r),
-        max: maxBy(nodes, n => n.y + n.r)
-      },
-    }
-
-    let dim = {
-      x, y,
-      w: (x.max.x + x.max.r) - (x.min.x - x.min.r),
-      h: (y.max.y + y.max.r) - (y.min.y - y.min.r)
-    }
-
-    return { group: t.group, nodes: nodes, dim }
+    return { group: t.group, nodes: nodes, dim: getPackDim(nodes) }
   }).filter(t => t != null)
 
   const maxSize = max(groupedNodes.map(t => Math.max(t.dim.w, t.dim.h))) // max size for all charts

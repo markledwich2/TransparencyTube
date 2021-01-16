@@ -78,7 +78,8 @@ const pagesMd: NavItem[] = [
     path: '/', label: 'Home', subLabel: 'Channels', home: true, children: [
       { path: '/topVideos', label: 'Top Videos' },
       { path: '/removedVideos', label: 'Removed Videos' },
-      { path: '/narratives', label: 'Election Fraud Narrative' }
+      { path: '/narratives', label: 'Election Fraud Narrative' },
+      // { path: '/personalization', label: 'Personalized Recommendations' }
     ]
   },
   {

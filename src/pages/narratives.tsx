@@ -157,7 +157,7 @@ const NarrativesPage = () => {
 
   const groupCol = 'support'
   const colorCol = 'lr'
-  const narrative = q.narrative ?? idx?.videos.cols.find(c => c.name == 'narrative')?.distinct[0] ?? ''
+  const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
   const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
 
   // aggregate videos into channel/group-by granularity. Use these rows for bubbles
