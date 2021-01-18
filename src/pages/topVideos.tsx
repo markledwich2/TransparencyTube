@@ -54,7 +54,7 @@ const TopVideosPage = () => {
   useEffect(() => {
     if (!videoIdx || !channels) return
     setLoading(true)
-    videoIdx.getRows({ period: periodString(period) }).then(vids => {
+    videoIdx.rows({ period: periodString(period) }).then(vids => {
       const vidsEx = orderBy(
         vids.map(v => videoWithEx(v, channels)).filter(v => filterIncludes(videoFilter, v)),
         v => v.rank, 'asc')

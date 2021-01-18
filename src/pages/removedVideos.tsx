@@ -80,7 +80,7 @@ const RemovedVideosPage = () => {
   useEffect(() => {
     if (!removedIdx || !channels) return
     setLoading(true)
-    removedIdx.getRows(
+    removedIdx.rows(
       {
         from: { lastSeen: dateRange.startDate.toISOString() },
         to: { lastSeen: dateRange.endDate.toISOString() }
@@ -149,7 +149,7 @@ const RemovedVideosPage = () => {
       <Videos
         channels={channels}
         onOpenChannel={onOpenChannel}
-        loadCaptions={videoId => captionIdx?.getRows({ videoId })}
+        loadCaptions={videoId => captionIdx?.rows({ videoId })}
         videos={vidsFiltered}
         showChannels
         groupChannels

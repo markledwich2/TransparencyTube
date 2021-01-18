@@ -132,6 +132,7 @@ button {
     color: var(--fg1);
     background-color: var(--bg2);
     border: none;
+    outline: none;
     padding: 0.8em 1em;
     border-radius: 4px;
     font-weight: bold;

@@ -4,6 +4,7 @@ import { pack, hierarchy, HierarchyNode, sum, HierarchyCircularNode } from 'd3'
 import { flatMap, groupBy, indexBy, mapValues, pick, pipe, } from 'remeda'
 import { getPackDim } from './Bubble'
 import { Circle, circleFromD3, circleToRect, getBounds, Point } from './Bounds'
+import orderBy from 'lodash.orderby'
 
 
 interface VennChartCircle { x: number, y: number, radius: number }
@@ -111,7 +112,8 @@ export const vennLayout = <T>(
     return c
   })
 
-  const zoom = max([min(rawCircles.map(c => c.innerRadius * 2 / Math.max(c.circlesDim.h, c.circlesDim.w))), 15])
+  const zooms = rawCircles.map(c => c.innerRadius * 2 / Math.max(c.circlesDim.h, c.circlesDim.w)).sort()
+  const zoom = zooms[zooms.length > 1 ? Math.floor(zooms.length / 3) : 0]
 
   // fit packing into the inner circle of each set
   const circleNodes = rawCircles.map(n => {

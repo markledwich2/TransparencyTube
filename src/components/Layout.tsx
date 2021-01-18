@@ -1,7 +1,6 @@
 import React, { CSSProperties, FunctionComponent } from "react"
 import PropTypes from "prop-types"
 import { useStaticQuery, graphql } from "gatsby"
-
 import "./main.css"
 import styled, { createGlobalStyle, css } from 'styled-components'
 import Header from './Header'
@@ -12,6 +11,7 @@ import { FluidObject } from 'gatsby-image'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
 import { Footer } from './Footer'
+import { makeCarousel, Slide } from 'react-reveal'
 
 export interface StyleProps {
   style?: React.CSSProperties

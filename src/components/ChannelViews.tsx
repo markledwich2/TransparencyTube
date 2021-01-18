@@ -101,7 +101,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
     const go = async () => {
       setLoading(true)
       await delay(1)
-      const rawStats = await indexes.channelStatsByPeriod.getRows({ period: periodString(period) })
+      const rawStats = await indexes.channelStatsByPeriod.rows({ period: periodString(period) })
       setRawStats(rawStats)
       setLoading(false)
       await delay(1000) // wait a sec before rebuilding tooltips. This makes it work more consistently but i'm not sure why

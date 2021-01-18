@@ -186,28 +186,27 @@ const NarrativesPage = () => {
     ]).then(([videos, channels]) => setIdx({ videos, channels }))
   }, [])
 
-  useEffect(() => { idx?.channels.getRows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, q.narrative])
+  useEffect(() => { idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, q.narrative])
 
   useEffect(() => {
     if (!idx || !channels) return
     setLoading(true)
-    idx.videos
-      .getRows(
-        { narrative },
-        { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
-      ).then(vids => {
-        const vidsExtra = vids.map(v => {
-          const c = channels[v.channelId]
-          if (!c) return v
-          const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
-          vExtra.supplement = (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual'
-          vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
-          return vExtra
-        })
-        setVideos(vidsExtra)
-        setLoading(false)
-        delay(200).then(() => ReactTooltip.rebuild())
+    idx.videos.rows(
+      { narrative },
+      { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
+    ).then(vids => {
+      const vidsExtra = vids.map(v => {
+        const c = channels[v.channelId]
+        if (!c) return v
+        const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
+        vExtra.supplement = (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual'
+        vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
+        return vExtra
       })
+      setVideos(vidsExtra)
+      setLoading(false)
+      delay(200).then(() => ReactTooltip.rebuild())
+    })
   }, [idx, channels, JSON.stringify(q)])
 
   const selections: BubblesSelectionState<NarrativeChannel> = {

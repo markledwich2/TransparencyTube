@@ -268,5 +268,5 @@ const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags }: VideoCh
   </div>
 }
 
-const VideoA = ({ id, children, offset, style }: PropsWithChildren<{ id: string, offset?: number } & StyleProps>) =>
+export const VideoA = ({ id, children, offset, style }: PropsWithChildren<{ id: string, offset?: number } & StyleProps>) =>
   <a href={videoUrl(id, offset)} target="tt_video" style={style}>{children}</a>

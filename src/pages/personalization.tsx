@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { PropsWithChildren, useEffect, useState } from 'react'
 import Layout, { FlexRow, MinimalPage } from '../components/Layout'
 import PurposeBanner from '../components/PurposeBanner'
-import { delay, navigateNoHistory } from '../common/Utils'
-import { first, flatMap, groupBy, pick, pipe, uniq, indexBy } from 'remeda'
-import { md } from '../common/Channel'
+import { dateFormat, delay, navigateNoHistory } from '../common/Utils'
+import { first, flatMap, groupBy, pick, pipe, uniq, indexBy, mapValues, take, sortBy } from 'remeda'
+import { Channel, getChannels, md } from '../common/Channel'
 import { colMdValuesObj } from '../common/Metadata'
 import ContainerDimensions from 'react-container-dimensions'
 import { vennLayout, VennSet, vennSets, VennTypeCfg } from '../common/Venn'
 import styled from 'styled-components'
 import { Tip } from '../components/Tooltip'
 import { VideoCommon } from '../common/RecfluenceApi'
-import { Video, Videos } from '../components/Video'
+import { Video, VideoA, Videos } from '../components/Video'
 import { BlobIndex, blobIndex } from '../common/BlobIndex'
 import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
@@ -18,10 +18,12 @@ import ReactTooltip from 'react-tooltip'
 import { TextSection } from '../components/Markdown'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FilterState, InlineValueFilter } from '../components/ValueFilter'
-import { Tag } from '../components/Channel'
+import { ChannelTitle, Tag } from '../components/Channel'
 import { entries, mapEntries, minBy, orderBy, takeRandom, values } from '../common/Pipe'
-import { VideoSettings } from 'styled-icons/material'
 import { circleToRect, cropTransform, getBounds } from '../common/Bounds'
+import { RotateContent } from '../components/RotateContent'
+import { videoThumb } from '../common/Video'
+import { shuffle } from 'd3'
 
 interface Rec {
   fromVideoId: string
@@ -32,15 +34,23 @@ interface Rec {
   fromVideoTitle: string
   fromChannelId: string
   fromChannelTitle: string
-  fromChannelLogo?: string
   toVideoTitle: string
   toChannelId: string
   toChannelTitle: string
-  toChannelLogo?: string
 }
 
+interface Watch {
+  account: string
+  updated: string
+  videoId: string
+  videoTitle: string
+  channelId: string
+  channelTitle: string
+}
+type WatchKey = Pick<Watch, 'updated'>
+
 type RecVideo = Omit<Rec, 'fromVideoId' | 'fromVideoTitle' | 'day'> & { recs: Rec[], id: string }
-type RecGroup = Pick<Rec, 'toChannelId' | 'toChannelTitle' | 'toChannelLogo'> & { id: string, groupAccounts: string[], videoRecs: RecVideo[] }
+type RecGroup = Pick<Rec, 'toChannelId' | 'toChannelTitle'> & { id: string, groupAccounts: string[], videoRecs: RecVideo[] }
 const isRec = (o: any): o is Rec => o.fromVideoId !== undefined && o.toVideoId !== undefined
 const isRecVideo = (o: any): o is RecVideo => o.groupAccounts !== undefined && o.recs !== undefined
 const isRecGroup = (o: any): o is RecGroup => o.toChannelId !== undefined && o.videoRecs !== undefined
@@ -79,6 +89,24 @@ const SvgStyle = styled.svg`
 const tipId = 'rec'
 
 
+const VideoStyle = styled.div`
+  position: relative;
+  .date {
+    right: 5px;
+    top: 2px;
+    padding:0.3em 0.6em;
+    min-width:2em;
+    height:2em;
+    position:absolute;
+    font-weight:bolder;
+    background-color: rgba(250, 250, 250, 0.8);
+    color:#333;
+    text-align:center;
+    border-radius: 2em;
+    box-shadow: 0px 1px 6px 2px #444;
+  }
+`
+
 interface RecState {
   groups: RecGroup[]
   sets: VennSet<RecGroup>[]
@@ -88,18 +116,37 @@ interface RecState {
 
 const PersonalizationPage = () => {
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
+  const [watchIdx, setWatchIdx] = useState<BlobIndex<Watch, WatchKey>>(null)
   const [rs, setRecState] = useState<RecState>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [chans, setChannels] = useState<Record<string, Channel>>()
+  const [watches, setWatches] = useState<Record<string, Watch[]>>(null)
 
   const label = q.label ?? (recIdx ? first(recIdx.cols.label.distinct) : null)
   const accounts = q.accounts ?? ['Fresh', 'PartisanLeft', 'PartisanRight']
   const filterAccounts = (acc: string[]) => acc.filter(a => accounts.includes(a))
   const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
 
-  useEffect(() => { blobIndex<Rec, RecVennKey>("us_recs").then(setRecIdx) }, [])
   useEffect(() => {
-    if (!recIdx || !label) return
-    recIdx.getRows(q.videoId ? { fromVideoId: q.videoId } : { label }).then((d: Rec[]) => {
+    getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))
+    blobIndex<Watch, WatchKey>("us_watch").then(setWatchIdx)
+    blobIndex<Rec, RecVennKey>("us_recs").then(setRecIdx)
+  }, [])
+
+  useEffect(() => {
+    if (!recIdx || !label || !chans || !watchIdx) return
+
+    watchIdx.rowsWith([], {
+      parallelism: 4,
+      // complete when we have at least one video for each account
+      isComplete: (rs) => entries(groupBy(rs, r => r.account)).length >= watchIdx.cols.account?.distinct?.length,
+      order: 'desc'
+    }).then((rawWatches: Watch[]) => {
+      const watches = mapValues(groupBy(rawWatches, r => r.account), ws => shuffle(ws))
+      setWatches(watches)
+    })
+
+    recIdx.rows(q.videoId ? { fromVideoId: q.videoId } : { label }).then((d: Rec[]) => {
       const recs = d.map(r => ({ ...r, accounts: renameAccounts(r.accounts) }))
         .map(r => ({ ...r, groupAccounts: filterAccounts(r.accounts).sort() }))
       const groups = entries(
@@ -107,7 +154,7 @@ const PersonalizationPage = () => {
       ).map(([id, recs]) => {
         const r = recs[0]
         const group = {
-          ...pick(r, ['toChannelId', 'toChannelTitle', 'toChannelLogo']),
+          ...pick(r, ['toChannelId', 'toChannelTitle']),
           accounts: pipe(recs, flatMap(r => r.accounts), uniq()).sort(),
           groupAccounts: r.groupAccounts, id
         }
@@ -139,8 +186,7 @@ const PersonalizationPage = () => {
           videoId: r.fromVideoId,
           videoTitle: r.fromVideoTitle,
           channelId: r.fromChannelId,
-          channelTitle: r.fromChannelTitle,
-          channelLogo: r.fromChannelLogo
+          channelTitle: r.fromChannelTitle
         })
         return v
       })
@@ -148,7 +194,7 @@ const PersonalizationPage = () => {
       setRecState({ groups, sets, byId, fromVideos })
       delay(1000).then(() => ReactTooltip.rebuild())
     })
-  }, [recIdx, JSON.stringify(q)])
+  }, [recIdx, watchIdx, chans, JSON.stringify(q)])
 
   const setRecFilter = (f: FilterState<Rec>) => setQuery({ accounts: f.accounts })
   const availableVideoIds = recIdx?.cols.fromVideoId?.distinct
@@ -158,8 +204,37 @@ const PersonalizationPage = () => {
       <p>YouTube's recommended videos are tailored for each user taking into account watch history. We created 15 personas, each with their own watch history to see how YouTube's personalization works. </p>
     </PurposeBanner>
     <MinimalPage>
-      <TextSection style={{ marginBottom: '1em' }}>
-        The <b>Recommendation Venn</b> bellow, allows you to compare personalized recommendations shown to different accounts.
+      <TextSection style={{ marginBottom: '1em', marginTop: '2em' }}>
+        Here is a <b>history of videos watched by each persona</b>. Personas watch video's in channels with a matching classification (e.g. The socialist persona watched only videos in Socialist channels). Each day, a list of videos was selected at random, proportional to views within the previous 7 days.
+      </TextSection>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: '1rem' }}>
+        {watches && sortBy(entries(watches), ([account, _]) => tagMd[account]?.label).map(([account, ws]) => {
+          const size = { w: 300, h: 320 }
+          const md = tagMd[account]
+          return <div style={{ margin: '1em' }}>
+            <div style={{ marginBottom: '0.5em' }}><Tag label={`${md?.label ?? account}`} color={md?.color} /></div>
+            <RotateContent
+              key={account}
+              data={ws}
+              size={size}
+              getDelay={() => 4000 + Math.random() * 1000}
+              style={{}}
+              template={(w: Watch) => {
+                if (!w) return <></>
+                const c = chans[w.channelId] ?? { channelId: w.channelId, channelTitle: w.channelTitle }
+                return <VideoStyle>
+                  <VideoA id={w.videoId}><img src={videoThumb(w.videoId, 'high')} style={{ width: size.w }} /></VideoA>
+                  {c && <ChannelTitle c={c} titleStyle={{ fontSize: '1rem' }} logoStyle={{ width: '50px' }} />}
+                  <div className="date">watched on {dateFormat(w.updated)}</div>
+                </VideoStyle>
+              }} />
+          </div>
+        })}
+      </div>
+
+      <TextSection style={{ marginBottom: '1em', marginTop: '5em' }}>
+        Here are some example recommendations from videos all personas have watched on the same day. Overlapping sections are recommendations seen by multiple personas.
       </TextSection>
       <FilterHeader>
         <FilterPart>
@@ -173,7 +248,7 @@ const PersonalizationPage = () => {
       <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
         {rs?.fromVideos && <div style={{ marginBottom: '1em' }}>
           <h3>Watching:</h3>
-          <Videos videos={rs.fromVideos} showChannels showThumb style={{ marginLeft: '1em' }} />
+          <Videos videos={rs.fromVideos} channels={chans} showChannels showThumb style={{ marginLeft: '1em' }} />
           {availableVideoIds && <div>
             <button onClick={() => {
               const videoId = takeRandom(availableVideoIds)
@@ -185,9 +260,10 @@ const PersonalizationPage = () => {
           {({ width }) => {
             if (!rs?.sets?.length) return <></>
             const size = Math.min(1000, width)
-            const chart = vennLayout(rs.sets, { width: size, height: size, padding: 5 })
+            const vennCfg = { width: size, height: size, padding: 20 }
+            const chart = vennLayout(rs.sets, vennCfg)
             const circles = chart.filter(c => c.circle)
-            const bounds = getBounds(circles.map(c => circleToRect(c.circle)))
+            const bounds = getBounds(circles.map(c => circleToRect(c.circle)), vennCfg.padding)
 
             const rowCircles = flatMap(chart, c => c.circles)
             return <SvgStyle width={bounds.w} height={bounds.h}>
@@ -204,11 +280,12 @@ const PersonalizationPage = () => {
                   {c.circles.map(r => {
                     const id = r.data.id
                     const tipData = isRecVideo(r.data) ? id : null
+                    const toChan = chans?.[r.data.toChannelId]
                     return <g key={id} transform={`translate(${r.cx}, ${r.cy})`}>
-                      {isRecGroup(r.data) && r.data.toChannelLogo &&
+                      {isRecGroup(r.data) && toChan?.logoUrl &&
                         <image
                           x={-r.r} y={-r.r} width={r.r * 2}
-                          href={r.data.toChannelLogo} clipPath={`url(#clip-${r.r})`}
+                          href={toChan.logoUrl} clipPath={`url(#clip-${r.r})`}
                           data-title={r.data.toChannelTitle}
                         />}
                       {<circle
@@ -239,8 +316,7 @@ const PersonalizationPage = () => {
           videoId: r.toVideoId,
           videoTitle: r.toVideoTitle,
           channelId: r.toChannelId,
-          channelTitle: r.toChannelTitle,
-          channelLogo: r.toChannelLogo
+          channelTitle: r.toChannelTitle
         }
         return <div style={{ maxWidth: '40em', width: '100%' }}>
           <div style={{ marginBottom: '1em' }}>Shown to {r.accounts.map(a => <Tag key={a} style={{ marginRight: '0.3em' }} label={tagMd[a]?.label ?? a} color={tagMd[a]?.color} />)}</div>
@@ -252,3 +328,5 @@ const PersonalizationPage = () => {
 }
 
 export default PersonalizationPage
+
+

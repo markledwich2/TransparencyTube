@@ -3,7 +3,7 @@ import { toKey } from 'react-select/src/utils'
 import { blobCfg, webCfg } from './Cfg'
 import { Uri } from './Uri'
 import { getJson, getJsonl, PartialRecord } from './Utils'
-import { flatMap, indexBy } from 'remeda'
+import { flatMap, indexBy, splitAt } from 'remeda'
 import { entries } from './Pipe'
 import { isNamedExportBindings } from 'typescript'
 
@@ -12,7 +12,14 @@ export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   cols: Record<keyof TRow, IndexCol<TRow>>
   baseUri: Uri
   fileRowsCache: { [key: string]: TRow[] }
-  getRows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
+  rows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
+  rowsWith: (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow>) => Promise<TRow[]>
+}
+
+export interface GetRowsCfg<TRow> {
+  isComplete: ((rows: TRow[]) => boolean)
+  parallelism?: number
+  order?: 'asc' | 'desc'
 }
 
 export interface BlobIndexFile<TRow, TKey extends Partial<TRow>> {
@@ -93,23 +100,38 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
     return rows
   }
 
-  const getRows = async (...filters: [TKey | FilterRange<TKey>]) => {
-    const fileOverlap = (f: IndexFile<TKey>) => filters.every(q => {
-      if (isFilterRange(q))
-        return compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
-      return compare(f.first, q) <= 0 && compare(f.last, q) >= 0
-    })
+  const getRows = async (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow> = null) => {
+    const isComplete = cfg?.isComplete ?? ((_) => false)
+    const parallelism = cfg?.parallelism ?? 8
 
-    const files = index.keyFiles.filter(fileOverlap)
+    const fileOverlap = (f: IndexFile<TKey>) => filters.every(q => isFilterRange(q)
+      ? compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
+      : compare(f.first, q) <= 0 && compare(f.last, q) >= 0
+    )
+
+    let files = index.keyFiles.filter(fileOverlap)
+    if (cfg?.order == 'desc') files = files.reverse()
     console.log(`index files in ${indexUrl} loaded`, files)
-    const rows = flatMap(await Promise.all(files.map(f => fileRows(f.file))), r => r)
-    const filtered = rows.filter((r: TKey) => filters.every(q => {
-      if (isFilterRange(q))
-        return compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
-      return entries(q).every(([p, v]) => r[p] == v) // ensure each value of row matches
-    }))
+    let filtered: TRow[] = []
+
+    while (files.length > 0) {
+      const [toRead, remaining] = files.length <= parallelism ? [files, []] : splitAt(files, parallelism)
+      files = remaining
+      const rows = flatMap(await Promise.all(toRead.map(f => fileRows(f.file))), r => r)
+      filtered = filtered.concat(rows.filter((r: TKey) => filters.every(q => isFilterRange(q)
+        ? compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
+        : entries(q).every(([p, v]) => r[p] == v) // ensure each value of row matches
+      )))
+
+      if (isComplete(filtered)) {
+        console.log(`getRows isComplete = true: returning now`, filters)
+        break
+      }
+    }
+
     console.log(`${filtered.length} index rows returned for filter:`, filters)
     console.table(filtered.slice(0, 10))
+
     return filtered
   }
 
@@ -118,7 +140,8 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
     cols: indexBy(index.cols, c => c.name) as Record<keyof TRow, IndexCol<TRow>>,
     baseUri,
     fileRowsCache,
-    getRows
+    rows: ((...fs) => getRows(fs)),
+    rowsWith: getRows
   }
 }
 

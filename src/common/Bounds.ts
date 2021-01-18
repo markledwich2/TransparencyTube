@@ -32,11 +32,11 @@ export const circleToRect = (c: Circle): Rect => {
  * calculates dimensions to help resizing/zooming to fit containers
  * @param nodes circle packing nodes
  */
-export const getBounds = (rects: Rect[]): Rect => {
-  const x = min(rects.map(r => r.x))
-  const y = min(rects.map(r => r.y))
-  const w = max(rects.map(r => r.x + r.w)) - x
-  const h = max(rects.map(r => r.y + r.h)) - y
+export const getBounds = (rects: Rect[], padding: number = 0): Rect => {
+  const x = min(rects.map(r => r.x)) - padding
+  const y = min(rects.map(r => r.y)) - padding
+  const w = max(rects.map(r => r.x + r.w)) - x + padding
+  const h = max(rects.map(r => r.y + r.h)) - y + padding
   return { x, y, w, h }
 }
 

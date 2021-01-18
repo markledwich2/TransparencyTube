@@ -32,12 +32,12 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
     if (mode != 'max')
       return
     setStatsLoading(true)
-    indexes.channelStatsById.getRows({ channelId: channel.channelId }).then(chans => {
+    indexes.channelStatsById.rows({ channelId: channel.channelId }).then(chans => {
       const c = chans.find(c => c.period == periodString(period))
       setStats(c)
       setStatsLoading(false)
     })
-    indexes.channelVideo.getRows({ period: periodString(period), channelId: channel.channelId }).then(setVideos)
+    indexes.channelVideo.rows({ period: periodString(period), channelId: channel.channelId }).then(setVideos)
     //TODO: build tooltips, set loading property on videos
   }, [periodString(period)])
 
