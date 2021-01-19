@@ -53,6 +53,9 @@ export const styles = {
     fontSize: '1rem',
     fontWeight: 'normal',
     lineHeight: '1.2rem'
+  } as CSSProperties,
+  centerH: {
+    margin: '0 auto', width: 'fit-content'
   } as CSSProperties
 }
 
@@ -82,7 +85,6 @@ const GlobalStyle = createGlobalStyle`
   div.${popupClasses.popup} {
     background-color: var(--bg);
     position: absolute;
-    padding: 1em;
     z-index: 10;
     top:0;
     left:0;
@@ -104,6 +106,11 @@ const GlobalStyle = createGlobalStyle`
       bottom: auto;
       margin-right: -50%;
       transform: translate(-50%, -50%);
+    }
+    div.${popupClasses.content} {
+      overflow-y: auto;
+      height: 100%;
+      padding: 2em 1em;
     }
   }
   div.${popupClasses.overlay} {
@@ -144,7 +151,7 @@ export const NormalFont = styled.span`
 `
 
 export const TextPage = styled.div`
-  max-width: 45em;
+  max-width: 45rem;
   margin: auto;
   font-size: 1.4em;
   min-height: 80vh;
@@ -152,6 +159,11 @@ export const TextPage = styled.div`
   h2 {
     margin-bottom: 1em;
   }
+`
+
+export const NarrowSection = styled.div`
+  margin:auto;
+  max-width: 65rem;
 `
 
 export const MinimalPage = styled.div`

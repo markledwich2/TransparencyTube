@@ -113,7 +113,7 @@ export const vennLayout = <T>(
   })
 
   const zooms = rawCircles.map(c => c.innerRadius * 2 / Math.max(c.circlesDim.h, c.circlesDim.w)).sort()
-  const zoom = zooms[zooms.length > 1 ? Math.floor(zooms.length / 3) : 0]
+  const zoom = zooms[zooms.length > 1 ? Math.floor(zooms.length / 4) : 0]
 
   // fit packing into the inner circle of each set
   const circleNodes = rawCircles.map(n => {

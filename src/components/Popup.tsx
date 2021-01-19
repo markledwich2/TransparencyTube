@@ -5,14 +5,15 @@ import Modal from 'react-modal'
 
 export const popupClasses = {
   popup: 'popup-main',
-  overlay: 'popup-overlay'
+  overlay: 'popup-overlay',
+  content: 'popup-content'
 }
 
 export const Close = styled(CloseOutline)`
   position: absolute;
   right: 0.5em;
   top: 0.5em;
-  height: 3em;
+  height: 4em;
   :hover {
     cursor: pointer;
   }
@@ -31,7 +32,9 @@ export const Popup = (props: PropsWithChildren<ReactModal.Props>) => {
   >
     <>
       <Close onClick={e => props.onRequestClose?.(e)} />
-      {props.children}
+      <div className={popupClasses.content}>
+        {props.children}
+      </div>
     </>
   </Modal>
 }

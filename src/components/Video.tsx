@@ -1,4 +1,4 @@
-import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect } from 'react'
+import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect, CSSProperties } from 'react'
 import { dateFormat, hoursFormat, numFormat, secondsFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
@@ -33,6 +33,7 @@ interface VideosProps<T extends VideoCommon, TExtra extends VideoId> {
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
   loadExtraOnVisible?: (v: T[]) => Promise<TExtra[]>
   contentBelow?: (v: (T & Partial<TExtra>)) => JSX.Element
+  videoStyle?: CSSProperties
 }
 
 interface VideoGroup<T extends VideoCommon, TExtra extends VideoId> {
@@ -49,14 +50,14 @@ const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, defaultLimit, highlightWords,
-  loadCaptions, loadExtraOnVisible, contentBelow, style }: StyleProps & VideosProps<T, TExtra>) => {
+  loadCaptions, loadExtraOnVisible, contentBelow, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
 
-  const [limit, setLimit] = useState(defaultLimit ?? 20)
+  const [limit, setLimit] = useState(defaultLimit ?? 40)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
   const [extras, setExtras] = useState<Record<string, TExtra>>({})
 
   let groupedVids: VideoGroup<T, TExtra>[] = null
-  let groupedVidsTotal = 0
+  let groupedVidsTotal: number = null
   if (groupChannels && videos) {
     var groupedVidsRaw = groupChannels && pipe(
       entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: orderBy(e[1], v => v.videoViews, 'desc') })),
@@ -143,7 +144,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     onOpenChannel={onOpenChannel}
                     showThumb={showThumb}
                     v={v}
-                    style={{ width: (videoWidth) }}
+                    style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
                     children={contentBelow?.(v)}
@@ -166,11 +167,13 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         showThumb={showThumb}
         showChannel
         v={v}
-        style={{ width: '45em', maxWidth: '100%' }}
-        c={showChannels && channels && channels[v.channelId]} />)}
+        style={{ width: '45em', maxWidth: '100%', ...videoStyle }}
+        c={showChannels && channels && channels[v.channelId]}
+        children={contentBelow?.(v as T & Partial<TExtra>)}
+      />)}
     </div>
     {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
-      <a onClick={_ => setLimit(limit + 40)}>show more</a>
+      <a onClick={_ => setLimit(limit + 200)}>show more</a>
     </div>}
     {showChannels && <Tip id={tipId} getContent={(id) => {
       if (!id || !channels?.[id]) return <></>

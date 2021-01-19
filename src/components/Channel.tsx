@@ -100,7 +100,6 @@ export interface ChannelTitleProps {
   showCollectionStats?: boolean
   showReviewInfo?: boolean
   tipId?: string
-  style?: CSSProperties
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
   onLogoClick?: (c: Channel) => void
@@ -109,7 +108,8 @@ export interface ChannelTitleProps {
 
 const tags = indexBy(md.channel.tags.values, t => t.value)
 
-export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps) => {
+export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, className,
+  logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps & StyleProps) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
@@ -117,7 +117,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
   //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
   //console.log('faded', faded)
   //style={{ opacity: faded ? 0.5 : null }}
-  return <ChannelTitleStyle style={style}>
+  return <ChannelTitleStyle style={style} className={className}>
     <div><ChannelLogo c={c} tipId={tipId} onClick={onLogoClick} style={logoStyle} /></div>
     <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>

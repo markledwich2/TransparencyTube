@@ -42,7 +42,7 @@ export const TextStyle = styled.div`
 export const TextSection = styled(TextStyle)`
   margin:auto;
   font-size: 1.4rem;
-  max-width: 45em;
+  max-width: 65rem;
 `
 
 export const Markdown = (props: PropsWithChildren<ReactMarkdownProps>) => <TextStyle as={ReactMarkdown} {...props} />
