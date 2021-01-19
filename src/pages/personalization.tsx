@@ -117,7 +117,7 @@ interface RecState {
 const PersonalizationPage = () => {
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
   const [watchIdx, setWatchIdx] = useState<BlobIndex<Watch, WatchKey>>(null)
-  const [rs, setRecState] = useState<RecState>(null)
+  const [recState, setRecState] = useState<RecState>(null)
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [chans, setChannels] = useState<Record<string, Channel>>()
   const [watches, setWatches] = useState<Record<string, Watch[]>>(null)
@@ -241,14 +241,14 @@ const PersonalizationPage = () => {
           Recommendations seen by accounts <InlineValueFilter md={md}
             filter={{ accounts }}
             onFilter={setRecFilter}
-            rows={rs?.groups} />
+            rows={recState?.groups} />
         </FilterPart>
       </FilterHeader>
 
       <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
-        {rs?.fromVideos && <div style={{ marginBottom: '1em' }}>
+        {recState?.fromVideos && <div style={{ marginBottom: '1em' }}>
           <h3>Watching:</h3>
-          <Videos videos={rs.fromVideos} channels={chans} showChannels showThumb style={{ marginLeft: '1em' }} />
+          <Videos videos={recState.fromVideos} channels={chans} showChannels showThumb style={{ marginLeft: '1em' }} />
           {availableVideoIds && <div>
             <button onClick={() => {
               const videoId = takeRandom(availableVideoIds)
@@ -258,10 +258,10 @@ const PersonalizationPage = () => {
         </div>}
         <ContainerDimensions>
           {({ width }) => {
-            if (!rs?.sets?.length) return <></>
+            if (!recState?.sets?.length) return <></>
             const size = Math.min(1000, width)
             const vennCfg = { width: size, height: size, padding: 20 }
-            const chart = vennLayout(rs.sets, vennCfg)
+            const chart = vennLayout(recState.sets, vennCfg)
             const circles = chart.filter(c => c.circle)
             const bounds = getBounds(circles.map(c => circleToRect(c.circle)), vennCfg.padding)
 
@@ -310,7 +310,7 @@ const PersonalizationPage = () => {
       </div>
 
       <Tip id={tipId} getContent={(id) => {
-        const r = rs?.byId?.[id]
+        const r = recState?.byId?.[id]
         if (!r) return <></>
         const v: VideoCommon = {
           videoId: r.toVideoId,

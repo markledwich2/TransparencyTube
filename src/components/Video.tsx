@@ -55,7 +55,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
   const [extras, setExtras] = useState<Record<string, TExtra>>({})
 
-  let groupedVids: VideoGroup<T, TExtra>[] = []
+  let groupedVids: VideoGroup<T, TExtra>[] = null
   let groupedVidsTotal = 0
   if (groupChannels && videos) {
     var groupedVidsRaw = groupChannels && pipe(
@@ -102,7 +102,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       })
   }, [videos?.length, limit, showAlls])
 
-  if (!groupedVids) return <Spinner />
+  if (!videos) return <Spinner />
 
   const showMore = (groupedVidsTotal ?? videos?.length) > limit
 

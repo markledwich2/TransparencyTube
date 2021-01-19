@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { filter, indexBy, map, pipe, pick, take } from 'remeda'
+import { filter, indexBy, map, pipe, pick } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -8,11 +8,10 @@ import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout, { FlexRow, MinimalPage, StyleProps } from "../components/Layout"
 import { VideoId, Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
-import { delay, navigateNoHistory } from '../common/Utils'
+import { navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
-import { mapEntries, orderBy } from '../common/Pipe'
-import { addDays, endOfToday, parseISO, startOfToday } from 'date-fns'
+import { orderBy } from '../common/Pipe'
 import { DateRangeQueryState, InlineDateRange, rangeFromQuery } from '../components/DateRange'
 import SearchText from '../components/SearchText'
 import { Period } from '../components/Period'
@@ -22,7 +21,6 @@ import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
 import { colMd, ColumnValueMd } from '../common/Metadata'
 import ReactMarkdown from 'react-markdown'
-import styled from 'styled-components'
 import { odyseeVideoUrl, OdyseeYtVideo, odyseeYtVideos } from '../common/Odysee'
 
 
