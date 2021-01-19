@@ -11,7 +11,6 @@ import { FluidObject } from 'gatsby-image'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
 import { Footer } from './Footer'
-import { makeCarousel, Slide } from 'react-reveal'
 
 export interface StyleProps {
   style?: React.CSSProperties

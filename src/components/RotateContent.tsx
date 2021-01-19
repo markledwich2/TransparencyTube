@@ -29,18 +29,10 @@ const Container = styled.div`
 
   @keyframes 
   shutdown {
-    0% {
-      transform: scale3d(1, 1, 1);
-    }
-    20% {
-      transform: scale3d(1, 1.2, 1);
-    }
-    50% {
-      transform: scale3d(1, 0.005, 1);
-    }
-    100% {
-      transform: scale3d(0, 0, 1);
-    }
+    0% { transform: scale3d(1, 1, 1); }
+    20% { transform: scale3d(1, 1.2, 1); }
+    50% { transform: scale3d(1, 0.005, 1); }
+    100% { transform: scale3d(0, 0, 1); }
   }
 `
 
@@ -57,30 +49,22 @@ export const RotateContent = <T,>({ size, data, template, getDelay, style }: Rot
     let isRunning = true;
     (async () => {
       var cs = { ...s }
-      const setCs = (newCs: RotateState) => {
+      const setCs = async (newCs: RotateState, ms: number = 400) => {
+        await delay(ms)
         setState(newCs)
         return newCs
       }
+
+      const stateLoop = {
+        on: () => setCs({ ...cs, status: 'exit' }, getDelay()),
+        exit: () => setCs({ i: (cs.i + 1) % data.length, status: 'off' }),
+        off: () => setCs({ ...cs, status: 'enter' }),
+        enter: () => setCs({ ...cs, status: 'on' })
+      }
+
       while (true) {
         if (!isRunning) return
-        switch (cs.status) {
-          case 'on': {
-            await delay(getDelay())
-            cs = setCs({ ...cs, status: 'exit' })
-          }
-          case 'exit': {
-            await delay(400)
-            cs = setCs({ i: (cs.i + 1) % data.length, status: 'off' })
-          }
-          case 'off': {
-            await delay(100)
-            cs = setCs({ ...cs, status: 'enter' })
-          }
-          case 'enter': {
-            await delay(400)
-            cs = setCs({ ...cs, status: 'on' })
-          }
-        }
+        cs = await stateLoop[cs.status]()
       }
     })()
     return () => isRunning = false

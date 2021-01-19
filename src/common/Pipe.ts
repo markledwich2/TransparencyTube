@@ -1,4 +1,4 @@
-import { purry } from 'remeda'
+import R, { purry } from 'remeda'
 import _orderBy from 'lodash.orderby'
 
 type Many<T> = T | readonly T[]
