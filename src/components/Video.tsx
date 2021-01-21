@@ -143,7 +143,6 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     key={v.videoId}
                     onOpenChannel={onOpenChannel}
                     showThumb={showThumb}
-                    showChannel={showChannels}
                     v={v}
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
