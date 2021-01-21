@@ -1,12 +1,10 @@
 import { Uri } from './Uri'
 
-const env = {
-  branchEnv: null
-}
-
-const suffix = env.branchEnv ? `-${env.branchEnv}` : ''
-const blobUri = new Uri(`https://pyt.blob.core.windows.net/data${suffix}`)
-const blobCdnUri = suffix ? blobUri : new Uri('https://pyt-data.azureedge.net/data')
+const branchEnv = process.env.GATSBY_BRANCH_ENV
+const branchSuffix = branchEnv ? `-${branchEnv}` : ''
+console.log('branchSuffix', branchSuffix)
+const blobUri = new Uri(`https://pyt.blob.core.windows.net/data${branchSuffix}`)
+const blobCdnUri = branchSuffix ? blobUri : new Uri('https://pyt-data.azureedge.net/data')
 export const blobCfg = {
   resultsUri: blobUri.addPath('results'),
   indexUri: blobUri.addPath('results/index'),

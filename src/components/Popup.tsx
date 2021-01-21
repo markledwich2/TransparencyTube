@@ -13,7 +13,6 @@ export const Close = styled(CloseOutline)`
   position: absolute;
   right: 0.5em;
   top: 0.5em;
-  height: 4em;
   :hover {
     cursor: pointer;
   }
@@ -31,10 +30,10 @@ export const Popup = (props: PropsWithChildren<ReactModal.Props>) => {
     {...passProps}
   >
     <>
-      <Close onClick={e => props.onRequestClose?.(e)} />
       <div className={popupClasses.content}>
         {props.children}
       </div>
+      <Close onClick={e => props.onRequestClose?.(e)} style={{ width: '30px', height: '30px' }} />
     </>
   </Modal>
 }

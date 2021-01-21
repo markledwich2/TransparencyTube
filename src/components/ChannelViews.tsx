@@ -160,9 +160,6 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
 
     <BubbleCharts<ChannelWithStats>
-      {... {
-
-      }}
       onSelect={channelClick}
       bubbleWidth={bubbleWidth}
       dataCfg={{

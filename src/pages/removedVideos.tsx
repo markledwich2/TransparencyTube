@@ -154,8 +154,6 @@ const RemovedVideosPage = () => {
         highlightWords={q.search ? [q.search] : null}
         loadExtraOnVisible={async (vids) => {
           const res = await odyseeYtVideos(vids.map(v => v.videoId))
-          console.log('loaded extra')
-          console.table(res)
           return res
         }}
         contentBelow={(v) => v.odyseePath && <span>

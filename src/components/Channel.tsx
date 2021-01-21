@@ -47,7 +47,7 @@ export const ChannelDetails = ({ channel, mode, indexes, defaultPeriod }: TopVid
 
   return <FlexCol style={{ width: '100%', maxHeight: '100%' }}>
     <ChannelTitle c={{ ...c, ...period, ...stats }} showTags showReviewInfo showCollectionStats={mode == 'max'} statsLoading={statsLoading} />
-    <FlexCol space='1em' style={{ overflowY: 'auto' }}>
+    <FlexCol space='1em'>
       <div style={{ color: 'var(--fg3)' }}>
         <p style={{ maxWidth: '50em' }}>
           {desc}{desc?.length > 300 && '...'}
@@ -131,7 +131,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
         <span>
           {fViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fViews}</b>}
           {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}
-          {fViews && '&nbsp;views'}
+          {fViews && ' views'}
         </span>
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}

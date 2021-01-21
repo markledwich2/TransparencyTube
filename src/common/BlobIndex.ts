@@ -124,7 +124,6 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
       )))
 
       if (isComplete(filtered)) {
-        console.log(`getRows isComplete = true: returning now`, filters)
         break
       }
     }

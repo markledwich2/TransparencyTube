@@ -48,7 +48,7 @@ export const getGroupData = <T>(rows: T[], selections: BubblesSelectionState<T>,
   const { measure, groupBy, colorBy, selectedKeys } = selections
   const val = (c: T) => c[measure] ?? 0
 
-  const groupValues = colMdValues(md, groupBy, rows)
+  const groupValues = colMdValues(md, groupBy, rows).filter(g => g.value)
   const colorValues = indexBy(colMdValues(md, colorBy), c => c.value)
 
   const selectedSet = selectedKeys ? new Set(selectedKeys) : null

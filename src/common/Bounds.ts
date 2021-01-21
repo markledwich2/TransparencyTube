@@ -19,14 +19,8 @@ export interface Circle {
   r: number
 }
 
-export const circleFromD3 = <T,>(c: HierarchyCircularNode<T>): Circle => {
-  console.log('circleFromD3', c)
-  return ({ cx: c.x, cy: c.y, r: c.r })
-}
-
-export const circleToRect = (c: Circle): Rect => {
-  return ({ x: c.cx - c.r, y: c.cy - c.r, w: c.r * 2, h: c.r * 2 })
-}
+export const circleFromD3 = <T,>(c: HierarchyCircularNode<T>): Circle => ({ cx: c.x, cy: c.y, r: c.r })
+export const circleToRect = (c: Circle): Rect => ({ x: c.cx - c.r, y: c.cy - c.r, w: c.r * 2, h: c.r * 2 })
 
 /**
  * calculates dimensions to help resizing/zooming to fit containers

@@ -409,14 +409,17 @@ const AccountVideos: FC<AccountVideosProps> = ({ account, idx, channels }) => {
   const [watch, setWatch] = useState<Watch[]>(null)
 
   useEffect(() => {
-    if (!account) setWatch(null)
+    if (!account || !idx) {
+      setWatch(null)
+      return
+    }
     idx.rows().then(ws => {
       const accountVids = pipe(ws.filter(w => w.account == account), orderBy(w => w.updated, 'desc'))
       return setWatch(accountVids)
     })
   }, [account, idx])
 
-  return watch && <Videos videos={watch} channels={channels}
+  return watch && channels && <Videos videos={watch} channels={channels}
     showChannels showThumb showTags
     videoStyle={{ position: 'relative' }}
     contentBelow={v => <span style={videoOverlayStyle}>watched {dateFormat(v.updated)}</span>}

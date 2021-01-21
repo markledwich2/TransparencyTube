@@ -143,6 +143,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     key={v.videoId}
                     onOpenChannel={onOpenChannel}
                     showThumb={showThumb}
+                    showChannel={showChannels}
                     v={v}
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
@@ -165,9 +166,9 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         key={v.videoId}
         onOpenChannel={onOpenChannel}
         showThumb={showThumb}
-        showChannel
+        showChannel={showChannels}
         v={v}
-        style={{ width: '45em', maxWidth: '100%', ...videoStyle }}
+        style={{ width: '40em', maxWidth: '100%', ...videoStyle }}
         c={showChannels && channels && channels[v.channelId]}
         children={contentBelow?.(v as T & Partial<TExtra>)}
       />)}
@@ -256,7 +257,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
       </div>}
-      <FlexCol style={{ color: 'var(--fg1)', maxWidth: '31em' }} space='0.2em'>
+      <FlexCol style={{ color: 'var(--fg1)', maxWidth: '27em' }} space='0.2em'>
         <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>
           {highlightWords ? <Highlighter
             searchWords={highlightWords}
