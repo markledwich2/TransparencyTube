@@ -99,7 +99,7 @@ export const indexPeriods = (index: BlobIndex<any, HasPeriod>) => index.cols?.pe
 
 export const indexRemovedVideos = () => blobIndex<VideoRemoved, { lastSeen: string }>('video_removed')
 
-const getJsonlResult = <T,>(name: string): Promise<T[]> => getJsonl<T>(blobCfg.resultsUri.addPath(`${name}.jsonl.gz`).url,
+export const getJsonlResult = <T,>(name: string): Promise<T[]> => getJsonl<T>(blobCfg.resultsUri.addPath(`${name}.jsonl.gz`).url,
   { headers: { pragma: "no-cache", 'cache-control': 'no-cache' } })
 
 

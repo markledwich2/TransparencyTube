@@ -20,11 +20,12 @@ import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FilterState, InlineValueFilter } from '../components/ValueFilter'
 import { ChannelTitle, Tag } from '../components/Channel'
 import { entries, mapEntries, minBy, orderBy, takeRandom, values } from '../common/Pipe'
-import { circleToRect, cropTransform, Dim, getBounds } from '../common/Bounds'
+import { circleToRect, offsetTransform, Dim, getBounds } from '../common/Bounds'
 import { RotateContent } from '../components/RotateContent'
 import { videoThumb } from '../common/Video'
 import { shuffle } from 'd3'
 import { Popup } from '../components/Popup'
+import PersonalizationChart from '../components/PersonalizationChart'
 
 interface Rec {
   fromVideoId: string
@@ -119,20 +120,19 @@ const PersonalizationPage = () => {
   }, [])
 
   useEffect(() => {
-    if (!recIdx || !label || !chans || !watchIdx) return
-
-    watchIdx.rowsWith([], {
-      parallelism: 4,
-      // complete when we have at least one video for each account
-      isComplete: (rs) => entries(groupBy(rs, r => r.account)).length >= watchIdx.cols.account?.distinct?.length,
-      order: 'desc'
-    }).then((rawWatches: Watch[]) => {
+    if (!recIdx || !label || !watchIdx) return;
+    (async () => {
+      const rawWatches = await watchIdx.rowsWith([], {
+        parallelism: 4,
+        // complete when we have at least one video for each account
+        isComplete: (rs) => entries(groupBy(rs, r => r.account)).length >= watchIdx.cols.account.distinct.length,
+        order: 'desc'
+      })
       const watches = mapValues(groupBy(rawWatches, r => r.account), ws => shuffle(ws))
       setWatches(watches)
-    })
 
-    recIdx.rows(q.videoId ? { fromVideoId: q.videoId } : { label }).then((d: Rec[]) => {
-      const recs = d.map(r => ({ ...r, accounts: renameAccounts(r.accounts) }))
+      const rawRecs = await recIdx.rows(q.videoId ? { fromVideoId: q.videoId } : { label })
+      const recs = rawRecs.map(r => ({ ...r, accounts: renameAccounts(r.accounts) }))
         .map(r => ({ ...r, groupAccounts: filterAccounts(r.accounts).sort() }))
       const groups = entries(
         groupBy(recs, r => `${r.groupAccounts.join(':')}|${r.toChannelId}`)
@@ -145,7 +145,7 @@ const PersonalizationPage = () => {
         }
 
         // group recs to the same videos
-        const videoRecs = mapEntries(groupBy(recs.map(r => ({ ...r, id: `${id}|${r.toVideoId}` })), r => r.id), (id, recs) => {
+        const videoRecs = mapEntries(groupBy(recs.map(r => ({ ...r, id: `${id}|${r.toVideoId}` })), r => r.id), (recs, id) => {
           const { day, fromVideoId, fromVideoTitle, ...r } = recs[0]
           const recVideo: RecVideo = { ...r, recs, id }
           return recVideo
@@ -165,7 +165,7 @@ const PersonalizationPage = () => {
         indexBy(r => r.id)
       )
 
-      const fromVideos = mapEntries(groupBy(d, d => d.fromVideoId), (_, recs) => {
+      const fromVideos = mapEntries(groupBy(rawRecs, d => d.fromVideoId), (recs) => {
         const r = recs[0]
         const v = ({
           videoId: r.fromVideoId,
@@ -179,8 +179,8 @@ const PersonalizationPage = () => {
 
       setRecState({ groups, sets, byId, fromVideos })
       delay(1000).then(() => ReactTooltip.rebuild())
-    })
-  }, [recIdx, watchIdx, chans, JSON.stringify(q)])
+    })()
+  }, [recIdx, watchIdx, JSON.stringify(q)])
 
   const setRecFilter = (f: FilterState<Rec>) => setQuery({ accounts: f.accounts })
   const availableVideoIds = recIdx?.cols.fromVideoId?.distinct
@@ -198,67 +198,66 @@ const PersonalizationPage = () => {
         {watches && sortBy(entries(watches), ([account, _]) => tagMd[account]?.label).map(([account, ws]) => {
           const size = { w: 300, h: 320 }
           const md = tagMd[account]
-          return <div style={{ margin: '1em' }}>
+          return <div key={account} style={{ margin: '1em' }}>
             <FlexRow style={{ marginBottom: '0.5em' }}>
               <Tag label={`${md?.label ?? account}`} color={md?.color} />
               <a onClick={() => setQuery({ openAccount: account })}>history</a>
             </FlexRow>
             <RotateContent
-              key={account}
               data={ws}
               size={size}
               getDelay={() => 4000 + Math.random() * 1000}
               style={{}}
               template={(w: Watch) => {
                 if (!w) return <></>
-                const c = chans[w.channelId] ?? { channelId: w.channelId, channelTitle: w.channelTitle }
+                const c = chans?.[w.channelId] ?? { channelId: w.channelId, channelTitle: w.channelTitle }
                 return <VideoTile w={w} c={c} size={size} />
               }} />
           </div>
         })}
       </div>
 
-      <TextSection style={{ marginBottom: '1em', marginTop: '5em' }}>
-        Here are some example recommendations from videos all personas have watched on the same day. Overlapping sections are recommendations seen by multiple personas.
-      </TextSection>
-      <NarrowSection>
-        <FilterHeader>
-          <FilterPart>
-            Recommendations seen by accounts <InlineValueFilter md={md}
-              filter={{ accounts }}
-              onFilter={setRecFilter}
-              rows={recState?.groups} />
+      {recState?.sets && <>
+        <TextSection style={{ marginBottom: '1em', marginTop: '5em' }}>
+          Here are some example recommendations from videos all personas have watched on the same day. Overlapping sections are recommendations seen by multiple personas.
+        </TextSection>
+        <NarrowSection>
+          <FilterHeader>
+            <FilterPart>
+              Recommendations seen by accounts <InlineValueFilter md={md}
+                filter={{ accounts }}
+                onFilter={setRecFilter}
+                rows={recState?.groups} />
               when watching videos:
           </FilterPart>
-        </FilterHeader>
-      </NarrowSection>
+          </FilterHeader>
+        </NarrowSection>
 
-      {recState?.fromVideos && <div style={{ marginBottom: '1em' }}>
-        <Videos
-          videos={recState.fromVideos}
-          channels={chans}
-          contentBelow={v => <span>Watched {v.days.map(d => <span key={d} style={{ marginRight: '1em' }}>{dateFormat(d)}</span>)}</span>}
-          showChannels showThumb
-          style={{ margin: '0 auto', width: 'fit-content' }} />
-      </div>}
+        {recState?.fromVideos && <div style={{ marginBottom: '1em' }}>
+          <Videos
+            videos={recState.fromVideos}
+            channels={chans}
+            contentBelow={v => <span>Watched {v.days.map(d => <span key={d} style={{ marginRight: '1em' }}>{dateFormat(d)}</span>)}</span>}
+            showChannels showThumb
+            style={{ margin: '0 auto', width: 'fit-content' }} />
+        </div>}
 
-      <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
-        <ContainerDimensions>
-          {({ width }) => {
-            if (!recState?.sets?.length) return <></>
-            return <RecVennChart channels={chans} sets={recState.sets} width={width} />
-          }}
-        </ContainerDimensions>
-      </div>
+        <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
+          <ContainerDimensions>
+            {({ width }) => {
+              return <RecVennChart channels={chans} sets={recState.sets} width={width} />
+            }}
+          </ContainerDimensions>
+        </div>
 
-      {availableVideoIds && <button
-        style={{ ...styles.centerH, margin: '3em auto', display: 'block' }}
-        onClick={() => {
-          const videoId = takeRandom(availableVideoIds)
-          return setQuery({ videoId, label: null })
-        }}
-      >Show Random Video</button>
-      }
+        {availableVideoIds && <button
+          style={{ ...styles.centerH, margin: '3em auto', display: 'block' }}
+          onClick={() => setQuery({ videoId: takeRandom(availableVideoIds), label: null })}>
+          Show Random Video
+            </button>
+        }
+      </>}
+
 
       <Tip id={tipId} getContent={(id) => {
         const r = recState?.byId?.[id]
@@ -280,9 +279,7 @@ const PersonalizationPage = () => {
       The overall % of recommendations from personas (left) to channels (top) is shown bellow.
     </TextSection>
 
-    <div>
-
-    </div>
+    <PersonalizationChart />
 
     <Popup isOpen={q.openAccount != null} onRequestClose={() => setQuery({ openAccount: null })}>
       {q.openAccount && <AccountVideos idx={watchIdx} channels={chans} account={q.openAccount} />}
@@ -362,7 +359,7 @@ const RecVennChart: FC<RecVennProps> = ({ width, sets, channels }) => {
       {uniq(rowCircles.map(r => r.r)).map(r => <clipPath key={r} id={`clip-${r}`}><circle r={r} /></clipPath>)}
     </defs>
 
-    <g transform={cropTransform(bounds)}>
+    <g transform={offsetTransform(bounds)}>
       {circles.map(c => <circle key={c.key} className='set'
         cx={c.circle.cx} cy={c.circle.cy} r={c.circle.r} fill={tagMd[c.key]?.color} />
       )}

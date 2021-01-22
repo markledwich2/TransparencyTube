@@ -46,7 +46,7 @@ const darkValues = css`
 export const styles = {
   inlineIcon: {
     position: 'relative',
-    top: '-0.15em',
+    top: '-0.1em',
     paddingRight: '0.2em'
   } as CSSProperties,
   normalFont: {
@@ -73,7 +73,6 @@ const GlobalStyle = createGlobalStyle`
   ${StyledIconBase} {
     height: 1.4em;
     width: 1.4em;
-    color: var(--fg2);
     &.clickable {
       &:hover {
         cursor: pointer;

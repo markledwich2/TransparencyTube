@@ -97,7 +97,7 @@ export const dateFormat = (date: Date | string, tz?: string | 'UTC') => {
 }
 
 export const numFormat = (n: number) =>
-  n != null ? numeral(n).format(Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
+  n != null ? numeral(n).format(n < 1 || Math.floor(Math.log10(n)) % 3 == 0 ? '0[.]0a' : '0a') : null
 
 export const delay = (ms: number) => new Promise(_ => setTimeout(_, ms))
 
@@ -167,3 +167,5 @@ export const useDebounce = <T>(value: T, delay: number) => {
   )
   return debouncedValue
 }
+
+export const isSSR = () => typeof window === 'undefined'

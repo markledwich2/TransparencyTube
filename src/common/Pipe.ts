@@ -54,5 +54,6 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
 }
 
 export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.includes(n))
-export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (key: string, values: T) => U): U[] => entries(group).map(([key, values]) => groupMap(key, values))
+export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (values: T, key: string, i: number) => U): U[] =>
+  entries(group).map(([key, values], i) => groupMap(values, key, i))
 export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null

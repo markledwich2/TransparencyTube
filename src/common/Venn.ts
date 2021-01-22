@@ -43,7 +43,7 @@ export const vennSets = <T>(data: T[], typeCfg: VennTypeCfg<T>): VennSet<T>[] =>
     groupBy(n => setNamesToKey(typeCfg.getSets(n)))
   )
 
-  const groups = mapEntries(groupObj, (key, nodes) => {
+  const groups = mapEntries(groupObj, (nodes, key) => {
     const root = hierarchy<VennDatum<T>>(
       { type: 'root', nodes, id: key, value: null },
       n => isVenRootNode(n) ? n.nodes : typeCfg.getChildren(n)?.map(c => ({
@@ -97,7 +97,7 @@ export const vennLayout = <T>(
   }
 
   // pack node circles without any zoom/offset
-  const rawCircles = mapEntries(textCenters, (key, txtCenter) => {
+  const rawCircles = mapEntries(textCenters, (txtCenter, key) => {
     const set = setsObj[key]
     const innerRadius = getInnerRadius(set)
 

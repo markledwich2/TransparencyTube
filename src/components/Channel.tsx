@@ -1,4 +1,4 @@
-import React, { CSSProperties, useContext, useEffect, useState } from 'react'
+import React, { CSSProperties, useContext, useEffect, useState, FunctionComponent as FC } from 'react'
 import { first, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel, channelUrl, md, measureFormat, openYtChannel } from '../common/Channel'
@@ -195,15 +195,14 @@ const TagStyle = styled.span`
   font-weight: bold;
   line-height: 1.6;
   border-radius: 5px;
-  padding: 1px 6px;
+  padding: 0.15em 0.5em;
   white-space: nowrap;
 `
 
-interface TagProps { color?: string, label: string }
+interface TagProps { color?: string, label?: string }
 
-export const Tag = ({ color, label, style, className }: TagProps & StyleProps) =>
-  <TagStyle style={{ ...style, backgroundColor: color, color: '#fff' }} className={className}>{label}</TagStyle>
-
+export const Tag: FC<TagProps & StyleProps> = ({ color, label, style, className, children }) =>
+  <TagStyle style={{ ...style, backgroundColor: color, color: '#fff' }} className={className}>{label}{children}</TagStyle>
 
 interface ChannelSearchProps<T extends Channel> {
   onSelect: (T) => void

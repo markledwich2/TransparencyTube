@@ -21,7 +21,7 @@ export interface OdyseeYtVideo {
 export const odyseeYtVideos = async (ytVideoIds: string[]): Promise<OdyseeYtVideo[]> => {
   const url = (ids: string[]) => new Uri('https://api.lbry.com/yt/resolve').addQuery({ video_ids: ids.join(',') }).url
   const rows = await Promise.all(chunk(ytVideoIds, 50).map(ids => getJson<OdyseeRes<OdyseeVideos>>(url(ids))))
-  const res = flatMap(rows, r => mapEntries(r.data?.videos ?? {}, (videoId, odyseePath) => ({ videoId, odyseePath }))
+  const res = flatMap(rows, r => mapEntries(r.data?.videos ?? {}, (odyseePath, videoId) => ({ videoId, odyseePath }))
     .filter(e => e.odyseePath))
   return res
 }
