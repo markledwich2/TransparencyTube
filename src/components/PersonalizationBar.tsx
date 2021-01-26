@@ -1,22 +1,23 @@
 import React, { useEffect, useState, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
-import { compact, filter, first, flatMap, groupBy, indexBy, mapValues, pick, pipe, uniq } from 'remeda'
+import { compact, filter, flatMap, groupBy, indexBy, mapValues, pick, pipe, uniq } from 'remeda'
 import styled from 'styled-components'
-import { getBounds, getTextWidth, pointTranslate, Rect } from '../common/Bounds'
+import { getBounds, getTextWidth, pointTranslate, Rect } from '../common/Draw'
 import { md } from '../common/Channel'
-import { colMdValuesObj } from '../common/Metadata'
 import { mapEntries, max, min, sumBy, values } from '../common/Pipe'
 import { getJsonlResult as jRes } from '../common/RecfluenceApi'
 import { numFormat, parseJson, toJson } from '../common/Utils'
 import { Tag } from './Channel'
-import { FlexCol, FlexRow, styles } from './Layout'
-import { Markdown } from './Markdown'
+import { FlexCol, FlexRow, StyleProps, styles } from './Layout'
 import { scaleLinear } from '@visx/scale'
 import ReactMarkdown from 'react-markdown'
 import { UserCircle } from '@styled-icons/boxicons-solid'
+import { filterIncludes } from '../components/ValueFilter'
+import { parsePeriod, periodIncludes } from './Period'
 
+const tagMd = { ...md.channel.tags.val, ...{ Other: { value: 'Other', color: '#666', label: 'Non-political' } } }
 
-interface RecStat {
+export interface RecStat {
   account: string
   month: string
   fromTag: string
@@ -25,57 +26,19 @@ interface RecStat {
   recsPortion: number
 }
 
-interface RecTag { tag: string, month: string, views: number }
-interface RecMonth { month: string, views: number }
-interface RecData { recs: RecStat[], tags: RecTag[], months?: RecMonth[] }
-interface RecGroupKey { account: string, toTag: string }
-const tagMd = { ...colMdValuesObj(md, 'tags'), ...{ Other: { value: 'Other', color: '#666', label: 'Non-political' } } }
+export interface BarQueryState {
+  barTags?: string[]
+  barAccounts?: string[]
+  barPeriod?: string
+}
 
-interface PersonalizedStatsProps { }
-const PersonalizationChart: FC<PersonalizedStatsProps> = ({ }) => {
-  const [stats, setRecStats] = useState<RecData>({ recs: [], tags: [] })
-
-  useEffect(() => {
-    Promise.all([jRes<RecStat>('us_rec_stats'), jRes<RecTag>('us_rec_tag'), jRes<RecMonth>('us_rec_month')])
-      .then(([recs, tags, months]) => setRecStats({
-        recs: recs.map(r => ({ ...r, toTag: r.toTag ?? 'Other' })).filter(r => tagMd[r.toTag]),
-        tags, months
-      }))
-  }, [])
-
-  const selectedMonths: string[] = null
-  const filterMonths = <T extends { month: string }>(item: T) => selectedMonths == null || selectedMonths.includes(item.month)
-
-  const groups = pipe(
-    stats.recs.filter(filterMonths),
-    groupBy(r => toJson({ account: r.account, toTag: r.toTag }))
-  )
-
-  const aggGroup = mapValues(groups, (gs, j) => {
-    const k: RecGroupKey = parseJson(j)
-    const accountRecs = stats.recs.filter(r => r.account == k.account)
-    const pctOfAccountRecs = sumBy(gs, g => g.recs) / sumBy(accountRecs, g => g.recsPortion)
-    const tagViews = sumBy(stats.tags.filter(t => filterMonths(t) && t.tag == k.toTag), m => m.views)
-    const totalTagViews = sumBy(stats.months.filter(filterMonths), m => m.views)
-    const ppVsTagViews = k.toTag != 'Other' && pctOfAccountRecs - tagViews / totalTagViews
-    return { ...k, pctOfAccountRecs, ppVsTagViews }
-  })
-
-  const statsByAccount: Record<string, VisRow[]> = pipe(
-    mapEntries(aggGroup, (g, j) => {
-      const k: RecGroupKey = parseJson(j)
-      const ppVsFresh = g.pctOfAccountRecs - aggGroup[toJson({ account: 'Fresh', toTag: k.toTag })]?.pctOfAccountRecs
-      return { ...g, ppVsFresh }
-    }),
-    groupBy(r => r.account)
-  )
-
+const PersonalizationBar: FC<{ data: PersonalizationBarData, q: BarQueryState }> = ({ data, q }) => {
+  const statsByAccount = getStatsByAccount(data, q)
   const cfg = { font: '14px sans-serif' }
-  const legend = layoutLegend(stats, { pad: 10, between: 10, iconWidth: 20, itemHeight: 25, labelFont: `bold ${cfg.font}` })
+  const toTags = uniq(flatMap(values(statsByAccount), vs => vs).map(r => r.toTag))
+  const legend = layoutLegend(toTags, { pad: 10, between: 10, iconWidth: 20, itemHeight: 25, labelFont: `bold ${cfg.font}` })
   const referenceBars = indexBy(legend.items.map(i => ({ tag: i.tag, ...i.rect })), i => i.tag)
-  const getRefBar = (r: VisRow) => {
-    return referenceBars[r.toTag]
-  }
+  const getRefBar = (r: VisRow) => referenceBars[r.toTag]
 
   return <div style={{ font: cfg.font }}>
     <ContainerDimensions >
@@ -85,9 +48,9 @@ const PersonalizationChart: FC<PersonalizedStatsProps> = ({ }) => {
         return <div>
           {charts.map((accountCharts, i) => {
             const account = accountCharts.account
-            const accountMd = tagMd[account]
+
             return <div key={account} style={{ marginTop: i > 0 ? '2em' : 0 }}>
-              <Tag color={accountMd?.color} style={{ fontSize: '1.2em' }}>{accountMd?.label ?? account} <UserCircle style={styles.inlineIcon} /></Tag>
+              <AccountTag account={account} />
               <FlexRow>
                 <Panel title='Recommended video tag'>
                   <SvgStyle height={legend.bounds.h} width={legend.bounds.w}>
@@ -98,8 +61,8 @@ const PersonalizationChart: FC<PersonalizedStatsProps> = ({ }) => {
                     <g style={{ font: legend.cfg.labelFont }}>
                       {legend.items.map(l => {
                         const r = l.rect
-                        return <g transform={`translate(${r.x}, ${r.y})`}>
-                          <rect key={l.tag} rx={5} width={r.w} height={r.h} style={{ fill: r.fill }}></rect>
+                        return <g transform={`translate(${r.x}, ${r.y})`} key={l.tag}>
+                          <rect rx={5} width={r.w} height={r.h} style={{ fill: r.fill }}></rect>
                           <use xlinkHref='#video-icon' x={r.w - legend.cfg.iconWidth - 3} y={5} />
                           <text className='tag' x={10} y={r.h - 6}>{l.label}</text>
                         </g>
@@ -108,14 +71,14 @@ const PersonalizationChart: FC<PersonalizedStatsProps> = ({ }) => {
                   </SvgStyle>
                 </Panel>
                 <FlexRow style={{ overflowX: 'auto' }}>
-                  {accountCharts.charts.map(c => <Panel title={c.title}>
+                  {accountCharts.charts.map(c => <Panel title={i == 0 ? c.title : c.shortTitle}>
                     <SvgStyle height={c.h} width={c.w}>
                       <g style={{ font: legend.cfg.labelFont }} transform={`translate(${c.x}, ${c.y})`} >
                         {c.lines.map((l, i) => <line key={i} {...l} className="tick" />)}
                         {c.bars.map(b => <rect key={b.row.toTag} width={b.w} height={b.h}
                           x={b.x} y={b.y}
                           style={{ fill: b.color }}></rect>)}
-                        {c.labels.map(l => <text
+                        {c.labels.map((l, i) => <text key={i}
                           className={`label ${l.inside ? 'inside' : 'outside'}`}
                           data-tag={l.row.toTag}
                           x={l.x} y={l.y}>{l.label}</text>)}
@@ -131,14 +94,66 @@ const PersonalizationChart: FC<PersonalizedStatsProps> = ({ }) => {
     </ContainerDimensions>
   </div>
 }
-export default PersonalizationChart
+export default PersonalizationBar
+
+
+
+interface RecTag { tag: string, month: string, views: number }
+interface RecMonth { month: string, views: number }
+export interface PersonalizationBarData { recs: RecStat[], tags: RecTag[], months?: RecMonth[] }
+interface RecGroupKey { account: string, toTag: string }
+
+export const useBarData = () => {
+  const [data, setData] = useState<PersonalizationBarData>({ recs: [], tags: [] })
+  useEffect(() => { loadBarData().then(d => setData(d)) }, [])
+  return data
+}
+
+export const loadBarData: () => Promise<PersonalizationBarData> = async () => {
+  const [recs, tags, months] = await Promise.all([jRes<RecStat>('us_rec_stats'), jRes<RecTag>('us_rec_tag'), jRes<RecMonth>('us_rec_month')])
+  return {
+    recs: recs.map(r => ({ ...r, toTag: r.toTag ?? 'Other' })).filter(r => tagMd[r.toTag]),
+    tags, months
+  }
+}
+
+const getStatsByAccount = (stats: PersonalizationBarData, q: BarQueryState) => {
+  const period = q.barPeriod && parsePeriod(q.barPeriod)
+  const periodFilter = (r: { month?: string }) => periodIncludes(period, r.month)
+
+  const groups = pipe(
+    stats.recs.filter(periodFilter),
+    groupBy(r => toJson({ account: r.account, toTag: r.toTag }))
+  )
+
+  const aggGroup = mapValues(groups, (gs, j) => {
+    const k: RecGroupKey = parseJson(j)
+    const accountRecs = stats.recs.filter(r => r.account == k.account)
+    const pctOfAccountRecs = sumBy(gs, g => g.recs) / sumBy(accountRecs, g => g.recsPortion)
+    const tagViews = sumBy(stats.tags.filter(t => periodFilter(t) && t.tag == k.toTag), m => m.views)
+    const totalTagViews = sumBy(stats.months.filter(periodFilter), m => m.views)
+    const ppVsTagViews = k.toTag != 'Other' && pctOfAccountRecs - tagViews / totalTagViews
+    return { ...k, pctOfAccountRecs, ppVsTagViews }
+  })
+
+  const statsByAccount: Record<string, VisRow[]> = pipe(
+    mapEntries(aggGroup, (g, j) => {
+      const k: RecGroupKey = parseJson(j)
+      const ppVsFresh = g.pctOfAccountRecs - aggGroup[toJson({ account: 'Fresh', toTag: k.toTag })]?.pctOfAccountRecs
+      return { ...g, ppVsFresh }
+    }),
+    filter(r => filterIncludes({ toTag: q.barTags, account: q.barAccounts }, r)), // filter after all calcs have been made
+    groupBy(r => r.account)
+  )
+  return statsByAccount
+}
 
 interface PanelProps { title: string, }
 const Panel: FC<PanelProps> = ({ title, children }) => {
   return <FlexCol>
     <div style={{
       height: '4em', overflow: 'hidden',
-      fontSize: '1.3em',
+      fontSize: '1em',
       display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
     }}><ReactMarkdown>{title}</ReactMarkdown></div>
     <div>{children}</div>
@@ -172,14 +187,14 @@ interface VisRow {
 }
 
 interface Scale { min?: number, max?: number }
-interface BarLayout { title: string, x: Scale }
+interface BarLayout { title: string, shortTitle: string, x: Scale }
 
 const layoutCharts = (data: Record<string, VisRow[]>, referenceBar: (r: VisRow) => Rect, cfg: { width: number, height: number, font: string }) => {
   const allValues = <T,>(getValue: (r: VisRow) => T) => flatMap(values(data), rs => rs.map(getValue))
   const measureCfg = {
-    pctOfAccountRecs: { title: '% of total persona’s recommendations', x: { min: 0 } } as BarLayout,
-    ppVsTagViews: { title: "percentage point difference between **persona's recommendations** and **video views**", x: {} } as BarLayout,
-    ppVsFresh: { title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**", x: {} } as BarLayout
+    pctOfAccountRecs: { title: '% of total persona’s recommendations', shortTitle: '% of total', x: { min: 0 } } as BarLayout,
+    ppVsTagViews: { title: "percentage point difference between **persona's recommendations** and **video views**", shortTitle: '**vs video views**', x: {} } as BarLayout,
+    ppVsFresh: { title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**", shortTitle: '**vs anonymous**', x: {} } as BarLayout
   }
   const measures = mapValues(measureCfg, (c, m) => {
     const all = allValues(r => r[m])
@@ -194,7 +209,7 @@ const layoutCharts = (data: Record<string, VisRow[]>, referenceBar: (r: VisRow) 
   })
 
   const layout = mapEntries(data, (rows, account) => {
-    const measureGroups = mapEntries(measures, (c, m, i) => {
+    const measureGroups = mapEntries(measures, (c, m) => {
       const xZero = c.scale(0)
       const bars = compact(rows.map((r) => {
         const value = r[m]
@@ -223,15 +238,15 @@ const layoutCharts = (data: Record<string, VisRow[]>, referenceBar: (r: VisRow) 
       })
 
       const lines = [{ x1: xZero, y1: 0, x2: xZero, y2: cfg.height }]
-      return { x: 0, y: 0, w: cfg.width, h: cfg.height, bars, labels, lines, title: c.title }
+      return { x: 0, y: 0, w: cfg.width, h: cfg.height, bars, labels, lines, title: c.title, shortTitle: c.shortTitle }
     })
     return { account, charts: measureGroups }
   })
   return layout
 }
 
-const layoutLegend = (stats: RecData, cfg: { pad: number; between: number; iconWidth: number; itemHeight: number; labelFont: string }) => {
-  const legend = uniq(stats.recs.map(r => r.toTag)).filter(t => tagMd[t]?.color)
+const layoutLegend = (toTags: string[], cfg: { pad: number; between: number; iconWidth: number; itemHeight: number; labelFont: string }) => {
+  const legend = toTags.filter(t => tagMd[t]?.color)
     .map((tag, i) => {
       const label = tagMd[tag]?.label ?? tag
       const labelW = getTextWidth(label, cfg.labelFont) + cfg.iconWidth + 20
@@ -250,3 +265,9 @@ const layoutLegend = (stats: RecData, cfg: { pad: number; between: number; iconW
 }
 
 
+export const AccountTag: FC<{ account: string } & StyleProps> = ({ account, style }) => {
+  const accountMd = tagMd[account]
+  return <Tag color={accountMd?.color} style={style}>
+    {accountMd?.label ?? account}<UserCircle style={{ ...styles.inlineIcon, marginLeft: '0.6em' }} />
+  </Tag>
+}

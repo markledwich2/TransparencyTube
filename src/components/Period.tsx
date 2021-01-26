@@ -1,6 +1,6 @@
 import { format, parseISO, getYear } from 'date-fns'
 import React from 'react'
-import { compact, groupBy, map, pipe } from 'remeda'
+import { compact, first, groupBy, map, pipe } from 'remeda'
 import { entries, orderBy, values } from '../common/Pipe'
 import { dateFormat } from '../common/Utils'
 import { InlineForm } from './InlineForm'
@@ -9,7 +9,7 @@ import { FlexRow } from './Layout'
 import numeral from 'numeral'
 import { Opt } from '../common/Metadata'
 
-export type Period = { type: string, value: string }
+export type Period = { type: string | 'd' | 'm' | 'y', value: string }
 export type HasPeriod = { period: string }
 
 type FormatMode = 'menu' | 'inline'
@@ -26,8 +26,9 @@ const groupFormat = {
   y: (p: string, mode: FormatMode) => `${format(parseISO(p), 'yyyy')}`
 }
 
-type PeriodOption = Opt<Period> & { group: string, parent: Period, daysTill: number, date: string }
-const periodOption = (p: Period) => {
+type PeriodOption = Opt<Period> & { group: string, parent?: Period, daysTill?: number, date?: string }
+const periodOption = (p: Period): PeriodOption => {
+  if (!p.value) return { label: 'All', value: { type: null, value: null }, group: '_' }
 
   const dReg = /d([\d]+)/.exec(p.type)
   const group = dReg ? 'd' : 'my'
@@ -37,7 +38,7 @@ const periodOption = (p: Period) => {
   if (group == 'd' && p.type != 'd1')
     parent = { type: 'd', value: p.value }
   else if (p.type == 'm')
-    parent = { type: 'y', value: `${getYear(parseISO(p.value))}-01-01` }
+    parent = { type: 'y', value: `${getYear(parseISO(p.value))}` }
 
   const option: PeriodOption = { value: p, group, daysTill, parent, date: p.value }
   return { ...option, label: periodLabel(option, 'menu') }
@@ -61,11 +62,15 @@ export const periodString = (p: Period) => p ? `${p.type}|${p.value}` : null
 
 interface PeriodSelectProps {
   periods: Period[]
-  period: Period
+  period?: Period
   onPeriod?: (p: Period) => void
+  showAll?: boolean
 }
-export const PeriodSelect = ({ periods, period, onPeriod }: PeriodSelectProps) => {
+export const PeriodSelect = ({ periods, period, onPeriod, showAll }: PeriodSelectProps) => {
   if (!periods) return <></>
+
+  if (showAll)
+    periods.push({ type: null, value: null })
 
   const periodGroups = pipe(periods,
     map(p => periodOption(p)),
@@ -74,10 +79,11 @@ export const PeriodSelect = ({ periods, period, onPeriod }: PeriodSelectProps) =
     groupBy(p => p.group)
   )
 
-  return <InlineForm value={period} inlineRender={p => p ? periodLabel(periodOption(p), 'inline') : ''}>
+  return <InlineForm value={period} inlineRender={p => p ? periodLabel(periodOption(p), 'inline') : 'All'}>
     <FlexRow style={{ fontSize: '1rem' }}>
       {entries(periodGroups).map((e) => {
         const [group, options] = e
+
         return <OptionList key={group}
           options={options}
           onChange={p => onPeriod(p.value)}
@@ -87,3 +93,5 @@ export const PeriodSelect = ({ periods, period, onPeriod }: PeriodSelectProps) =
     </FlexRow>
   </InlineForm>
 }
+
+export const periodIncludes = (p: Period, ts: string) => !p || ts.startsWith(p.value)

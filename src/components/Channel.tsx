@@ -1,19 +1,18 @@
-import React, { CSSProperties, useContext, useEffect, useState, FunctionComponent as FC } from 'react'
-import { first, indexBy } from 'remeda'
+import React, { CSSProperties, useEffect, useState, FunctionComponent as FC } from 'react'
+import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import { Channel, channelUrl, md, measureFormat, openYtChannel } from '../common/Channel'
+import { Channel, md, openYtChannel } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
 import { FlexCol, FlexRow, styles, loadingFilter, StyleProps } from './Layout'
-import { Spinner } from './Spinner'
 import { Videos } from './Video'
 import { ChannelStats, ChannelWithStats, isChannelWithStats, ChannelViewIndexes, VideoViews, indexPeriods } from '../common/RecfluenceApi'
-import { PeriodSelect, HasPeriod, Period, periodString } from './Period'
+import { PeriodSelect, Period, periodString } from './Period'
 import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled-icons/boxicons-solid'
 import { Markdown } from './Markdown'
 import Highlighter from "react-highlight-words"
 import { SearchSelect } from './SearchSelect'
 import orderBy from 'lodash.orderby'
-import { values } from '../common/Pipe'
+import { UseTip } from './Tip'
 
 export interface TopVideosProps {
   channel: Channel
@@ -99,26 +98,23 @@ export interface ChannelTitleProps {
   showTags?: boolean
   showCollectionStats?: boolean
   showReviewInfo?: boolean
-  tipId?: string
   logoStyle?: CSSProperties
   titleStyle?: CSSProperties
   onLogoClick?: (c: Channel) => void
   highlightWords?: string[]
+  useTip?: UseTip<ChannelWithStats | Channel>
 }
 
 const tags = indexBy(md.channel.tags.values, t => t.value)
 
 export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, className,
-  logoStyle, titleStyle, tipId, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps & StyleProps) => {
+  logoStyle, titleStyle, useTip, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps & StyleProps) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
-  //interaction. this doesn't cause updates to other components. Need to look at something like this  https://kentcdodds.com/blog/how-to-use-react-context-effectively
-  //const faded = inter.hover.value ? c[inter.hover.col] != inter.hover.value : false
-  //console.log('faded', faded)
-  //style={{ opacity: faded ? 0.5 : null }}
-  return <ChannelTitleStyle style={style} className={className}>
-    <div><ChannelLogo c={c} tipId={tipId} onClick={onLogoClick} style={logoStyle} /></div>
+
+  return <ChannelTitleStyle style={{ position: 'relative', ...style }} className={className}>
+    <div {...useTip?.attributes(c)}><ChannelLogo c={c} onClick={onLogoClick} style={logoStyle} /></div>
     <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>
         {highlightWords ? <Highlighter
@@ -195,14 +191,14 @@ const TagStyle = styled.span`
   font-weight: bold;
   line-height: 1.6;
   border-radius: 5px;
-  padding: 0.15em 0.5em;
+  padding: 0.2em 0.5em 0.15em;
   white-space: nowrap;
 `
 
 interface TagProps { color?: string, label?: string }
 
 export const Tag: FC<TagProps & StyleProps> = ({ color, label, style, className, children }) =>
-  <TagStyle style={{ ...style, backgroundColor: color, color: '#fff' }} className={className}>{label}{children}</TagStyle>
+  <TagStyle style={{ backgroundColor: color, color: '#fff', ...style }} className={className}>{label}{children}</TagStyle>
 
 interface ChannelSearchProps<T extends Channel> {
   onSelect: (T) => void

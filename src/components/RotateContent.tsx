@@ -4,7 +4,6 @@ import { delay } from '../common/Utils'
 import { StyleProps } from './Layout'
 
 interface RotateContentProps<T> {
-  size: { w: number, h: number }
   data: T[]
   template: (d: T) => JSX.Element
   getDelay: () => number
@@ -42,7 +41,7 @@ interface RotateState { status: RotateStatus, i: number }
 /**
  * Cycles through the given content in a fixed size container
  */
-export const RotateContent = <T,>({ size, data, template, getDelay, style }: RotateContentProps<T> & StyleProps) => {
+export const RotateContent = <T,>({ data, template, getDelay, style }: RotateContentProps<T> & StyleProps) => {
   const [s, setState] = useState<RotateState>({ status: 'off', i: 0 })
 
   useEffect(() => {
@@ -63,16 +62,17 @@ export const RotateContent = <T,>({ size, data, template, getDelay, style }: Rot
       }
 
       while (true) {
-        if (!isRunning) return
+        if (!isRunning || (data.length <= 1 && cs.status == 'on')) return
         cs = await stateLoop[cs.status]()
       }
     })()
     return () => isRunning = false
-  }, [])
+  }, [data])
 
-  const d = data?.[s.i]
+  const d = data?.[s.i % data.length]
   const dPreload = data?.[(s.i + 1) % data.length]
-  return <Container style={{ width: size.w, height: size.h, overflow: 'hidden', ...style }}>
+  //width: size.w, height: size.h, overflow: 'hidden',
+  return <Container style={{ ...style }}>
     {d && <div className={`content ${s.status}`}>{template(d)}</div>}
     {dPreload && <div style={{ display: 'none' }}>{template(dPreload)}</div>}
   </Container>

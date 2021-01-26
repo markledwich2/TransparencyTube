@@ -46,7 +46,6 @@ As we have noted elsewhere on the site, this is not an attempt to label or categ
 
 
 const FaqPage = () => {
-
   return <Layout>
     <TextPage>
       <Markdown>{md}</Markdown>

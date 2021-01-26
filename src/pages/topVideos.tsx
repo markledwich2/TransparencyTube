@@ -77,7 +77,7 @@ const TopVideosPage = () => {
     <PeriodSelect periods={periods} period={period} onPeriod={(p) => {
           setQuery({ period: periodString(p) })
         }} />
-  filtered to <InlineValueFilter md={md} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />
+  filtered to <InlineValueFilter metadata={{ ...md.channel, ...md.video }} filter={videoFilter} onFilter={setVideoFilter} rows={videos} />
       </FilterHeader>
       <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels showThumb loading={loading} />
       <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>

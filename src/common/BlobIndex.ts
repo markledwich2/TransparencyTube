@@ -6,6 +6,7 @@ import { getJson, getJsonl, PartialRecord } from './Utils'
 import { flatMap, indexBy, splitAt } from 'remeda'
 import { entries } from './Pipe'
 import { isNamedExportBindings } from 'typescript'
+import { mapToObj } from './remeda/mapToObj'
 
 export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   keyFiles: IndexFile<TKey>[]
@@ -74,7 +75,7 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
     for (const key in file) {
       const fileValue = file[key]
       const filterValue = filter[key]
-      if (filterValue == null) continue
+      if (filterValue == null || filterValue == undefined) continue
       if (fileValue == null)
         return 1 // nulls last to match default ordering by DB
       const res = (fileValue < filterValue ? -1 : (fileValue > filterValue ? 1 : 0))
@@ -101,6 +102,8 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true): Promise<B
   }
 
   const getRows = async (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow> = null) => {
+    filters = filters.map(f => isFilterRange(f) ? f : mapToObj(entries(f).filter(([_, v]) => v !== undefined), e => e) as TKey)
+
     const isComplete = cfg?.isComplete ?? ((_) => false)
     const parallelism = cfg?.parallelism ?? 8
 

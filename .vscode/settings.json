@@ -16,13 +16,16 @@
     "camelcase",
     "chans",
     "endregion",
+    "evaicons",
+    "heur",
     "ngraph",
     "odysee",
     "purry",
     "remeda",
     "stardazed",
     "ttube",
-    "vids"
+    "vids",
+    "visx"
   ],
   "typescript.preferences.quoteStyle": "single",
   "javascript.format.semicolons": "remove",

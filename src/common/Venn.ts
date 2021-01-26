@@ -1,9 +1,9 @@
 import { entries, isSubset, mapEntries, max, min, minBy, sumBy, values } from './Pipe'
 import { venn, scaleSolution, computeTextCentres, distance } from 'venn.js'
 import { pack, hierarchy, HierarchyNode, sum, HierarchyCircularNode } from 'd3'
-import { flatMap, groupBy, indexBy, mapValues, pick, pipe, } from 'remeda'
+import { first, flatMap, groupBy, indexBy, last, mapValues, pick, pipe, } from 'remeda'
 import { getPackDim } from './Bubble'
-import { Circle, circleFromD3, circleToRect, getBounds, Point } from './Bounds'
+import { Circle, circleFromD3, circleToRect, getBounds, Point } from './Draw'
 import orderBy from 'lodash.orderby'
 
 
@@ -64,7 +64,7 @@ export const vennSets = <T>(data: T[], typeCfg: VennTypeCfg<T>): VennSet<T>[] =>
   return sizedGroups
 }
 
-interface VennSetLayout<T> {
+export interface VennSetLayout<T> {
   key: string,
   circle: (Circle)
   txtCenter: Point
@@ -90,7 +90,6 @@ export const vennLayout = <T>(
     const key = setNamesToKey(node.sets)
     const txtCenter = textCenters[key]
     return min(entries(setCircles).map(([k, circle]) => {
-      if (!circle.vennCircle.x) debugger
       const dist = distance(txtCenter, circle.vennCircle) // distance between center points
       return k == key ? circle.r - dist : Math.abs(dist - circle.r)
     }))
@@ -108,31 +107,30 @@ export const vennLayout = <T>(
       (set.root)
       .descendants()
 
-    const c = { key, circles, circlesDim: getPackDim(circles), txtCenter, innerRadius }
+    const bounds = getBounds(circles.map(c => circleToRect(circleFromD3(c))))
+
+    const c = { key, circles, bounds, txtCenter, innerRadius }
     return c
   })
 
-  const zooms = rawCircles.map(c => c.innerRadius * 2 / Math.max(c.circlesDim.h, c.circlesDim.w)).sort()
-  const zoom = zooms[zooms.length > 1 ? Math.floor(zooms.length / 4) : 0]
-
+  const zooms = rawCircles.map(c => c.innerRadius * 2 / Math.max(c.bounds.h, c.bounds.w)).sort()
+  const zoom = first(zooms)
   // fit packing into the inner circle of each set
   const circleNodes = rawCircles.map(n => {
-    const dim = n.circlesDim
-    const dx = -dim.x.min.x + dim.x.min.r
-    const dy = -dim.y.min.y + dim.y.min.r
+    const b = n.bounds
     const circles: VennCircle<T>[] = n.circles.filter(c => !isVenRootNode(c.data)).map(n => ({
       key: n.id,
-      cx: (n.x + dx) * zoom,
-      cy: (n.y + dy) * zoom,
+      cx: (n.x - b.x) * zoom,
+      cy: (n.y - b.y) * zoom,
       r: n.r * zoom,
       data: n.data as T
     }))
 
-    const bounds = getBounds(circles.map(circleToRect))
+    const postZoomBounds = getBounds(circles.map(circleToRect))
 
     const offset = {
-      x: n.txtCenter.x - bounds.w / 2,
-      y: n.txtCenter.y - bounds.h / 2
+      x: n.txtCenter.x - postZoomBounds.w / 2,
+      y: n.txtCenter.y - postZoomBounds.h / 2
     }
     const circle = setCircles[n.key]
     const { key, txtCenter, innerRadius } = n

@@ -3,7 +3,7 @@ import orderBy from 'lodash.orderby'
 import { pipe, map, indexBy, flatMap, filter, first } from 'remeda'
 import { BubbleDataCfg } from '../components/BubbleChart'
 import { Channel, md } from './Channel'
-import { ColumnValueMd, colMdValues } from './Metadata'
+import { colMd, ColumnMdVal } from './Metadata'
 import { sumBy, minBy, maxBy, max } from './Pipe'
 
 export interface BubbleNode<T> {
@@ -19,7 +19,7 @@ export interface BubbleNode<T> {
 }
 
 export interface GroupedNodes<T> {
-  group: ColumnValueMd<string>
+  group: ColumnMdVal<string>
   nodes: d3.HierarchyCircularNode<BubbleNode<T>>[]
   dim: {
     x: NodeMinMax<T>
@@ -44,12 +44,12 @@ export interface BubblesSelectionState<T> {
   selectedKeys?: string[]
 }
 
-export const getGroupData = <T>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>) => {
+export const getGroupData = <T extends object>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>) => {
   const { measure, groupBy, colorBy, selectedKeys } = selections
   const val = (c: T) => c[measure] ?? 0
 
-  const groupValues = colMdValues(md, groupBy, rows).filter(g => g.value)
-  const colorValues = indexBy(colMdValues(md, colorBy), c => c.value)
+  const groupValues = colMd(dataCfg.md[groupBy], rows).values.filter(g => g.value)
+  const colorValues = dataCfg.md[colorBy].val
 
   const selectedSet = selectedKeys ? new Set(selectedKeys) : null
 
@@ -114,7 +114,7 @@ export const getPackDim = <T>(nodes: HierarchyCircularNode<T>[]) => {
   return dim
 }
 
-export const buildBubbleNodes = <T>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
+export const buildBubbleNodes = <T extends object>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
   : GroupNodes<T> => {
   const groupData = getGroupData(rows, selections, dataCfg)
   const packSize = Math.min(containerWidth - 20, 800)

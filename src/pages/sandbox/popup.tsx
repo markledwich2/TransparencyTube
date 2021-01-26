@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import Layout from '../components/Layout'
-import { Popup } from '../components/Popup'
+import Layout from '../../components/Layout'
+import { Popup } from '../../components/Popup'
 
 const SearchSandbox = () => {
   const [open, setOpen] = useState(true)

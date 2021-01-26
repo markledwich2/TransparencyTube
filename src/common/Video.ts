@@ -18,5 +18,5 @@ export const videoUrl = (videoId: string, offset: number | null = null) => {
 
 export const videoWithEx = <T extends VideoCommon>(v: T, channels: Record<string, Channel>) => {
   const c = channels[v.channelId]
-  return ({ ...v, tags: c?.tags, lr: c?.lr }) // de-normalize from channel for generic filter functionality
+  return ({ ...v, tags: c?.tags ?? null, lr: c?.lr ?? null }) // de-normalize from channel for generic filter functionality
 }

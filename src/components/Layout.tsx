@@ -56,6 +56,16 @@ export const styles = {
   } as CSSProperties,
   centerH: {
     margin: '0 auto', width: 'fit-content'
+  } as CSSProperties,
+
+  tip: {
+    opacity: 1,
+    padding: '1rem',
+    fontSize: '1rem',
+    backgroundColor: 'var(--bg1)',
+    color: 'var(--fg)',
+    border: '1px solid var(--bg3)',
+    borderRadius: '10px'
   } as CSSProperties
 }
 
@@ -150,7 +160,7 @@ export const NormalFont = styled.span`
 `
 
 export const TextPage = styled.div`
-  max-width: 45rem;
+  max-width: 60rem;
   margin: auto;
   font-size: 1.4em;
   min-height: 80vh;

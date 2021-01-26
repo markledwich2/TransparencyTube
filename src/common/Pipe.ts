@@ -57,3 +57,4 @@ export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.
 export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (values: T, key: string, i: number) => U): U[] =>
   entries(group).map(([key, values], i) => groupMap(values, key, i))
 export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null
+export const asArray = <T,>(v: Array<T> | T) => !v ? [] : Array.isArray(v) ? v as Array<T> : [v as T]

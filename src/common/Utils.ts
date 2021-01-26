@@ -88,10 +88,9 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
 
 /** formats the given date or string. If tz is not specified it will be displayed in the local time */
-export const dateFormat = (date: Date | string, tz?: string | 'UTC') => {
+export const dateFormat = (date: Date | string, tz?: string | 'UTC', fmt: string = 'do MMM yyyy') => {
   if (!date) return
   const d: Date = (typeof (date) == 'string') ? parseISO(date) : date
-  const fmt = 'do MMM yyyy'
   return tz ? format(utcToZonedTime(d, tz), fmt, { timeZone: tz }) //https://stackoverflow.com/questions/58561169/date-fns-how-do-i-format-to-utc
     : format(d, fmt)
 }
@@ -169,3 +168,13 @@ export const useDebounce = <T>(value: T, delay: number) => {
 }
 
 export const isSSR = () => typeof window === 'undefined'
+
+export const logIfError = <T>(m: () => T): (T | null) => {
+  try {
+    return m()
+  }
+  catch (e) {
+    console.error(e)
+  }
+  return null
+}

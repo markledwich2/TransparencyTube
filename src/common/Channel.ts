@@ -3,7 +3,7 @@ import { getJsonl, hoursFormat, numFormat } from './Utils'
 import { indexBy, map, pipe } from 'remeda'
 import { entries, orderBy, sumBy } from './Pipe'
 import { blobCfg } from './Cfg'
-import { ColumnMd, Opt } from './Metadata'
+import { ColumnMd, Opt, tableMd } from './Metadata'
 
 export interface Channel {
   channelId: string
@@ -26,7 +26,7 @@ export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
 export const hiddenTags = ['Black', 'LGBT']
 
 export const md = {
-  channel: {
+  channel: tableMd({
     tags: {
       label: 'Tag',
       desc: `Cultural or political classification for channel (e.g. Libertarian or  Partisan Right).
@@ -102,8 +102,8 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'subs', label: 'Subscribers', desc: 'The number of subscribers to the channel as provided by the YouTube API. Note, a small amount of channels hide this data.' }
       ]
     } as ColumnMd
-  },
-  video: {
+  }),
+  video: tableMd({
     errorType: {
       label: 'Removed Reason',
       values: [
@@ -142,7 +142,7 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'manual', label: 'Manual review' },
       ]
     } as ColumnMd
-  }
+  })
 }
 
 export const getColOptions = (table: keyof typeof md) => {

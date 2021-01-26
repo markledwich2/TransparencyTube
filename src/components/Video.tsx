@@ -1,11 +1,11 @@
-import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect, CSSProperties } from 'react'
+import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect, CSSProperties, useMemo } from 'react'
 import { dateFormat, hoursFormat, numFormat, secondsFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
-import { Tip } from './Tooltip'
+import { ToolTip } from './Tooltip'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative, VideoCaption } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
 import { flatMap, groupBy, indexBy, map, pipe, take } from 'remeda'
@@ -14,8 +14,8 @@ import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
 import ReactTooltip from 'react-tooltip'
+import { Tip, useTip, UseTip } from './Tip'
 
-const tipId = 'video-tip'
 
 export interface VideoId { videoId: string }
 
@@ -55,39 +55,45 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
   const [limit, setLimit] = useState(defaultLimit ?? 40)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
   const [extras, setExtras] = useState<Record<string, TExtra>>({})
+  const chanTip = useTip<Channel>()
 
-  let groupedVids: VideoGroup<T, TExtra>[] = null
-  let groupedVidsTotal: number = null
-  if (groupChannels && videos) {
-    var groupedVidsRaw = groupChannels && pipe(
-      entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: orderBy(e[1], v => v.videoViews, 'desc') })),
-      orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc'),
-    )
-    groupedVidsTotal = groupedVidsRaw.length
-    if (groupedVidsTotal > 1) groupedVidsRaw = take(groupedVidsRaw, limit)
-    const singleChannel = groupedVidsRaw.length == 1
-    groupedVids = groupedVidsRaw && map(groupedVidsRaw, g => {
-      const showAll = showAlls?.[g.channelId] || singleChannel
-      const vidsToShow = (showAlls?.[g.channelId] ? g.vids : g.vids.slice(0, chanVidChunk)).map(v => {
-        const e = extras[v.videoId]
-        return e ? { ...v, ...e } : v as T & Partial<TExtra>
+  const { groupedVids, groupedVidsTotal } = useMemo(() => {
+    let groupedVids: VideoGroup<T, TExtra>[] = null
+    let groupedVidsTotal: number = null
+    if (groupChannels && videos) {
+      var groupedVidsRaw = groupChannels && pipe(
+        entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: orderBy(e[1], v => v.videoViews, 'desc') })),
+        orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc'),
+      )
+      groupedVidsTotal = groupedVidsRaw.length
+      if (groupedVidsTotal > 1) groupedVidsRaw = take(groupedVidsRaw, limit)
+      const singleChannel = groupedVidsRaw.length == 1
+      groupedVids = groupedVidsRaw && map(groupedVidsRaw, g => {
+        const showAll = showAlls?.[g.channelId] || singleChannel
+        const vidsToShow = (showAlls?.[g.channelId] ? g.vids : g.vids.slice(0, chanVidChunk)).map(v => {
+          const e = extras[v.videoId]
+          return e ? { ...v, ...e } : v as T & Partial<TExtra>
+        })
+        return ({
+          ...g,
+          channel: channels?.[g.channelId],
+          showAll,
+          showLess: g.vids.length > chanVidChunk,
+          vidsToShow,
+          showChannel: true,
+          totalVids: g.vids.length
+        })
       })
-      return ({
-        ...g,
-        channel: channels?.[g.channelId],
-        showAll,
-        showLess: g.vids.length > chanVidChunk,
-        vidsToShow,
-        showChannel: true,
-        totalVids: g.vids.length
-      })
-    })
 
-    if (singleChannel) { // collapse videos into their own groups
-      const g = groupedVids[0]
-      groupedVids = g.vidsToShow.map((v, i) => ({ ...g, vidsToShow: [v], showChannel: i == 0 }))
+      if (singleChannel) { // collapse videos into their own groups
+        const g = groupedVids[0]
+        groupedVids = g.vidsToShow.map((v, i) => ({ ...g, vidsToShow: [v], showChannel: i == 0 }))
+      }
     }
-  }
+    return { groupedVids, groupedVidsTotal }
+  }, [limit, showAlls, extras, videos, channels, groupChannels])
+
+
 
   useEffect(() => { ReactTooltip.rebuild() }, [videos?.length, limit])
 
@@ -103,12 +109,10 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       })
   }, [videos?.length, limit, showAlls])
 
-  if (!videos) return <Spinner />
-
-  const showMore = (groupedVidsTotal ?? videos?.length) > limit
-
-  return <div style={style}>
-    <div style={{
+  return <div style={style}> {useMemo(() => {
+    if (!videos) return <Spinner />
+    const showMore = (groupedVidsTotal ?? videos?.length) > limit
+    return <><div style={{
       filter: loading ? loadingFilter : null,
       display: 'flex',
       flexDirection: 'row',
@@ -117,7 +121,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
     }}>
       {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
       {groupedVids &&
-        <ContainerDimensions >
+        <ContainerDimensions>
           {({ width }) => {
             const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
             const videoWidth = width / numCols - videoPadding
@@ -138,7 +142,8 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     onOpenChannel={onOpenChannel}
                     v={v}
                     highlightWords={highlightWords}
-                    showTags={showTags} />}
+                    showTags={showTags}
+                    useTip={chanTip} />}
                   <Video
                     key={v.videoId}
                     onOpenChannel={onOpenChannel}
@@ -147,8 +152,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
-                    children={contentBelow?.(v)}
-                  />
+                    children={contentBelow?.(v)} />
                   {i == vidsToShow.length - 1 && (showLess || showAll) &&
                     <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
                       {showAll ? `show less videos` : `show all ${totalVids} videos`}
@@ -159,8 +163,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
               )}
             </FlexRow>
           }}
-        </ContainerDimensions>
-      }
+        </ContainerDimensions>}
       {!groupedVids && videos && videos.slice(0, limit).map(v => <Video
         key={v.videoId}
         onOpenChannel={onOpenChannel}
@@ -169,16 +172,15 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         v={v}
         style={{ width: '40em', maxWidth: '100%', ...videoStyle }}
         c={showChannels && channels && channels[v.channelId]}
-        children={contentBelow?.(v as T & Partial<TExtra>)}
-      />)}
+        useTip={chanTip}
+        children={contentBelow?.(v as T & Partial<TExtra>)} />)}
     </div>
-    {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
-      <a onClick={_ => setLimit(limit + 200)}>show more</a>
-    </div>}
-    {showChannels && <Tip id={tipId} getContent={(id) => {
-      if (!id || !channels?.[id]) return <></>
-      return <ChannelDetails channel={channels[id] as ChannelWithStats} mode='min' />
-    }} />}
+      {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
+        <a onClick={_ => setLimit(limit + 200)}>show more</a>
+      </div>}
+    </>
+  }, [videos, groupedVids, loading, limit])}
+    {showChannels && <Tip {...chanTip.tipProps}>{chanTip.data && <ChannelDetails channel={chanTip.data as ChannelWithStats} mode='min' />}</Tip>}
   </div>
 }
 
@@ -219,32 +221,27 @@ const BMetric = styled.b`
   color:var(--fg);
 `
 
+type VideoTypes = VideoRemoved | VideoViews | VideoCommon | VideoNarrative
+
 interface VideoProps extends StyleProps {
-  v: VideoRemoved | VideoViews | VideoCommon | VideoNarrative,
+  v: VideoTypes,
   c?: Channel,
   onOpenChannel?: (c: Channel) => void,
   showThumb?: boolean
   showChannel?: boolean
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
+  useTip?: UseTip<Channel>
 }
 
-const getMdValues = (col: string, table = 'video') => indexBy(colMd(md, col, table).values, c => c.value)
-
-const mdValues = {
-  errorType: getMdValues('errorType'),
-  support: getMdValues('support'),
-  supplement: getMdValues('supplement')
-}
-
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, children }) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, children, useTip }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
-  const errorTypeOpt = isVideoError(v) ? mdValues.errorType[v.errorType] : null
-  const supportOpt = isVideoNarrative(v) ? mdValues.support[v.support] : null
-  const supplementOpt = isVideoNarrative(v) ? mdValues.supplement[v.supplement] : null
+  const errorTypeOpt = isVideoError(v) ? md.video.errorType.val[v.errorType] : null
+  const supportOpt = isVideoNarrative(v) ? md.video.support.val[v.support] : null
+  const supplementOpt = isVideoNarrative(v) ? md.video.supplement.val[v.supplement] : null
 
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
@@ -289,7 +286,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
             {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
           </div>
         }
-        {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} />}
+        {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} useTip={useTip} />}
         {children}
       </FlexCol>
     </FlexRow>
@@ -302,13 +299,14 @@ interface VideoChannelProps {
   onOpenChannel?: (c: Channel) => void
   highlightWords?: string[]
   showTags?: boolean
+  useTip?: UseTip<Channel>
 }
-const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags }: VideoChannelProps) => {
+const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags, useTip }: VideoChannelProps) => {
   c ??= { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
   //if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px' }} titleStyle={{ fontSize: '1em' }}
-      tipId={tipId} onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} />
+      onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} useTip={useTip} />
   </div>
 }
 

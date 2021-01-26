@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react"
-import { groupBy, indexBy, map, pick, pipe, uniq } from 'remeda'
+import React, { useEffect, useState, FunctionComponent as FC, useMemo } from "react"
+import { groupBy, indexBy, pick, uniq } from 'remeda'
 import { blobIndex, BlobIndex, noCacheReq } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelStats, VideoChannelExtra, VideoCommon, VideoNarrative, VideoViews } from '../common/RecfluenceApi'
+import { ChannelStats, VideoNarrative } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout, { MinimalPage, styles } from "../components/Layout"
 import { Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
-import { delay, getJsonl, navigateNoHistory, numFormat, parseJson } from '../common/Utils'
-import { filterFromQuery, filterFromState, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
+import { delay, getJsonl, navigateNoHistory, numFormat, toJson } from '../common/Utils'
+import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
 import PurposeBanner from '../components/PurposeBanner'
 import ReactTooltip from 'react-tooltip'
 import { DateRangeQueryState, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
@@ -18,10 +18,9 @@ import { BubbleCharts } from '../components/BubbleChart'
 import ContainerDimensions from 'react-container-dimensions'
 import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
 import { BubblesSelectionState } from '../common/Bubble'
-import { Tip } from '../components/Tooltip'
+import { ToolTip } from '../components/Tooltip'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
-import { Markdown, TextSection, TextStyle } from '../components/Markdown'
-import { colMdValuesObj } from '../common/Metadata'
+import { Markdown, TextSection } from '../components/Markdown'
 import { ChevronDownOutline, ChevronUpOutline } from '@styled-icons/evaicons-outline'
 import { blobCfg } from '../common/Cfg'
 import { LinkData, NodeData, Sankey } from '../components/Sankey'
@@ -120,7 +119,7 @@ const bubbleKeyObject = (key: string) => {
   return { channelId, group }
 }
 
-const supportValues = colMdValuesObj(md, 'support')
+const supportValues = md.video.support.val
 
 const PageStyle = styled(MinimalPage)`
   svg.sankey {
@@ -141,6 +140,8 @@ const PageStyle = styled(MinimalPage)`
     }
   }
 `
+const groupCol = 'support'
+const colorCol = 'lr'
 
 const NarrativesPage = () => {
   const [idx, setIdx] = useState<NarrativeIdx>(null)
@@ -151,31 +152,35 @@ const NarrativesPage = () => {
   const [copyOpen, setCopyOpen] = useState<string[]>(copySections.filter(s => s.open).map(s => s.title))
   const [recs, setRecs] = useState<NarrativeRecSupport[]>(null)
 
+  const setVideoFilter = (f) => setQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement', 'errorType']))
   const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
-  const setVideoFilter = (f: FilterState<VideoNarrative>) => setQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement', 'errorType']))
 
-  const groupCol = 'support'
-  const colorCol = 'lr'
-  const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
-  const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
+  const { narrative, dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
 
-  // aggregate videos into channel/group-by granularity. Use these rows for bubbles
-  const bubbleRows = videos && channels && entries(
-    groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
-  )
-    .map(([g, vids]) => {
-      const { channelId, group } = bubbleKeyObject(g)
-      return ({
-        bubbleKey: g,
-        ...channels[channelId],
-        [groupCol]: group,
-        views: vids ? sumBy(vids, v => v.videoViews) : 0
-      }) as NarrativeChannel
-    })
+    const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
+    const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
 
-  const videoRows = videos?.filter(v => filterIncludes(videoFilter, v))
-  const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
+    // aggregate videos into channel/group-by granularity. Use these rows for bubbles
+    const bubbleRows = videos && channels && entries(
+      groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
+    )
+      .map(([g, vids]) => {
+        const { channelId, group } = bubbleKeyObject(g)
+        return ({
+          bubbleKey: g,
+          ...channels[channelId],
+          [groupCol]: group,
+          views: vids ? sumBy(vids, v => v.videoViews) : 0
+        }) as NarrativeChannel
+      })
+
+    const videoRows = videos?.filter(v => filterIncludes(videoFilter, v))
+    const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
+
+    return { narrative, dateRange, selectedChannels, videoRows, bubbleRows }
+  }, [toJson(q), videos, channels, idx])
+
 
   useEffect(() => {
     getJsonl<NarrativeRecSupport>(blobCfg.resultsUri.addPath('narrative_recs_support.jsonl.gz').url, noCacheReq)
@@ -244,11 +249,11 @@ const NarrativesPage = () => {
             <FilterHeader style={{ marginBottom: '2em' }}>
               <FilterPart>
                 Videos filter
-                <InlineValueFilter md={md} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} />
+                <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
               </FilterPart>
               <FilterPart>
                 channel filter
-                <InlineValueFilter md={md} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} />
+                <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
               </FilterPart>
               in period
               <FilterPart>
@@ -266,7 +271,7 @@ const NarrativesPage = () => {
                     return setQuery({ selectedKeys: keys?.length > 0 ? keys : null })
                   }} />
               </>)}
-                <Tip id='searchChannel' getContent={id => {
+                <ToolTip id='searchChannel' getContent={id => {
                   const c = channels?.[id]
                   return c ? <ChannelDetails channel={c} mode='min' /> : <></>
                 }} />
@@ -283,7 +288,8 @@ const NarrativesPage = () => {
               dataCfg={{
                 key: r => `${r.channelId}|${r[groupCol]}`,
                 image: r => r.logoUrl,
-                title: r => r.channelTitle
+                title: r => r.channelTitle,
+                md: { ...md.channel, ...md.video }
               }}
               showImg
               loading={loading}
@@ -331,7 +337,6 @@ const NarrativesPage = () => {
     </PageStyle>
   </Layout>
 }
-
 
 type Dir = 'from' | 'to'
 const supportKey = (dir: Dir, support: string) => `${dir}|${support ?? 'none'}`

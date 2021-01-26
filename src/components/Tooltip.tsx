@@ -21,7 +21,7 @@ interface TipProps {
   getContent: GetContentFunc
 }
 
-export const Tip = ({ id, getContent }: TipProps) => <TipStyle>
+export const ToolTip = ({ id, getContent }: TipProps) => <TipStyle>
   <ReactTooltip
     id={id}
     effect='solid'

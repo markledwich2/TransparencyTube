@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost:8001/personalization",
+            "url": "http://localhost:8001/removedVideos",
             "webRoot": "${workspaceFolder}"
         }
     ]

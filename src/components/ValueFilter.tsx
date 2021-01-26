@@ -1,8 +1,9 @@
+import { StringKeyOf } from 'elastic-ts/dist/elasticBuilder/utils'
 import React from "react"
-import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact } from 'remeda'
+import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact, uniqBy, concat } from 'remeda'
 import styled from 'styled-components'
-import { colMd, ColumnValueMd, Opt, tableMdForCol, TablesMetadata } from '../common/Metadata'
-import { entries, keys, orderBy, values } from '../common/Pipe'
+import { colMd, ColumnMd, ColumnMdRun, ColumnMdVal, Opt, TableMd, TablesMetadata } from '../common/Metadata'
+import { asArray, entries, keys, orderBy, values } from '../common/Pipe'
 import { mapToObj } from '../common/remeda/mapToObj'
 import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
@@ -10,83 +11,89 @@ import { InlineForm } from './InlineForm'
 import { OptionList } from './InlineSelect'
 import { StyleProps } from './Layout'
 
-
-export type FilterState<T> = { [P in Extract<keyof T, string>]?: string[] }
+/**
+ * Currently selected values that will filter a row. Only supply values for cols that are presented in the filter.
+ * The filter can be single or multi select. This will be based on the values of this filter
+ */
+export type FilterState<T> = { [P in Extract<keyof T, string>]?: string[] | string }
 
 interface FilterColValue {
   value: string,
   num?: number
 }
 
-type FilterColOption = Opt<FilterColValue> & ColumnValueMd<FilterColValue> & { selected?: boolean }
+type FilterColOption = Opt<FilterColValue> & ColumnMdVal<FilterColValue> & { selected?: boolean }
 
 interface FilterOption {
-  table: string,
   col: string,
   options: FilterColOption[]
 }
 
-interface FilterFormProps<TRow, TFilter> {
-  md: TablesMetadata
-  filter: FilterState<TFilter>
-  onFilter: (f: FilterState<TFilter>) => void
+export type FilterColMd = ColumnMdRun & { singleSelect?: boolean, sort?: { getVal?: (v: FilterColOption) => any, dir: 'asc' | 'desc' } }
+export type FilterTableMd = Record<string, FilterColMd>
+
+interface FilterFormProps<TRow, TFilter extends FilterState<Partial<TRow>>> {
+  metadata: FilterTableMd
+  filter: TFilter
+  onFilter: (f: TFilter) => void
   rows?: TRow[]
+  showCount?: boolean
 }
 
 export const filterIncludes = <T,>(filter: FilterState<T>, row: T) => {
   if (!filter || !row) return true
   const colTest = (c: Extract<keyof T, string>): boolean => {
-    var filterValues = filter[c]
+    var filterValues: string | string[] = filter[c]
     if (!filterValues) return true
     const rv = row?.[c]
     if (rv === undefined) {
       console.error(`filtering by col '${c}' which is undefined on row:`, row)
       return false
     }
-    if (Array.isArray(rv)) return filterValues.every(fv => rv.includes(fv))
+    if (Array.isArray(rv)) return Array.isArray(filterValues) ? filterValues.every(fv => rv.includes(fv)) : rv.includes(filterValues)
     if (typeof rv == 'string' || rv == null) return filterValues.includes(rv as any as string | null)
     throw 'not implemented. Only support string[] | string'
   }
   return keys(filter).every(colTest)
 }
 
-export const InlineValueFilter = <TRow, TFilter>(p: FilterFormProps<TRow, TFilter> & StyleProps) => <InlineForm
+export const InlineValueFilter = <TRow extends object, TFilter>(p: FilterFormProps<TRow, TFilter> & StyleProps) => <InlineForm
   style={p.style}
-  inlineRender={f => inlineFilterElement(p.md, f)}
+  inlineRender={f => inlineFilterElement(p.metadata, f)}
   value={p.filter}
   onChange={f => p.onFilter(f)}
   keepOpenOnChange>
   <FilterForm {...p} />
 </InlineForm>
 
-const tableColOptions = <TRow, TFilter>(md: TablesMetadata, table: string, col: string, filter: FilterState<TFilter>, rows?: TRow[]) => {
-  const c = colMd(md, col, table)
+const tableColOptions = <TRow extends object, TFilter>(md: FilterTableMd, col: string, filter: TFilter, rows?: TRow[], showCount?: boolean) => {
+  rows ??= []
+  if (!md[col]) throw `No metadata found for '${col}'`
+  const c = colMd(md[col], rows)
   const allOption: FilterColOption = { value: { value: '_all', num: rows?.length }, label: `All - ${c.label}`, color: '#444', selected: isSelected(filter, col, '_all') }
-
   const mdByVal = indexBy(c.values ?? [], v => v.value)
+  const rawColValues = compact(flatMap(rows, r => asArray(r[col])))
 
-  if (!rows) rows = []
+  var filterValues = pipe(
+    entries(groupBy(rawColValues, v => v)).map(([value, g]) => ({ value, num: g.length } as FilterColValue))
+      .concat((c.values ?? []).map(v => ({ value: v.value })))
+      .concat(asArray(filter?.[col]).map(v => ({ value: v }))),
+    uniqBy(v => v.value)
+  )
 
-  // values from data
-  const rawColValues = compact(flatMap(rows, r => {
-    const v = r[col]
-    return Array.isArray(v) ? v as string[] : [v as string]
-  }))
+  const sort = c.sort ?? (showCount ? { getVal: (v) => v.value.num, dir: 'desc' } : { getVal: (v) => v.label, dir: 'desc' })
 
-  var filterValues = entries(groupBy(rawColValues, v => v)).map(([value, g]) => ({ value, num: g.length } as FilterColValue))
-  filterValues = c.values?.filter(v => !filterValues.find(f => f.value == v.value)).map(v => ({ value: v.value })).concat(filterValues) ?? filterValues
-  filterValues = (filter?.[col] ?? []).filter(v => !filterValues.find(f => f.value == v)).map(v => ({ value: v })).concat(filterValues)
   const filterOptions = pipe(filterValues,
     map(v => {
       const m = mdByVal[v.value]
       return ({ value: v, label: m?.label ?? v.value, color: m?.color, desc: m?.desc, selected: isSelected(filter, col, v.value) })
     }), // get metadata for all values
-    orderBy(v => v.value.num ?? 0, 'desc')
+    orderBy(v => sort.getVal(v), sort.dir)
   )
   return [allOption].concat(filterOptions)
 }
 
-const inlineFilterElement = <TFilter,>(md: TablesMetadata, f: FilterState<TFilter>) => {
+const inlineFilterElement = <TFilter,>(md: FilterTableMd, f: FilterState<TFilter>) => {
   if (!Object.values(f).some(f => f)) return <Tag label="All" color="#444" />
   //if (f.tags?.length == 0 || f.lr?.length == 0) return <Tag label="None" color="#444" />
   const filterOptions = getFilterOptions(md, f)
@@ -94,13 +101,12 @@ const inlineFilterElement = <TFilter,>(md: TablesMetadata, f: FilterState<TFilte
   return <span >{inlineOps.map(t => <Tag key={t.value.value} label={t.label} color={t.color} style={{ margin: '0.2em' }} />)}</span>
 }
 
-const getFilterOptions = <TRow, TFilter>(md: TablesMetadata, filter: FilterState<TFilter>, rows?: TRow[])
+const getFilterOptions = <TRow extends object, TFilter extends FilterState<Partial<TRow>>>(md: FilterTableMd, filter: TFilter, rows?: TRow[], showCount?: boolean)
   : Record<string, FilterOption> => {
   const res = pipe(
     keys(filter),
     map(f => {
-      const table = tableMdForCol(md, f as string)
-      return { table, col: f, options: tableColOptions(md, table, f, filter, rows) } as FilterOption
+      return { col: f, options: tableColOptions(md, f as string, filter, rows, showCount) } as FilterOption
     }),
     indexBy(o => o.col)
   )
@@ -132,38 +138,39 @@ const FilterFormStyle = styled.div`
   }
 `
 
-const FilterForm = <TRow, TFilter>({ filter, onFilter, rows, md }: FilterFormProps<TRow, TFilter>) => {
-  const filterOptions = getFilterOptions(md, filter, rows)
+const FilterForm = <TRow extends object, TFilter>({ filter, onFilter, rows, metadata: md, showCount }: FilterFormProps<TRow, TFilter>) => {
+  const filterOptions = getFilterOptions(md, filter, rows, showCount)
   const tagRender = (o: FilterColOption) => <div className='item'>
     <Tag label={o.label} color={o.color} style={{}} />
-    {o.value.num > 0 && <span className='num'>{numFormat(o.value.num)}</span>}
+    {showCount && o.value.num > 0 && <span className='num'>{numFormat(o.value.num)}</span>}
   </div>
-  const onSelect = (o: FilterColOption, col: Extract<keyof TFilter, string>) => onFilter(filterWithSelect(filter, col, o.value.value, o.selected))
+  const onSelect = (o: FilterColOption, col: Extract<keyof TFilter, string>) =>
+    onFilter(filterWithSelect(filter, col, md[col], o.value.value, o.selected))
   return < FilterFormStyle >
     {values(filterOptions).map(f => <OptionList key={f.col} options={f.options} itemRender={tagRender} onChange={o => onSelect(o, f.col as any)} />)}
   </FilterFormStyle >
 }
 
-const isSelected = <TFilter,>(filter: FilterState<TFilter>, col: string, v: string) => {
+const isSelected = <TFilter,>(filter: TFilter, col: string, v: string) => {
   const filterValues = filter[col]
   if (v == '_all') return !filterValues // all selected when filter null
-  return filterValues?.includes(v) == true
+  return Array.isArray(filterValues) ? filterValues?.includes(v) : filterValues == v
 }
 
-const filterWithSelect = <TFilter,>(f: FilterState<TFilter>, col: Extract<keyof TFilter, string>, val: string, select: boolean): FilterState<TFilter> => {
-  if (val == '_all') return { ...f, [col]: select ? null : [] } // if toggling all: null means no filter, [] means filter everything away
-  const c = f[col]
-  if (!c) return { ...f, [col]: [val] } // when previous value was null (all), then deselecting is selecting...
+const filterWithSelect = <TFilter,>(f: TFilter, col: string, colMd: FilterColMd, val: string, select: boolean): TFilter => {
+  // if toggling all: undefined means no filter, null means null values, []/'' means filter to no results
+  if (val == '_all') return { ...f, [col]: select ? null : colMd.singleSelect ? '' : [] }
+  if (colMd.singleSelect) return { ...f, [col]: val }
+  const filterVal = colMd.singleSelect ? f[col] as string : f[col] as string[]
+  if (!filterVal) return { ...f, [col]: [val] } // when previous value was null (all), then deselecting is selecting...
+  const selection = select ? uniq((f[col] as string[] ?? []).concat(val)) : (f[col] as string[] ?? []).filter(v => v != val)
   return {
-    ...f, ...{
-      [col]: select ?
-        uniq((c ?? []).concat(val)) :
-        (f[col] ?? []).filter(v => v != val)
-    }
+    ...f,
+    ...{ [col]: selection }
   }
 }
 
-export const filterToQuery = (f: FilterState<any>) => mapValues(f, v => v?.join('|'))
+export const filterToQuery = (f: FilterState<any>) => mapValues(f, v => Array.isArray(v) ? v?.join('|') : v)
 export const filterFromQuery = <T,>(q: T, filterProps: (keyof T)[]) =>
   mapToObj(filterProps, p => {
     const filterValues = (q[p] as unknown as string)?.split('|').filter(s => s?.length > 0)

@@ -2,7 +2,7 @@ import React from 'react'
 import { Channel, md } from '../common/Channel'
 import { HelpOutline } from '@styled-icons/material'
 import ReactTooltip from 'react-tooltip'
-import { Tip } from './Tooltip'
+import { ToolTip } from './Tooltip'
 import { Markdown } from './Markdown'
 import { Tag } from './Channel'
 import { indexBy, pipe } from 'remeda'
@@ -17,7 +17,7 @@ interface TagProps {
 
 const tipId = 'tag-help'
 
-export const TagTip = ({ channels }: { channels: Channel[] }) => <Tip
+export const TagTip = ({ channels }: { channels: Channel[] }) => <ToolTip
   id={tipId}
   getContent={tag => <TagInfo tag={tag} channels={channels} />} />
 

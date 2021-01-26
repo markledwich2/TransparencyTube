@@ -21,7 +21,7 @@ import { Markdown } from './Markdown'
 import { Popup } from './Popup'
 import { BubbleCharts } from './BubbleChart'
 import { FilterHeader } from './FilterCommon'
-import { ColumnValueMd } from '../common/Metadata'
+import { ColumnMdVal } from '../common/Metadata'
 
 interface QueryState extends BubblesSelectionState<Channel> {
   videoPeriod?: string
@@ -165,7 +165,8 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       dataCfg={{
         key: r => r.channelId,
         image: r => r.logoUrl,
-        title: r => r.channelTitle
+        title: r => r.channelTitle,
+        md: md.channel
       }}
       groupRender={(g, rows) => groupBy == 'tags' && <TagInfo tag={g} channels={rows} />}
       onOpenGroup={(g) => onSelection({ openGroup: g })}
@@ -196,6 +197,6 @@ const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
   <b>{o.label}</b><Markdown source={o.desc} />
 </NormalFont></MeasureOptionStyle>
 
-export const MeasureOption = (o: ColumnValueMd<string>) => <MeasureOptionStyle><NormalFont>
+export const MeasureOption = (o: ColumnMdVal<string>) => <MeasureOptionStyle><NormalFont>
   <b>{o.label}</b><Markdown source={o.desc} />
 </NormalFont></MeasureOptionStyle>

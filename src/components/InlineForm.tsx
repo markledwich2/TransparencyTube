@@ -62,13 +62,13 @@ interface InlineFormOptions<T> {
 }
 
 export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose, style }: PropsWithChildren<InlineFormOptions<T>> & StyleProps) => {
-  const [open, setOpen] = useState<T>(null)
+  const [open, setOpen] = useState<{ value: T, open: boolean }>({ value: null, open: false })
   const popupRef = useRef<HTMLDivElement>()
 
   const handleClick = ({ target }) => {
     if (popupRef.current?.contains(target)) return
-    if (open) {
-      setOpen(null)
+    if (open.open) {
+      setOpen({ value: null, open: false })
       onClose?.()
     }
   }
@@ -84,13 +84,14 @@ export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keep
 
   return <OuterStyle style={style}>
     <InlineStyle onClick={e => {
-      if (!open)
-        setOpen(value)
+      if (!open.open) {
+        setOpen({ value, open: true })
+      }
     }}>
       {inlineRender ? inlineRender(value) : value?.toString()}
       <ChevIcon />
     </InlineStyle>
-    {open && (keepOpenOnChange || jsonEquals(open, value)) && <PopupStyle ref={popupRef}
+    {open.open && (keepOpenOnChange || jsonEquals(open.value, value)) && <PopupStyle ref={popupRef}
       style={{ ...popupStyle, visibility: 'hidden' }} className="inline-form">
       {children}
     </PopupStyle>}
