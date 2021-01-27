@@ -10,8 +10,9 @@ import { Tag } from './Channel'
 import { Video } from './Video'
 import { styles } from './Layout'
 import { logIfError, toJson } from '../common/Utils'
-import { AccountTag } from './PersonalizationBar'
+import { AccountTag } from './PersonaBar'
 import { Tip, useTip } from './Tip'
+import { videoUrl } from '../common/Video'
 
 export type RecVennKey = Pick<Rec, 'label' & 'from_video_id'>
 const tagMd = md.channel.tags.val
@@ -24,7 +25,7 @@ interface RecVennProps {
   videos: Record<string, RecVideo>
   debug?: boolean
 }
-export const PersonalizationVenn: FC<RecVennProps> = ({ width, height, sets, channels, videos, debug }) => {
+export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, videos, debug }) => {
   const size = Math.min(1000, width)
   const vennCfg = { width: size, height: size, padding: 20 }
 
@@ -60,19 +61,23 @@ export const PersonalizationVenn: FC<RecVennProps> = ({ width, height, sets, cha
             {c.circles.map(r => {
               const id = r.data.id
               const toChan = channels?.[r.data.toChannelId]
-              const tipProps = isRecVideo(r.data) ? videoTip.eventProps(videos[id]) : {}
+
+              const v = isRecVideo(r.data) && videos[id]
+              const circleProps = isRecVideo(r.data) && {
+                ...videoTip.eventProps(v),
+                onClick: () => window.open(videoUrl(v.toVideoId), 'yt')
+              }
 
               return <g key={id} transform={`translate(${r.cx}, ${r.cy})`}>
                 {isRecGroup(r.data) && toChan?.logoUrl &&
                   <image
                     x={-r.r} y={-r.r} width={r.r * 2}
                     href={toChan.logoUrl} clipPath={`url(#clip-${r.r})`}
-                    data-title={r.data.toChannelTitle}
-                    {...tipProps} />}
+                    data-title={r.data.toChannelTitle} />}
                 {<circle
                   className='row'
                   r={r.r}
-                  {...tipProps} />}
+                  {...circleProps} />}
               </g>
             })}
           </g>)}
@@ -114,6 +119,7 @@ const SvgStyle = styled.svg`
     opacity: 0.1;
     stroke: #000;
     stroke-opacity: 0.9;
+    cursor: pointer;
   }
   text.tag {
     fill: #eee;

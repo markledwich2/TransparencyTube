@@ -1,4 +1,4 @@
-import React, { useEffect, useState, FunctionComponent as FC, Fragment } from 'react'
+import React, { useEffect, useState, FunctionComponent as FC, Fragment, useMemo } from 'react'
 import Layout, { FlexRow, MinimalPage, NarrowSection, StyleProps, styles } from '../components/Layout'
 import PurposeBanner from '../components/PurposeBanner'
 import { dateFormat, delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
@@ -13,62 +13,56 @@ import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { TextSection } from '../components/Markdown'
 import { FilterHeader as FH, FilterPart as FP } from '../components/FilterCommon'
-import { InlineValueFilter as FV } from '../components/ValueFilter'
+import { FilterState, InlineValueFilter as FV } from '../components/ValueFilter'
 import { entries, mapEntries, orderBy, takeRandom, values } from '../common/Pipe'
-import { shuffle } from 'd3'
-import { Popup } from '../components/Popup'
-import PersonalizationBar, { BarQueryState, loadBarData, PersonalizationBarData } from '../components/PersonalizationBar'
-import { isRecVideo, Rec, RecGroup, RecVideo, Watch, WatchKey } from '../common/Personalization'
-import { PersonalizationVenn, RecVennKey } from '../components/PersonalizationVenn'
-import { AccountVideos, PersonalizationHistory } from '../components/PersonalizationHistory'
+import PersonaBar, { BarFilter, BarStat, loadBarData, PersonaAllBarData, PersonaBarData, useBarData } from '../components/PersonaBar'
+import { isRecVideo, Rec, RecGroup, RecVideo, Seen, SeenKey } from '../common/Personalization'
+import { PersonaVenn, RecVennKey } from '../components/PersonaVenn'
+import { PersonaSeen, useSeen, PersonaSeenPopup } from '../components/PersonaSeen'
 import { PeriodSelect, periodString } from '../components/Period'
 import { Spinner } from '../components/Spinner'
 import { RotateContent } from '../components/RotateContent'
 import { ChannelDetails, ChannelLogo, ChannelSearch } from '../components/Channel'
-import { tableMd } from '../common/Metadata'
+import { TableMd, tableMd, TableMdRun } from '../common/Metadata'
 import { CloseOutline } from 'styled-icons/evaicons-outline'
 import { parseISO } from 'date-fns'
 import { Tip, useTip } from '../components/Tip'
+import styled from 'styled-components'
 
-interface QueryState extends BarQueryState {
+type PrefixAll<T, P extends string> = {
+  [K in keyof T & string as `${P}${Capitalize<K>}`]: T[K]
+}
+
+// type BarFilterPrefix = 'rec' | 'feed'
+// type BarFilters = { [K in `${BarFilterPrefix}${Capitalize<keyof BarFilter>}`]: BarFilter[`${keyof BarFilter}`] }
+
+type QueryState = {
   label?: string
   vennChannelIds?: string[]
   vennAccounts?: string[]
   vennLabel?: string
   vennDay?: string
-  openHistory: string
-}
+  openWatch: string
+  openFeed: string
+} & PrefixAll<BarFilter, 'rec'> & PrefixAll<BarFilter, 'feed'>
 
-const PersonalizationPage = () => {
+const PersonaPage = () => {
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
-  const [watchIdx, setWatchIdx] = useState<BlobIndex<Watch, WatchKey>>(null)
+
   const [rs, setRecState] = useState<RecState>()
   const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
   const [chans, setChannels] = useState<Record<string, Channel>>()
-  const [watches, setWatches] = useState<Record<string, Watch[]>>(null)
-  const [barData, setBarData] = useState<PersonalizationBarData>({ recs: [], tags: [] })
+
+  const watch = useSeen('us_watch')
+  const feed = useSeen('us_feed')
+
+  const barData = useBarData() //2000
   const chanTip = useTip<Channel>()
 
   useEffect(() => {
     getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))
-    blobIndex<Watch, WatchKey>("us_watch").then(setWatchIdx)
     blobIndex<Rec, RecVennKey>("us_recs").then(setRecIdx)
-    delay(2000).then(() => loadBarData().then(setBarData))
   }, [])
-
-  useEffect(() => {
-    if (!watchIdx) return;
-    (async () => {
-      const rawWatches = await watchIdx.rowsWith([], {
-        parallelism: 4,
-        // complete when we have at least one video for each account
-        isComplete: (rs) => entries(groupBy(rs, r => r.account)).length >= watchIdx.cols.account.distinct.length,
-        order: 'desc'
-      })
-      const watches = mapValues(groupBy(rawWatches, r => r.account), ws => shuffle(ws))
-      setWatches(watches)
-    })()
-  }, [watchIdx])
 
   const recFilter = pick(q, vennFilterKeys)
   useEffect(() => {
@@ -76,11 +70,7 @@ const PersonalizationPage = () => {
     loadRecData(recIdx, recFilter, chans).then(setRecState)
   }, [recIdx, toJson(recFilter)])
 
-  const months = uniq(barData.recs.map(r => r.month))
-  const barPeriods = uniq(months.map(m => dateFormat(m, 'UTC', 'yyyy'))).map(y => ({ type: 'y', value: `${y}` }))
-    .concat(months.map(m => ({ type: 'm', value: m })))
-
-  const recMd = {
+  const barMd = useMemo(() => ({
     ...{
       account: md.channel.tags,
       groupAccounts: md.channel.tags,
@@ -95,31 +85,57 @@ const PersonalizationPage = () => {
         values: rs?.availableDays.map(d => ({ value: d, label: d && dateFormat(d) }))
       }
     })
-  }
+  }), [rs, recIdx])
 
-  const barFilterProps = { metadata: recMd, rows: barData?.recs }
-  const vennFilterProps = { metadata: recMd, rows: rs?.recs }
+  const vennFilterProps = { metadata: barMd, rows: rs?.recs }
+  const commonBarData = pick(barData, ['tags', 'months'])
+  const barRecs = { stats: barData.recs, ...commonBarData }
+  const barFeeds = { stats: barData.feeds, ...commonBarData }
 
   return <Layout>
     <PurposeBanner>
       <p>YouTube's recommended videos are tailored for each user taking into account watch history. We created 15 personas, each with their own watch history to see how YouTube's personalization works. </p>
     </PurposeBanner>
     <MinimalPage>
-      <TextSection style={{ marginBottom: '1em', marginTop: '2em' }}>
-        Here is a <b>history of videos watched by each persona</b>. Personas watch video's in channels with a matching classification (e.g. The socialist persona watched only videos in Socialist channels). Each day, a list of videos was selected at random, proportional to views within the previous 7 days.
-      </TextSection>
+      <TS>
+        <h2>History</h2>
+        Personas only watch video's from their own group (i.e. The socialist persona watched only videos in Socialist channels). Each day, 50 recent videos were watched randomly proportional to views.
+      </TS>
 
-      {watches ? <PersonalizationHistory watches={watches} onShowHistory={a => setQuery({ openHistory: a })} channels={chans} />
-        : <div style={{ marginBottom: '100vh' }}><Spinner /></div>}
+      <PersonaSeen seen={watch} verb='watched' showSeen={openWatch => setQuery({ openWatch })} channels={chans} style={{ minHeight: '100vh' }} />
+
+      <TS>
+        <h2>Home page videos</h2>
+        Each day, personas refresh their home page many times, and we collect the videos that were shown. Bellow are the videos that were shown to the persona the most times.
+      </TS>
+
+      <PersonaSeen seen={feed} verb='seen' showSeen={openFeed => setQuery({ openFeed })} channels={chans} />
+
+      {barFeeds && <>
+        <TS>
+          For each persona, this the portion of home page videos to different political categories.
+        </TS>
+        <NarrowSection>
+          <BarFilters
+            noun='Home page videos' verb='seen'
+            data={barFeeds}
+            md={barMd}
+            filter={{ accounts: q.feedAccounts }}
+            onFilter={f => setQuery({ feedAccounts: f.accounts, feedPeriod: f.period, feedTags: f.tags })}
+          />
+        </NarrowSection>
+        <PersonaBar data={barFeeds} filter={{ accounts: q.feedAccounts, period: q.feedPeriod, tags: q.feedTags }} />
+      </>}
 
       {rs?.sets && <>
-        <TextSection style={{ marginBottom: '1em', marginTop: '5em' }}>
-          Bellow is a venn diagram showing the overlap of recommendation shown to the different personas from the same videos.
-        </TextSection>
+        <TS>
+          <h2>Recommendations</h2>
+          The venn diagram shows the overlap of recommendation shown to personas from the same videos.
+        </TS>
 
         <NarrowSection>
           <FH>
-            <FP>Recommendations seen by personas <FV metadata={recMd}
+            <FP>Recommendations seen by personas <FV metadata={barMd}
               filter={{ groupAccounts: rs.filter.vennAccounts }}
               onFilter={f => setQuery({ vennAccounts: f.groupAccounts })}
               rows={rs?.groups} />
@@ -163,34 +179,60 @@ const PersonalizationPage = () => {
         <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
           <ContainerDimensions>
             {({ width, height }) => {
-              return <PersonalizationVenn channels={chans} sets={rs.sets} width={width} height={height} videos={rs.byId} />
+              return <PersonaVenn channels={chans} sets={rs.sets} width={width} height={height} videos={rs.byId} />
             }}
           </ContainerDimensions>
         </div>
       </>}
 
-      {barData && <>
+      {barRecs && <>
         <NarrowSection>
-          <TextSection style={{ marginTop: '5em', marginBottom: '1em', }}>
+          <TS style={{ marginTop: '5em', marginBottom: '1em', }}>
             See how recommendations are personalized overall
-        </TextSection>
-          <FH>
-            <span>Recommendations seen by </span>
-            <FP><FV {...barFilterProps} filter={{ account: q.barAccounts }} onFilter={(f) => setQuery({ barAccounts: f.account })} /></FP>
-            <FP>recommended video tags <FV {...barFilterProps} filter={{ toTag: q.barTags }} onFilter={(f) => setQuery({ barTags: f.toTag })} /></FP>
-            <FP>in <PeriodSelect periods={barPeriods} showAll onPeriod={p => setQuery({ barPeriod: periodString(p) })} /></FP>
-          </FH>
+          </TS>
         </NarrowSection>
-        <PersonalizationBar data={barData} q={q} />
+
+        <BarFilters
+          noun='Recommendations' verb='recommended'
+          data={barRecs}
+          md={barMd}
+          filter={{ accounts: q.vennAccounts }}
+          onFilter={f => setQuery({ recAccounts: f.accounts, recPeriod: f.period, recTags: f.tags })}
+        />
+        <PersonaBar data={barRecs} filter={{ accounts: q.recAccounts, period: q.recPeriod, tags: q.recTags }} />
       </>}
     </MinimalPage>
-    <Popup isOpen={q.openHistory != null} onRequestClose={() => setQuery({ openHistory: null })}>
-      {q.openHistory && <AccountVideos idx={watchIdx} channels={chans} account={q.openHistory} />}
-    </Popup>
+
+    <PersonaSeenPopup verb='watched' isOpen={q.openWatch != null} onClose={() => setQuery({ openWatch: undefined })} account={q.openWatch} channels={chans} useSeen={watch} />
+    <PersonaSeenPopup verb='seen' isOpen={q.openFeed != null} onClose={() => setQuery({ openFeed: undefined })} account={q.openFeed} channels={chans} useSeen={feed} />
     <Tip {...chanTip.tipProps} ><ChannelDetails channel={chanTip.data} mode='min' /></Tip>
   </Layout>
 }
-export default PersonalizationPage
+export default PersonaPage
+
+
+const BarFilters: FC<{ noun: string, verb: string, data: PersonaBarData, md: Partial<TableMdRun<BarStat>>, filter: BarFilter, onFilter: (f: Partial<BarFilter>) => void }> =
+  ({ noun, verb, data, md, filter, onFilter }) => {
+    const months = uniq(data.stats.map(r => r.month))
+    const barPeriods = uniq(months.map(m => dateFormat(m, 'UTC', 'yyyy'))).map(y => ({ type: 'y', value: `${y}` }))
+      .concat(months.map(m => ({ type: 'm', value: m })))
+
+    const barFilterProps = { metadata: md, rows: data?.stats }
+    return <>
+      <FH>
+        <span>{noun} seen by </span>
+        <FP><FV {...barFilterProps} filter={{ account: filter.accounts }} onFilter={f => onFilter({ accounts: f.account })} /></FP>
+        <FP>{verb} video tags <FV {...barFilterProps} filter={{ toTag: filter.tags }} onFilter={f => onFilter({ tags: f.toTag })} /></FP>
+        <FP>in <PeriodSelect periods={barPeriods} showAll onPeriod={p => onFilter({ period: periodString(p) })} /></FP>
+      </FH>
+    </>
+  }
+
+
+const TS = styled(TextSection)`
+  margin-top: 6em;
+  margin-bottom: 3em;
+`
 
 const vennFilterKeys: (keyof VennFilter)[] = ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']
 type VennFilter = Pick<QueryState, 'vennLabel' | 'vennChannelIds' | 'vennAccounts' | 'vennDay'>
@@ -289,7 +331,7 @@ export const SelectWithChannelSearch: FC<{
     {channels && ids?.map(id => {
       const chan = channels[id]
       return chan && <Fragment key={id}>
-        <ChannelLogo c={chan} tipId='searchChannel' style={{ height: '3em' }} />
+        <ChannelLogo c={chan} style={{ height: '3em' }} />
         <CloseOutline style={{ verticalAlign: 'middle' }} className='clickable' onClick={() => onSelect(ids.filter(c => c != id))} />
       </Fragment>
     })}

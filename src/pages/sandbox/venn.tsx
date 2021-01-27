@@ -5,8 +5,8 @@ import { blobIndex, BlobIndex } from '../../common/BlobIndex'
 import { Channel, getChannels } from '../../common/Channel'
 import { Rec } from '../../common/Personalization'
 import Layout from '../../components/Layout'
-import { PersonalizationVenn, RecVennKey } from '../../components/PersonalizationVenn'
-import { loadRecData, RecState } from '../personalization'
+import { PersonaVenn, RecVennKey } from '../../components/PersonaVenn'
+import { loadRecData, RecState } from '../persona'
 
 const VennSandbox = () => {
   const [chans, setChannels] = useState<Record<string, Channel>>()
@@ -19,7 +19,7 @@ const VennSandbox = () => {
 
   return <Layout>
     <ContainerDimensions>
-      {({ width, height }) => rs && <PersonalizationVenn channels={chans} sets={rs.sets} width={width} videos={rs.byId} />}
+      {({ width, height }) => rs && <PersonaVenn channels={chans} sets={rs.sets} width={width} videos={rs.byId} />}
     </ContainerDimensions>
   </Layout>
 }

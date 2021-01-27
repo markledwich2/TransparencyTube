@@ -11,16 +11,20 @@ export interface Rec {
   toChannelTitle: string
 }
 
-export interface Watch {
+export interface Seen {
   account: string
-  updated: string
   videoId: string
   videoTitle: string
   channelId: string
   channelTitle: string
+  part?: 'featured'
+  firstSeen: string
+  lastSeen: string
+  seenTotal: number
+  percentile: number
 }
 
-export type WatchKey = Pick<Watch, 'updated'>
+export type SeenKey = Partial<Pick<Seen, 'part' | 'account'>>
 
 export type RecVideo = Omit<Rec, 'fromVideoId' | 'fromVideoTitle' | 'day'> & { recs: Rec[], id: string }
 export type RecGroup = Pick<Rec, 'toChannelId' | 'toChannelTitle'> & { id: string, groupAccounts: string[], videoRecs: RecVideo[] }

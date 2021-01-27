@@ -63,8 +63,8 @@ const TipStyle = styled.div`
 export const Tip = ({ style, children, target, open, setTip }: PropsWithChildren<StyleProps & TipState & { setTip: (state: TipState) => void }>) => {
   const popperEl = useRef()
   const [arrowRef, setArrowRef] = useState(null)
-  const close = useCallback(() => setTip({ open: false }), [setTip])
-  useClickOutside(popperEl, close)
+  //const close = useCallback(() => setTip({ open: false }), [setTip])
+  //useClickOutside(popperEl, close)
 
   const { styles: tipStyle, attributes } = usePopper(target, popperEl.current, {
     placement: 'auto',

@@ -6,34 +6,40 @@ import { getBounds, getTextWidth, pointTranslate, Rect } from '../common/Draw'
 import { md } from '../common/Channel'
 import { mapEntries, max, min, sumBy, values } from '../common/Pipe'
 import { getJsonlResult as jRes } from '../common/RecfluenceApi'
-import { numFormat, parseJson, toJson } from '../common/Utils'
+import { delay, numFormat, parseJson, toJson } from '../common/Utils'
 import { Tag } from './Channel'
 import { FlexCol, FlexRow, StyleProps, styles } from './Layout'
 import { scaleLinear } from '@visx/scale'
 import ReactMarkdown from 'react-markdown'
 import { UserCircle } from '@styled-icons/boxicons-solid'
-import { filterIncludes } from '../components/ValueFilter'
+import { filterIncludes } from './ValueFilter'
 import { parsePeriod, periodIncludes } from './Period'
 
 const tagMd = { ...md.channel.tags.val, ...{ Other: { value: 'Other', color: '#666', label: 'Non-political' } } }
 
-export interface RecStat {
+export interface BarStat {
   account: string
   month: string
-  fromTag: string
+  fromTag?: string
   toTag?: string
   recs: number
   recsPortion: number
 }
 
-export interface BarQueryState {
-  barTags?: string[]
-  barAccounts?: string[]
-  barPeriod?: string
+export interface BarFilter {
+  tags?: string[]
+  accounts?: string[]
+  period?: string
 }
 
-const PersonalizationBar: FC<{ data: PersonalizationBarData, q: BarQueryState }> = ({ data, q }) => {
-  const statsByAccount = getStatsByAccount(data, q)
+interface TagMonthViews { tag: string, month: string, views: number }
+interface MonthViews { month: string, views: number }
+interface RecGroupKey { account: string, toTag: string }
+
+export type PersonaBarData = Pick<PersonaAllBarData, 'months' | 'tags'> & { stats: BarStat[] }
+
+const PersonaBar: FC<{ data: PersonaBarData, filter: BarFilter }> = ({ data, filter }) => {
+  const statsByAccount = getStatsByAccount(data, filter)
   const cfg = { font: '14px sans-serif' }
   const toTags = uniq(flatMap(values(statsByAccount), vs => vs).map(r => r.toTag))
   const legend = layoutLegend(toTags, { pad: 10, between: 10, iconWidth: 20, itemHeight: 25, labelFont: `bold ${cfg.font}` })
@@ -94,44 +100,41 @@ const PersonalizationBar: FC<{ data: PersonalizationBarData, q: BarQueryState }>
     </ContainerDimensions>
   </div>
 }
-export default PersonalizationBar
+export default PersonaBar
 
+export interface PersonaAllBarData { recs: BarStat[], feeds: BarStat[], tags: TagMonthViews[], months?: MonthViews[] }
 
-
-interface RecTag { tag: string, month: string, views: number }
-interface RecMonth { month: string, views: number }
-export interface PersonalizationBarData { recs: RecStat[], tags: RecTag[], months?: RecMonth[] }
-interface RecGroupKey { account: string, toTag: string }
-
-export const useBarData = () => {
-  const [data, setData] = useState<PersonalizationBarData>({ recs: [], tags: [] })
-  useEffect(() => { loadBarData().then(d => setData(d)) }, [])
+export const useBarData = (wait: number = 0) => {
+  const [data, setData] = useState<PersonaAllBarData>({ recs: [], feeds: [], tags: [], months: [] })
+  useEffect(() => { delay(wait).then(() => loadBarData()).then(d => setData(d)) }, [])
   return data
 }
 
-export const loadBarData: () => Promise<PersonalizationBarData> = async () => {
-  const [recs, tags, months] = await Promise.all([jRes<RecStat>('us_rec_stats'), jRes<RecTag>('us_rec_tag'), jRes<RecMonth>('us_rec_month')])
+export const loadBarData = async () => {
+  const [recs, feeds, tags, months] = await Promise.all([jRes<BarStat>('us_rec_stats'), jRes<BarStat>('us_feed_stats'), jRes<TagMonthViews>('us_rec_tag'), jRes<MonthViews>('us_rec_month')])
+  const recClean = (stats: BarStat[]) => stats.map(r => ({ ...r, toTag: r.toTag ?? 'Other' })).filter(r => tagMd[r.toTag])
   return {
-    recs: recs.map(r => ({ ...r, toTag: r.toTag ?? 'Other' })).filter(r => tagMd[r.toTag]),
+    recs: recClean(recs),
+    feeds: recClean(feeds),
     tags, months
   }
 }
 
-const getStatsByAccount = (stats: PersonalizationBarData, q: BarQueryState) => {
-  const period = q.barPeriod && parsePeriod(q.barPeriod)
+const getStatsByAccount = (data: PersonaBarData, q: BarFilter) => {
+  const period = q.period && parsePeriod(q.period)
   const periodFilter = (r: { month?: string }) => periodIncludes(period, r.month)
 
   const groups = pipe(
-    stats.recs.filter(periodFilter),
+    data.stats.filter(periodFilter),
     groupBy(r => toJson({ account: r.account, toTag: r.toTag }))
   )
 
   const aggGroup = mapValues(groups, (gs, j) => {
     const k: RecGroupKey = parseJson(j)
-    const accountRecs = stats.recs.filter(r => r.account == k.account)
+    const accountRecs = data.stats.filter(r => r.account == k.account)
     const pctOfAccountRecs = sumBy(gs, g => g.recs) / sumBy(accountRecs, g => g.recsPortion)
-    const tagViews = sumBy(stats.tags.filter(t => periodFilter(t) && t.tag == k.toTag), m => m.views)
-    const totalTagViews = sumBy(stats.months.filter(periodFilter), m => m.views)
+    const tagViews = sumBy(data.tags.filter(t => periodFilter(t) && t.tag == k.toTag), m => m.views)
+    const totalTagViews = sumBy(data.months.filter(periodFilter), m => m.views)
     const ppVsTagViews = k.toTag != 'Other' && pctOfAccountRecs - tagViews / totalTagViews
     return { ...k, pctOfAccountRecs, ppVsTagViews }
   })
@@ -142,7 +145,7 @@ const getStatsByAccount = (stats: PersonalizationBarData, q: BarQueryState) => {
       const ppVsFresh = g.pctOfAccountRecs - aggGroup[toJson({ account: 'Fresh', toTag: k.toTag })]?.pctOfAccountRecs
       return { ...g, ppVsFresh }
     }),
-    filter(r => filterIncludes({ toTag: q.barTags, account: q.barAccounts }, r)), // filter after all calcs have been made
+    filter(r => filterIncludes({ toTag: q.tags, account: q.accounts }, r)), // filter after all calcs have been made
     groupBy(r => r.account)
   )
   return statsByAccount
