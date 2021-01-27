@@ -18,7 +18,6 @@ import { BubbleCharts } from '../components/BubbleChart'
 import ContainerDimensions from 'react-container-dimensions'
 import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
 import { BubblesSelectionState } from '../common/Bubble'
-import { ToolTip } from '../components/Tooltip'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { Markdown, TextSection } from '../components/Markdown'
 import { ChevronDownOutline, ChevronUpOutline } from '@styled-icons/evaicons-outline'
@@ -27,6 +26,7 @@ import { LinkData, NodeData, Sankey } from '../components/Sankey'
 import { SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
 import { Tab, Tabs } from '../components/Tab'
+import { Tip, useTip } from '../components/Tip'
 
 
 const findings = {
@@ -156,6 +156,8 @@ const NarrativesPage = () => {
   const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
+  const tip = useTip<Channel>()
+
   const { narrative, dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
 
     const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
@@ -264,17 +266,13 @@ const NarrativesPage = () => {
               <FilterPart>
                 from channel
                 {channels && selectedChannels && selectedChannels.map(c => <>
-                <ChannelLogo c={c} key={c.channelId} tipId='searchChannel' style={{ height: '2em' }} />
+                <ChannelLogo c={c} key={c.channelId} style={{ height: '2em' }} useTip={tip} />
                 <CloseOutline className='clickable'
                   onClick={() => {
                     const keys = q.selectedKeys?.filter(k => bubbleKeyObject(k).channelId != c.channelId)
                     return setQuery({ selectedKeys: keys?.length > 0 ? keys : null })
                   }} />
               </>)}
-                <ToolTip id='searchChannel' getContent={id => {
-                  const c = channels?.[id]
-                  return c ? <ChannelDetails channel={c} mode='min' /> : <></>
-                }} />
                 {channels && !q.selectedKeys && <ChannelSearch onSelect={c => {
                   const keys = bubbleRows.filter(b => b.channelId == c.channelId).map(b => bubbleKeyString(b, groupCol))
                   setQuery({ selectedKeys: keys })
@@ -291,7 +289,6 @@ const NarrativesPage = () => {
                 title: r => r.channelTitle,
                 md: { ...md.channel, ...md.video }
               }}
-              showImg
               loading={loading}
               groupRender={(g, _) => <div style={{ maxWidth: '40em' }}><Markdown>{supportValues[g]?.desc}</Markdown></div>}
               onSelect={(r) => {

@@ -81,16 +81,17 @@ const MetricsStyle = styled(FlexRow)`
 
 export interface ChannelLogoProps {
   c: ChannelWithStats | Channel
-  tipId?: string
   onClick?: (c: Channel) => void
 }
 
-export const ChannelLogo = ({ c, tipId, style, onClick }: StyleProps & ChannelLogoProps) => <img
-  src={c.logoUrl}
-  data-for={tipId} data-tip={c.channelId}
-  onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
-  className='logo'
-  style={{ clipPath: 'circle()', ...style }} />
+export const ChannelLogo: FC<StyleProps & ChannelLogoProps & { useTip?: UseTip<ChannelWithStats | Channel> }> =
+  ({ c, style, onClick, useTip }) => <img
+    src={c.logoUrl}
+    onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
+    className='logo'
+    style={{ clipPath: 'circle()', ...style }}
+    {...useTip?.eventProps(c)}
+  />
 
 export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
@@ -114,7 +115,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
   const fChannelViews = numFormat(c.channelViews)
 
   return <ChannelTitleStyle style={{ position: 'relative', ...style }} className={className}>
-    <div {...useTip?.attributes(c)}><ChannelLogo c={c} onClick={onLogoClick} style={logoStyle} /></div>
+    <div><ChannelLogo c={c} onClick={onLogoClick} style={logoStyle} useTip={useTip} /></div>
     <div style={{ paddingLeft: '0.5em' }}>
       <h2 style={{ marginBottom: '4px', ...titleStyle }}>
         {highlightWords ? <Highlighter

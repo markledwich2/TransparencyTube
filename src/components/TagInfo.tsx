@@ -1,32 +1,30 @@
-import React from 'react'
+import React, { FunctionComponent as FC } from 'react'
 import { Channel, md } from '../common/Channel'
 import { HelpOutline } from '@styled-icons/material'
-import ReactTooltip from 'react-tooltip'
-import { ToolTip } from './Tooltip'
 import { Markdown } from './Markdown'
 import { Tag } from './Channel'
 import { indexBy, pipe } from 'remeda'
 import { orderBy, values } from '../common/Pipe'
 import numeral from 'numeral'
 import { StyleProps, styles } from './Layout'
+import { UseTip } from './Tip'
 
 interface TagProps {
   tag: string
   showTitle?: boolean
 }
 
-const tipId = 'tag-help'
+// export const TagTip = ({ channels }: { channels: Channel[] }) => <ToolTip
+//   id={tipId}
+//   getContent={tag => <TagInfo tag={tag} channels={channels} />} />
 
-export const TagTip = ({ channels }: { channels: Channel[] }) => <ToolTip
-  id={tipId}
-  getContent={tag => <TagInfo tag={tag} channels={channels} />} />
+export const TagHelp: FC<TagProps & StyleProps & { useTip: UseTip<string> }> =
+  ({ tag, style, useTip }) => <HelpOutline
+    style={{ ...styles.inlineIcon, ...style }}
+    {...useTip.eventProps(tag)}
+  />
 
-export const TagHelp = ({ tag, style }: TagProps & StyleProps) => <HelpOutline
-  style={{ ...styles.inlineIcon, ...style }}
-  data-tip={tag}
-  data-for={tipId} />
-
-export const TagInfo = ({ tag, channels, showTitle, style }: TagProps & { channels: Channel[] } & StyleProps) => {
+export const TagInfo: FC<TagProps & { channels: Channel[] } & StyleProps> = ({ tag, channels, showTitle, style }) => {
   const tags = indexBy(md.channel.tags.values, t => t.value)
   const t = tags[tag]
   if (!t || !channels) return <></>

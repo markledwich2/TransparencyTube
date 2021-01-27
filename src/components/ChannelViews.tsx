@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import React from 'react'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { InlineSelect } from './InlineSelect'
-import ReactTooltip from 'react-tooltip'
 import { BubblesSelectionState } from '../common/Bubble'
 import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelSearch } from './Channel'
@@ -16,12 +15,13 @@ import { useQuery } from '../common/QueryString'
 import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { parsePeriod, PeriodSelect, periodString, Period } from './Period'
-import { TagInfo, TagTip } from './TagInfo'
+import { TagInfo } from './TagInfo'
 import { Markdown } from './Markdown'
 import { Popup } from './Popup'
 import { BubbleCharts } from './BubbleChart'
 import { FilterHeader } from './FilterCommon'
 import { ColumnMdVal } from '../common/Metadata'
+import { Tip, useTip } from './Tip'
 
 interface QueryState extends BubblesSelectionState<Channel> {
   videoPeriod?: string
@@ -48,8 +48,10 @@ export const ChannelViewsPage = () => {
   }, [])
 
   const openChannel = q.openRowKey ? channels?.[q.openRowKey] : null
-  const onOpenChannel = (c: Channel) => setQuery({ openRowKey: c?.channelId, openGroup: null })
-  const onCloseChannel = () => setQuery({ openRowKey: null })
+  const onOpenChannel = useCallback((c: Channel) => {
+    return setQuery({ openRowKey: c?.channelId, openGroup: undefined })
+  }, [])
+  const onCloseChannel = useCallback(() => setQuery({ openRowKey: undefined }), [])
 
   return <div style={{ minHeight: '100vh' }}>
     {channels && defaultPeriod && indexes && <>
@@ -65,7 +67,6 @@ export const ChannelViewsPage = () => {
         />}
       </ContainerDimensions>
       <div style={{ height: '2em' }} />
-
       <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
         <ChannelDetails channel={openChannel} mode='max' indexes={indexes} defaultPeriod={defaultPeriod} />
       </Popup>
@@ -87,13 +88,13 @@ interface BubblesProps {
 const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelection, defaultPeriod, onLoad }: BubblesProps) => {
   const [rawStats, setRawStats] = useState<ChannelStats[]>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [showImg] = useState(true) // always render sans image first
+  const tagTip = useTip<string>()
 
   const period = parsePeriod(selections.period) ?? defaultPeriod
   const derivedSelections: BubblesSelectionState<Channel> = { ...{ measure: 'views', colorBy: 'lr', groupBy: 'tags' }, ...selections }
   const { measure, colorBy, groupBy } = derivedSelections
 
-  const stats = rawStats ? rawStats.map(s => ({ ...channels[s.channelId], ...s })) : null
+  const stats = useMemo(() => rawStats ? rawStats.map(s => ({ ...channels[s.channelId], ...s })) : null, [rawStats, channels])
 
   const bubbleWidth = Math.min(800, width)
 
@@ -105,27 +106,15 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       setRawStats(rawStats)
       setLoading(false)
       await delay(1000) // wait a sec before rebuilding tooltips. This makes it work more consistently but i'm not sure why
-      ReactTooltip.rebuild()
       onLoad?.()
     }
     go()
   }, [periodString(period), indexes, channels])
 
-  useEffect(() => {
-    if (selections.groupBy)
-      ReactTooltip.rebuild()
-  }, [selections.groupBy])
-
-  const channelClick = (c: ChannelWithStats) => {
-    ReactTooltip.hide()
-    onOpenChannel(c)
-  }
-
   if (!rawStats) return <Spinner />
 
   const filterOnRight = width > 800
   const colOptions = getColOptions('channel')
-
 
   return <div>
     <div style={{ display: 'flex', flexDirection: filterOnRight ? 'row' : 'column', justifyContent: filterOnRight ? 'space-between' : null }}>
@@ -160,7 +149,7 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
 
 
     <BubbleCharts<ChannelWithStats>
-      onSelect={channelClick}
+      onSelect={onOpenChannel}
       bubbleWidth={bubbleWidth}
       dataCfg={{
         key: r => r.channelId,
@@ -172,7 +161,6 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       onOpenGroup={(g) => onSelection({ openGroup: g })}
       rows={stats}
       loading={loading}
-      showImg={showImg}
       selections={derivedSelections}
       tipContent={c => <ChannelDetails
         channel={c}
@@ -182,7 +170,8 @@ const Bubbles = ({ channels, width, onOpenChannel, indexes, selections, onSelect
       />}
     />
 
-    <TagTip channels={values(channels)} />
+    <Tip {...tagTip.tipProps}><TagInfo tag={tagTip.data} channels={values(channels)} /></Tip>
+
   </div>
 }
 
