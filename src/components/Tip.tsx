@@ -3,6 +3,7 @@ import { StyleProps, styles } from '../components/Layout'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
 import { useClickOutside } from '../common/Clicks'
+import { isMobile } from "react-device-detect"
 
 interface TipState {
   open: boolean,
@@ -30,8 +31,10 @@ export const useTip = <T,>(): UseTip<T> => {
   const hideTip = () => { setTip({ target: null, data: null, open: false }) }
 
   const eventProps = (data: T, touchShows = false) => ({
-    onTouchStart: !touchShows ? (e: React.TouchEvent<SVGCircleElement>) => { e.preventDefault() } : undefined,
-    onMouseEnter: (e: React.MouseEvent<Element, MouseEvent>) => { showTip(e.currentTarget, data) },
+    onMouseEnter: (e: React.MouseEvent<Element, MouseEvent>) => {
+      if (isMobile && !touchShows) return false
+      showTip(e.currentTarget, data)
+    },
     onMouseLeave: () => { hideTip() },
   })
 

@@ -201,7 +201,6 @@ const BubbleSvg: FC<{ onSelect: (row: any) => void, bubbleTip: UseTip<any> } & G
     const showImage = (n: HierarchyCircularNode<BubbleNode<any>>) => n.data.img && n.r > 10
 
     return useMemo(() => {
-      console.log('BubbleSvg render')
       return <SVGStyle width={dim.w * zoom} height={dim.h * zoom}>
         <defs>
           {displayNodes.filter(showImage)
