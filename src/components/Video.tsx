@@ -41,7 +41,8 @@ interface VideoGroup<T extends VideoCommon, TExtra extends VideoId> {
   channel: Channel,
   vidsToShow: (T & Partial<TExtra>)[],
   showAll: boolean,
-  showLess: boolean,
+  showLessVisible: boolean,
+  showAllVisible: boolean,
   totalVids: number,
   showChannel: boolean
 }
@@ -70,7 +71,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       const singleChannel = groupedVidsRaw.length == 1
       groupedVids = groupedVidsRaw && map(groupedVidsRaw, g => {
         const showAll = showAlls?.[g.channelId] || singleChannel
-        const vidsToShow = (showAlls?.[g.channelId] ? g.vids : g.vids.slice(0, chanVidChunk)).map(v => {
+        const vidsToShow = (showAll ? g.vids : g.vids.slice(0, chanVidChunk)).map(v => {
           const e = extras[v.videoId]
           return e ? { ...v, ...e } : v as T & Partial<TExtra>
         })
@@ -78,7 +79,8 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
           ...g,
           channel: channels?.[g.channelId],
           showAll,
-          showLess: g.vids.length > chanVidChunk,
+          showLessVisible: !singleChannel && showAll && g.vids.length > chanVidChunk,
+          showAllVisible: !singleChannel && !showAll && vidsToShow.length < g.vids.length,
           vidsToShow,
           showChannel: true,
           totalVids: g.vids.length
@@ -135,7 +137,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
 
             return <FlexRow space={numCols == 1 ? '0' : '1em'}>
               {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
-                const { vidsToShow, channelId, channel, showAll, showLess, totalVids, showChannel } = g
+                const { vidsToShow, channelId, channel, showAll, showAllVisible, showLessVisible, totalVids, showChannel } = g
                 return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
                   {i == 0 && showChannel && <VideoChannel
                     c={channel}
@@ -153,9 +155,9 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
                     children={contentBelow?.(v)} />
-                  {i == vidsToShow.length - 1 && (showLess || showAll) &&
+                  {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
                     <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
-                      {showAll ? `show less videos` : `show all ${totalVids} videos`}
+                      {showLessVisible ? `show less videos` : `show all ${totalVids} videos`}
                     </a>}
                 </div>)
               })}
