@@ -3,7 +3,7 @@ import GatsbyImage, { FluidObject } from 'gatsby-image'
 import React from 'react'
 import { last } from 'remeda'
 import { uri } from '../common/Uri'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 
 export const FluidImage = ({ path, style }: { path: string } & StyleProps) => <StaticQuery query={graphql`

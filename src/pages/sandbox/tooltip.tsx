@@ -1,5 +1,6 @@
 import React, { FunctionComponent as FC } from 'react'
-import Layout, { FlexRow } from '../../components/Layout'
+import Layout from '../../components/Layout'
+import { FlexRow } from '../../components/Style'
 import { Tip, useTip } from '../../components/Tip'
 
 const TipTest: FC<{}> = () => {

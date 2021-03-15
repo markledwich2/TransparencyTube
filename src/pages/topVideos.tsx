@@ -5,7 +5,8 @@ import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexPeriods, VideoChannelExtra, VideoViews } from '../common/RecfluenceApi'
 import { FilterHeader } from '../components/FilterCommon'
-import Layout, { MinimalPage } from "../components/Layout"
+import Layout from '../components/Layout'
+import { MinimalPage } from "../components/Style"
 import { parsePeriod, PeriodSelect, periodString, HasPeriod } from '../components/Period'
 import { Videos } from '../components/Video'
 import { useLocation } from '@reach/router'

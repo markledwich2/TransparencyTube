@@ -28,6 +28,30 @@
             "problemMatcher": [
                 "$eslint-stylish"
             ]
+        },
+        {
+            "label": "build - ttube_client",
+            "type": "npm",
+            "script": "build",
+            "runOptions": {},
+            "problemMatcher": [
+                "$eslint-stylish"
+            ],
+            "group": "build",
+            "options": {
+                "cwd": "./ttube_client"
+            }
+        },
+        {
+            "label": "dev - ttube_client",
+            "type": "npm",
+            "script": "dev",
+            "path": "ttube_client/",
+            "problemMatcher": [
+                "$eslint-stylish"
+            ],
+            "group": "build",
+            "detail": "webpack serve --mode development --progress --hot --config ./webpack.config.development.js"
         }
     ]
 }

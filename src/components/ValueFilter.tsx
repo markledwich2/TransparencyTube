@@ -9,7 +9,7 @@ import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
 import { InlineForm } from './InlineForm'
 import { OptionList } from './InlineSelect'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 /**
  * Currently selected values that will filter a row. Only supply values for cols that are presented in the filter.
@@ -67,7 +67,7 @@ export const InlineValueFilter = <TRow extends object, TFilter>(p: FilterFormPro
 </InlineForm>
 
 const tableColOptions = <TRow extends object, TFilter>(md: FilterTableMd, col: string, filter: TFilter, rows?: TRow[], showCount?: boolean) => {
-  rows ??= []
+  if (!rows) rows = []
   if (!md[col]) throw `No metadata found for '${col}'`
   const c = colMd(md[col], rows)
   const allOption: FilterColOption = { value: { value: '_all', num: rows?.length }, label: `All - ${c.label}`, color: '#444', selected: isSelected(filter, col, '_all') }

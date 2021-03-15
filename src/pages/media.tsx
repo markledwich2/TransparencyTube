@@ -4,7 +4,8 @@ import styled from 'styled-components'
 import { entries } from '../common/Pipe'
 import { dateFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
-import Layout, { FlexRow, TextPage } from "../components/Layout"
+import Layout from '../components/Layout'
+import { FlexRow, TextPage } from "../components/Style"
 import { Markdown } from '../components/Markdown'
 
 

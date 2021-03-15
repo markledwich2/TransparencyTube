@@ -4,7 +4,6 @@ import { orderBy } from '../../common/Pipe'
 import { ChannelTitle } from '../../components/Channel'
 import Layout from '../../components/Layout'
 import { SearchSelect } from '../../components/SearchSelect'
-import { TagHelp, TagInfo, TagTip } from '../../components/TagInfo'
 
 const SearchSandbox = () => {
   const [channels, setChannels] = useState<Channel[]>()

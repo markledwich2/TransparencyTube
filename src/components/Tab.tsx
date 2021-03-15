@@ -2,7 +2,7 @@ import React, { CSSProperties, FC, PropsWithChildren, ReactElement, ReactNode, u
 import { compact, first, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { values } from '../common/Pipe'
-import { FlexRow, StyleProps } from './Layout'
+import { FlexRow, StyleProps } from './Style'
 
 const TabsStyle = styled(FlexRow)`
   margin-bottom:1em;

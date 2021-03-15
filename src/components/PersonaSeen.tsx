@@ -1,5 +1,5 @@
 import React, { FunctionComponent as FC, CSSProperties, useEffect, useState } from 'react'
-import { FlexRow, StyleProps } from './Layout'
+import { FlexRow, StyleProps } from './Style'
 import { dateFormat, numFormat } from '../common/Utils'
 import { groupBy, pipe, sortBy } from 'remeda'
 import { Channel, md } from '../common/Channel'

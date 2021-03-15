@@ -1,8 +1,8 @@
 import React from "react"
 import { Footer } from '../components/Footer'
-import Layout, { TextPage } from "../components/Layout"
+import Layout from "../components/Layout"
 import SEO from '../components/SEO'
-import { FlexRow, styles } from '../components/Layout'
+import { FlexRow, styles, TextPage } from '../components/Style'
 import { Twitter } from '@styled-icons/boxicons-logos'
 import { Email } from '@styled-icons/entypo'
 import styled from 'styled-components'

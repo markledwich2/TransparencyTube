@@ -2,7 +2,7 @@ import styled from 'styled-components'
 import React, { useState, useEffect, useRef, FunctionComponent, PropsWithChildren, CSSProperties } from 'react'
 import { ChevronDownOutline } from '@styled-icons/evaicons-outline'
 import { jsonEquals } from '../common/Utils'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 
 const OuterStyle = styled.span`

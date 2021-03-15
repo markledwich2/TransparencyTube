@@ -2,10 +2,9 @@ import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect,
 import { dateFormat, hoursFormat, numFormat, secondsFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
-import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Layout'
+import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Style'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
-import { ToolTip } from './Tooltip'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative, VideoCaption } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
 import { flatMap, groupBy, indexBy, map, pipe, take } from 'remeda'
@@ -284,7 +283,11 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         </FlexRow>}
         {(captions || showLoadCaptions) &&
           <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-            <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>{s.caption}</div>)}
+            <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
+            {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
+              textToHighlight={s.caption ?? ""}
+            /> : s.caption}
+          </div>)}
             {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
           </div>
         }
@@ -304,7 +307,7 @@ interface VideoChannelProps {
   useTip?: UseTip<Channel>
 }
 const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags, useTip }: VideoChannelProps) => {
-  c ??= { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
+  if (!c) c = { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
   //if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px' }} titleStyle={{ fontSize: '1em' }}

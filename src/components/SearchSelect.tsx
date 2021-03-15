@@ -4,7 +4,7 @@ import { Search } from '@styled-icons/boxicons-regular'
 import { UlStyled } from './InlineSelect'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { useDebounce } from '../common/Utils'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 interface SearchSelectOptions<T> {
   onSelect: (item: T) => void

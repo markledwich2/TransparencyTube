@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, CSSProperties } from 'react'
 import { Search } from '@styled-icons/boxicons-regular'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { useDebounce } from '../common/Utils'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 interface SearchSelectOptions {
   search: string

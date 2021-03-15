@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { delay } from '../common/Utils'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 interface RotateContentProps<T> {
   data: T[]
@@ -66,7 +66,7 @@ export const RotateContent = <T,>({ data, template, getDelay, style }: RotateCon
         cs = await stateLoop[cs.status]()
       }
     })()
-    return () => isRunning = false
+    return () => { isRunning = false }
   }, [data])
 
   const d = data?.[s.i % data.length]

@@ -5,7 +5,8 @@ import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoChannelExtra, VideoRemoved } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
-import Layout, { FlexRow, MinimalPage, StyleProps } from "../components/Layout"
+import Layout from '../components/Layout'
+import { FlexRow, MinimalPage, StyleProps } from "../components/Style"
 import { VideoId, Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
 import { navigateNoHistory } from '../common/Utils'

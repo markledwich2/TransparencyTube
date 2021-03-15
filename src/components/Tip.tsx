@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, useCallback, useRef, useState } from 'react'
-import { StyleProps, styles } from '../components/Layout'
+import { StyleProps, styles } from './Style'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
 import { useClickOutside } from '../common/Clicks'

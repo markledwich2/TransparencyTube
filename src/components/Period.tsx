@@ -5,7 +5,7 @@ import { entries, orderBy, values } from '../common/Pipe'
 import { dateFormat } from '../common/Utils'
 import { InlineForm } from './InlineForm'
 import { OptionList } from './InlineSelect'
-import { FlexRow } from './Layout'
+import { FlexRow } from './Style'
 import numeral from 'numeral'
 import { Opt } from '../common/Metadata'
 

@@ -8,7 +8,7 @@ import { first } from 'remeda'
 import styled from 'styled-components'
 import { dateFormat, useDebounce } from '../common/Utils'
 import { InlineForm } from '../components/InlineForm'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 export interface DateRangeValue {
   startDate: Date

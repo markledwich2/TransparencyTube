@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react'
 import * as d3 from 'd3'
 import { sankey, sankeyLinkHorizontal, sankeyLeft, SankeyNode, SankeyLink, SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 
 
 

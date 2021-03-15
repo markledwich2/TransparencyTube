@@ -6,7 +6,7 @@ import { Tag } from './Channel'
 import { indexBy, pipe } from 'remeda'
 import { orderBy, values } from '../common/Pipe'
 import numeral from 'numeral'
-import { StyleProps, styles } from './Layout'
+import { StyleProps, styles } from './Style'
 import { UseTip } from './Tip'
 
 interface TagProps {

@@ -1,5 +1,6 @@
 import React from "react"
-import Layout, { TextPage } from "../components/Layout"
+import Layout from "../components/Layout"
+import { TextPage } from '../components/Style'
 import { Markdown } from '../components/Markdown'
 
 const md = `

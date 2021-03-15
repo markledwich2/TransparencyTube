@@ -45,4 +45,4 @@ export const TextSection = styled(TextStyle)`
   max-width: 65rem;
 `
 
-export const Markdown: FC<ReactMarkdownProps> = ({ children, ...props }) => <TextStyle as={ReactMarkdown} {...props}>{children}</TextStyle>
+export const Markdown: FC<ReactMarkdownProps> = ({ children, ...props }) => <TextStyle {...props}><ReactMarkdown>{children}</ReactMarkdown></TextStyle>

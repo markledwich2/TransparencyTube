@@ -1,5 +1,6 @@
 import React, { useEffect, useState, FunctionComponent as FC, Fragment, useMemo } from 'react'
-import Layout, { FlexRow, MinimalPage, NarrowSection, StyleProps, styles } from '../components/Layout'
+import Layout from '../components/Layout'
+import { FlexRow, MinimalPage, NarrowSection, StyleProps, styles } from '../components/Style'
 import PurposeBanner from '../components/PurposeBanner'
 import { dateFormat, delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
 import { first, flatMap, groupBy, pick, pipe, uniq, indexBy, mapValues } from 'remeda'

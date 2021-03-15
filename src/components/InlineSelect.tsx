@@ -2,7 +2,7 @@ import styled from 'styled-components'
 import React, { useState, useEffect, useRef, CSSProperties } from 'react'
 import { jsonEquals } from '../common/Utils'
 import { InlineForm } from './InlineForm'
-import { StyleProps } from './Layout'
+import { StyleProps } from './Style'
 import { Opt } from '../common/Metadata'
 
 export const UlStyled = styled.ul`

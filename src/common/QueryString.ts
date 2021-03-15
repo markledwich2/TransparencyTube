@@ -1,12 +1,9 @@
-import {
-  ParseOptions,
-  StringifyOptions,
-  parse,
-  stringify
-} from 'query-string'
+import { ParseOptions, StringifyOptions, parse, stringify } from 'query-string'
 import { useState } from 'react'
 
-// taken from here, and added typing https://github.com/trevorblades/use-query-string
+export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
+
+// originally from here  https://github.com/trevorblades/use-query-string
 
 export type QsResult<T> = {
   [0]: T
@@ -15,10 +12,11 @@ export type QsResult<T> = {
 
 export const useQuery = <T>(
   location: Location,
-  navigate: (path: string) => void,
+  navigate?: (path: string) => void,
   parseOptions?: ParseOptions,
   stringifyOptions?: StringifyOptions
 ): QsResult<T> => {
+  if (!navigate) navigate = navigateNoHistory
   const defaultOptions: StringifyOptions = { arrayFormat: 'bracket' }
   const initState = parse(location.search, { ...defaultOptions, ...parseOptions }) as any as T
   const [state, setState] = useState<T>(initState)
