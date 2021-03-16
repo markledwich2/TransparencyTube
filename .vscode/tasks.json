@@ -30,7 +30,7 @@
             ]
         },
         {
-            "label": "build - ttube_client",
+            "label": "ttube_client - build",
             "type": "npm",
             "script": "build",
             "runOptions": {},
@@ -40,10 +40,11 @@
             "group": "build",
             "options": {
                 "cwd": "./ttube_client"
-            }
+            },
+            "detail": "ttube_client>  npm run build"
         },
         {
-            "label": "dev - ttube_client",
+            "label": "ttube_client dev",
             "type": "npm",
             "script": "dev",
             "path": "ttube_client/",
@@ -51,7 +52,7 @@
                 "$eslint-stylish"
             ],
             "group": "build",
-            "detail": "webpack serve --mode development --progress --hot --config ./webpack.config.development.js"
+            "detail": "ttube_client>  npm run dev"
         }
     ]
 }

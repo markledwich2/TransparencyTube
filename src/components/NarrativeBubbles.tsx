@@ -206,7 +206,8 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
       <TextSection>
         <p><b>Videos</b> with the relevant captions for context. Change filters, or select channels above to filter this list.</p>
       </TextSection>
-      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading} highlightWords={['election', 'fraud', 'dominion', 'trump']} />
+      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading}
+        highlightWords={['trump', 'Fraud', 'fraudulent', 'rigged', 'stole', 'stolen', 'steal', 'theft', 'cheat', 'cheated', 'election', 'vote', 'voted', 'ballot', 'ballots']} />
     </>}
   </ContainerDimensions>
 }

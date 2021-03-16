@@ -4,9 +4,7 @@ const outputConfig = {
 
 // Entry points
 // https://webpack.js.org/concepts/entry-points/ 
-const entryConfig = [
-    "./src/TTUbeClient.ts"
-]
+const entryConfig = { ttube_client: "./src/ttube_client.ts" }
 
 // Copy files from src to dist
 // https://webpack.js.org/plugins/copy-webpack-plugin/
