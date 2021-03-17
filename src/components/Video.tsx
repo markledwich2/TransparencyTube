@@ -281,12 +281,13 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         </FlexRow>
         {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
         {(captions || showLoadCaptions) &&
-          <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-            <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
-            {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
-              textToHighlight={s.caption ?? ""}
-            /> : s.caption}
-          </div>)}
+          <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>
+            {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
+              <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
+              {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
+                textToHighlight={s.caption ?? ""}
+              /> : s.caption}
+            </div>)}
             {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
           </div>
         }

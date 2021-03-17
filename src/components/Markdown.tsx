@@ -41,7 +41,7 @@ export const TextStyle = styled.div`
 
 export const TextSection = styled(TextStyle)`
   margin:auto;
-  font-size: 1.4rem;
+  font-size: 1.4em;
   max-width: 65rem;
 `
 

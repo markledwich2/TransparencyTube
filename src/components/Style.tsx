@@ -38,6 +38,13 @@ const darkValues = css`
 --bg4: #666;
 `
 
+const defaultColors = css`
+  --bg-feature:#125C6E;
+  --bg-feature2:#6E1D39;
+  --fg-feature:#1F9FBF;
+  --fg-feature2:#b1d5df;
+`
+
 export const styles = {
   inlineIcon: {
     position: 'relative',
@@ -66,14 +73,13 @@ export const styles = {
 
 export const GlobalStyle = createGlobalStyle`
   :root {
-
-  --bg-feature:#125C6E;
-  --bg-feature2:#6E1D39;
-  --fg-feature:#1F9FBF;
-  --fg-feature2:#b1d5df;
+  
+  
   ${lightValues}
 
   ${p => !p.noDark && `@media(prefers-color-scheme: dark) { ${darkValues} }`}
+
+  ${p => p.colorCss ? p.colorCss : defaultColors}
 
   ${StyledIconBase} {
     height: 1.4em;
