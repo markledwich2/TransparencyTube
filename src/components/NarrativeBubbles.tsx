@@ -1,27 +1,29 @@
-import React, { useEffect, useState, FunctionComponent as FC, useMemo } from "react"
-import { groupBy, indexBy, pick, uniq } from 'remeda'
+import React, { useEffect, useState, FunctionComponent as FC, useMemo, ReactNode } from "react"
+import { groupBy, indexBy, pick, uniq, } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelStats, VideoNarrative } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
-import { styles } from "../components/Style"
+import { FlexRow, styles } from "../components/Style"
 import { Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
-import { delay, navigateNoHistory, toJson } from '../common/Utils'
+import { delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
 import ReactTooltip from 'react-tooltip'
 import { DateRangeQueryState, DateRangeValue, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
 import { entries, sumBy, values } from '../common/Pipe'
 import { BubbleCharts } from '../components/BubbleChart'
 import ContainerDimensions from 'react-container-dimensions'
-import { ChannelDetails, ChannelLogo, ChannelSearch } from '../components/Channel'
+import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
 import { BubblesSelectionState } from '../common/Bubble'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { Markdown, TextSection } from '../components/Markdown'
-import { useTip } from './Tip'
+import { useTip, Tip } from './Tip'
+import { HelpTip } from './HelpTip'
+import styled from 'styled-components'
 
-export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string }
+export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
 
 export type NarrativeKey = { narrative?: string, uploadDate?: string }
 type NarrativeIdx = {
@@ -38,14 +40,13 @@ const bubbleKeyObject = (key: string) => {
 
 export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
   channelId?: string[]
-  tags?: string[],
-  lr?: string[],
-  support?: string[],
-  supplement?: string[],
-  narrative?: string,
+  tags?: string[]
+  lr?: string[]
+  support?: string[]
+  supplement?: string[]
+  narrative?: string
   errorType?: string[]
 }
-
 
 const groupCol = 'support'
 
@@ -64,7 +65,7 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
   const { narrative, dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
 
     const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
-    const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2020, 11 - 1, 10))
+    const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2021, 1 - 1, 31))
 
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
     const bubbleRows = videos && channels && entries(
@@ -76,7 +77,8 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
           bubbleKey: g,
           ...channels[channelId],
           [groupCol]: group,
-          views: vids ? sumBy(vids, v => v.videoViews) : 0
+          views: vids ? sumBy(vids, v => v.videoViews) : 0,
+          viewsAdjusted: vids ? sumBy(vids, v => v.videoViewsAdjusted) : 0,
         }) as NarrativeChannel
       })
 
@@ -135,6 +137,15 @@ interface UseNarrative {
 }
 
 const supportValues = md.video.support.val
+const SupportTag = () => <Tag label={supportValues['support'].label} color={supportValues['support'].color} />
+const DisputeTag = () => <Tag label={supportValues['dispute'].label} color={supportValues['dispute'].color} />
+const PageStyle = styled.div`
+    mark {
+        background-color: unset;
+        font-weight: bold;
+        color:var(--fg);
+    }
+`
 
 export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter, videos, videoRows, dateRange, channels, selectedChannels, q, setQuery, bubbleRows, loading }) => {
   const selections: BubblesSelectionState<NarrativeChannel> = {
@@ -145,9 +156,10 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
     selectedKeys: q.selectedKeys
   }
 
-  const tip = useTip<Channel>()
+  const channelTip = useTip<Channel>()
+  const helpTip = useTip<ReactNode>()
 
-  return <ContainerDimensions>
+  return <PageStyle><ContainerDimensions>
     {({ width }) => <>
       <TextSection style={{ marginBottom: '1em' }}>
         <p>Channel <b>bubbles</b> are sized by views of their videos discussing voter fraud. Select a channel to filter the videos below.</p>
@@ -170,7 +182,7 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
         <FilterPart>
           from channel
         {channels && selectedChannels && selectedChannels.map(c => <>
-          <ChannelLogo c={c} key={c.channelId} style={{ height: '2em' }} useTip={tip} />
+          <ChannelLogo c={c} key={c.channelId} style={{ height: '2em' }} useTip={channelTip} />
           <CloseOutline className='clickable'
             onClick={() => {
               const keys = q.selectedKeys?.filter(k => bubbleKeyObject(k).channelId != c.channelId)
@@ -195,6 +207,24 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
         }}
         loading={loading}
         groupRender={(g, _) => <div style={{ maxWidth: '40em' }}><Markdown>{supportValues[g]?.desc}</Markdown></div>}
+        titleSuffixRender={(g, rows) => {
+          const fAdjusted = numFormat(sumBy(rows, r => r.viewsAdjusted))
+          const fViews = numFormat(sumBy(rows, r => r.views))
+          if (fViews == fAdjusted) return null
+          return <span> (<b style={{ fontSize: '1.3em' }}>{fAdjusted}</b> bias-adjusted views <HelpTip useTip={helpTip}>
+            <p><b>Bias-adjusted views</b> is an estimate of views adjusted for false positive &amp; false negative rates of the our model.</p>
+            <p>
+              <ul style={{ marginTop: '1em', marginLeft: '2em', lineHeight: '2em' }}>
+                <li><Tag label="manual" /> = 1</li>
+                <li><SupportTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.96 recall</li>
+                <li><SupportTag /> and uploaded after 2020-12-09 = 0.68 precision / 0.97 recall</li>
+                <li><DisputeTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.94 recall</li>
+                <li><DisputeTag /> and uploaded after 2020-12-09 = 0.80 precision / 0.97 recall</li>
+              </ul>
+            </p>
+          </HelpTip>)
+          </span>
+        }}
         onSelect={(r) => {
           setQuery({ selectedKeys: r == null ? null : [r.bubbleKey] })
         }}
@@ -207,7 +237,19 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
         <p><b>Videos</b> with the relevant captions for context. Change filters, or select channels above to filter this list.</p>
       </TextSection>
       <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading}
+        contentSubTitle={v => {
+          const supportOpt = md.video.support.val[v.support]
+          const supplementOpt = md.video.supplement.val[v.supplement]
+          return <FlexRow>
+            {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
+            {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
+          </FlexRow>
+        }}
         highlightWords={['trump', 'Fraud', 'fraudulent', 'rigged', 'stole', 'stolen', 'steal', 'theft', 'cheat', 'cheated', 'election', 'vote', 'voted', 'ballot', 'ballots']} />
+
+      <Tip {...helpTip.tipProps}>{helpTip.data}</Tip>
     </>}
-  </ContainerDimensions>
+  </ContainerDimensions></PageStyle>
 }
+
+

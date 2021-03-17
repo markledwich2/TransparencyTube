@@ -83,7 +83,7 @@ export const SeenVideos: FC<AccountVideosProps & { verb: string }> = ({ account,
   return seen && channels && <Videos videos={seen} channels={channels}
     showChannels showThumb showTags
     videoStyle={{ position: 'relative' }}
-    contentBelow={s => <SeenVideoExtra s={s} verb={verb} />}
+    contentBottom={s => <SeenVideoExtra s={s} verb={verb} />}
   />
 }
 

@@ -35,3 +35,12 @@ export const retry = async <T>(fn: () => Promise<T>, options?: Options<T>) => {
     }
   }
 }
+
+
+export const tryCatch = <TRes, TCatch>(tryFunc: () => TRes, catchFunc?: (ex: unknown) => TCatch): TRes | TCatch => {
+  try {
+    return tryFunc()
+  } catch (ex: unknown) {
+    return catchFunc?.(ex)
+  }
+}

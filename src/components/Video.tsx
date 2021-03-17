@@ -31,7 +31,8 @@ interface VideosProps<T extends VideoCommon, TExtra extends VideoId> {
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
   loadExtraOnVisible?: (v: T[]) => Promise<TExtra[]>
-  contentBelow?: (v: (T & Partial<TExtra>)) => JSX.Element
+  contentSubTitle?: (v: (T & Partial<TExtra>)) => JSX.Element
+  contentBottom?: (v: (T & Partial<TExtra>)) => JSX.Element
   videoStyle?: CSSProperties
 }
 
@@ -50,7 +51,7 @@ const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, defaultLimit, highlightWords,
-  loadCaptions, loadExtraOnVisible, contentBelow, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
+  loadCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
 
   const [limit, setLimit] = useState(defaultLimit ?? 40)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
@@ -153,7 +154,8 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
-                    children={contentBelow?.(v)} />
+                    contentSubTitle={contentSubTitle}
+                    children={contentBottom?.(v)} />
                   {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
                     <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
                       {showLessVisible ? `show less videos` : `show all ${totalVids} videos`}
@@ -174,7 +176,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         style={{ width: '40em', maxWidth: '100%', ...videoStyle }}
         c={showChannels && channels && channels[v.channelId]}
         useTip={chanTip}
-        children={contentBelow?.(v as T & Partial<TExtra>)} />)}
+        children={contentBottom?.(v as T & Partial<TExtra>)} />)}
     </div>
       {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
         <a onClick={_ => setLimit(limit + 200)}>show more</a>
@@ -222,6 +224,7 @@ const BMetric = styled.b`
   color:var(--fg);
 `
 
+// any of the possible video types. Pls don't add to this, we are moving to providing contentX attributions to customize display rather than switching inside here
 type VideoTypes = VideoRemoved | VideoViews | VideoCommon | VideoNarrative
 
 interface VideoProps extends StyleProps {
@@ -232,17 +235,16 @@ interface VideoProps extends StyleProps {
   showChannel?: boolean
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
+  contentSubTitle?: (v: (VideoTypes)) => JSX.Element
   useTip?: UseTip<Channel>
 }
 
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, children, useTip }) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, contentSubTitle, children, useTip }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
   const fViews = numFormat(v.videoViews)
   const errorTypeOpt = isVideoError(v) ? md.video.errorType.val[v.errorType] : null
-  const supportOpt = isVideoNarrative(v) ? md.video.support.val[v.support] : null
-  const supplementOpt = isVideoNarrative(v) ? md.video.supplement.val[v.supplement] : null
 
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
@@ -270,17 +272,14 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
           </div>}
           {!fPeriodViews && fViews && <div><BMetric>{fViews}</BMetric> views</div>}
           {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
+          {contentSubTitle && contentSubTitle(v)}
           {isVideoError(v) && <>
             <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
-            <span><b>{numFormat(v.videoViews)} views</b></span>
-            <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>
+            {/* <span><b>{numFormat(v.videoViews)} views</b></span> */}
+            {v.lastSeen && <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>}
           </>}
         </FlexRow>
         {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
-        {isVideoNarrative(v) && <FlexRow>
-          {v.support && <Tag label={supportOpt?.label ?? v.support} color={supportOpt?.color} />}
-          {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
-        </FlexRow>}
         {(captions || showLoadCaptions) &&
           <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>{captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
             <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>

@@ -8,7 +8,7 @@ import { Popup } from './Popup'
 import ContainerDimensions from 'react-container-dimensions'
 import { HierarchyCircularNode } from 'd3'
 import { toJson } from '../common/Utils'
-import { loadingFilter, StyleProps, styles } from './Style'
+import { loadingFilter, NormalFont, StyleProps, styles } from './Style'
 import { compact, pick } from 'remeda'
 import { HelpOutline } from 'styled-icons/material'
 import { TableMdRun } from '../common/Metadata'
@@ -46,6 +46,7 @@ interface BubbleChartPropsCommon<T> {
   onSelect: (row: T) => void
   onOpenGroup?: (group: string) => void
   groupRender: (group: string, rows: T[]) => JSX.Element
+  titleSuffixRender?: (group: string, rows: T[]) => JSX.Element
   dataCfg: BubbleDataCfg<T>
 }
 
@@ -68,13 +69,13 @@ interface GroupData<T> {
   rows: T[]
 }
 
-export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, tipContent, dataCfg, style }: BubbleChartsProps<T> & StyleProps) => {
+export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, titleSuffixRender, tipContent, dataCfg, style }: BubbleChartsProps<T> & StyleProps) => {
   const bubbleTip = useTip<T>()
   const groupTip = useTip<GroupData<T>>()
 
   const d = useMemo(() => {
     const { groupedNodes, zoom, packSize } = rows ? buildBubbleNodes(rows, selections, dataCfg, bubbleWidth) : { groupedNodes: [] as GroupedNodes<T>[], zoom: 1, packSize: 1 }
-    const commonProps = { selections, rows, pack: { zoom, packSize }, onOpenGroup, onSelect, groupRender, dataCfg, groupTip, bubbleTip }
+    const commonProps = { selections, pack: { zoom, packSize }, onOpenGroup, onSelect, groupRender, titleSuffixRender, dataCfg, groupTip, bubbleTip }
     return { groupedNodes, commonProps }
   }, [rows, toJson(pick(selections, ['colorBy', 'groupBy', 'measure', 'period'])), bubbleWidth, loading])
 
@@ -102,17 +103,17 @@ interface BubblePackProps {
 
 interface BubbleChartProps<T> extends BubbleChartPropsCommon<T> {
   groupNodes: GroupedNodes<T>
-  rows: T[]
   pack: BubblePackProps,
   isOpen?: boolean,
   groupTip?: UseTip<GroupData<T>>
   bubbleTip?: UseTip<T>
 }
 
-const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOpen, groupRender, dataCfg, onSelect, groupTip, bubbleTip }: BubbleChartProps<T>) => {
+const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, groupRender, titleSuffixRender, dataCfg, onSelect, groupTip, bubbleTip }: BubbleChartProps<T>) => {
   const group = groupNodes.group.value
   const measureFmt = measureFormat(selections.measure)
   const fMeasure = measureFmt(sumBy(groupNodes.nodes, n => n.data.val ?? 0))
+  const rows = groupNodes.rows
 
   const info = <div style={{ padding: '2px' }}>
     <h4>
@@ -121,6 +122,7 @@ const BubbleChart = <T,>({ groupNodes, selections, rows, pack, onOpenGroup, isOp
         style={{ ...styles.inlineIcon }} />}
       </span>}
       <b style={{ fontSize: '1.5em' }}>{fMeasure}</b>
+      {titleSuffixRender && <NormalFont>{titleSuffixRender(group, rows)}</NormalFont>}
     </h4>
     {isOpen && <div style={{ marginBottom: '1em' }}>{groupRender(group, rows)}</div>}
   </div>
@@ -233,12 +235,4 @@ const BubbleSvg: FC<{ onSelect: (row: any) => void, bubbleTip: UseTip<any> } & G
       </SVGStyle>
     }, [displayNodes, onSelect])
   }
-
-
-// , (a, b) => a.zoom == b.zoom &&
-//   a?.nodes.length == b?.nodes.length && jsonEquals(a?.nodes[0]?.data, b?.nodes[0]?.data)
-//   && a?.dim.w == b?.dim.w
-//   && a?.showImg == b?.showImg
-//   && toJson(getSelected(a.nodes)) == toJson(getSelected(b.nodes))
-
 

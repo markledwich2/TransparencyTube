@@ -57,8 +57,11 @@ export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
   supplement: string
   bubbleKey: string
   errorType: string
+  /**
+   * views adjusted for precision/recall ratios
+   */
+  videoViewsAdjusted: number
 }
-
 
 
 export type ChannelKey = { channelId: string }

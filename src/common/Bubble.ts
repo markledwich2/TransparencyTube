@@ -21,6 +21,7 @@ export interface BubbleNode<T> {
 export interface GroupedNodes<T> {
   group: ColumnMdVal<string>
   nodes: d3.HierarchyCircularNode<BubbleNode<T>>[]
+  rows: T[]
   dim: {
     x: NodeMinMax<T>
     y: NodeMinMax<T>
@@ -54,28 +55,28 @@ export const getGroupData = <T extends object>(rows: T[], selections: BubblesSel
   const selectedSet = selectedKeys ? new Set(selectedKeys) : null
 
   const groups = groupValues.map(g => {
-    const nodes: BubbleNode<T>[] = rows
+    const groupRows = rows
       .filter(r => {
         const gVal = r[groupBy as string]
         return Array.isArray(gVal)
           ? gVal.includes(g.value) && val(r) != null
           : gVal == g.value && val(r) != null
       })
-      .map(r => {
-        const colorVals = r[colorBy as string]
-        const colorVal = Array.isArray(colorVals) ? first(colorVals.filter(cv => colorValues[cv])) : colorVals as string | number
-        const key = dataCfg.key(r)
-        return {
-          type: 'node',
-          title: dataCfg.title(r),
-          row: r,
-          color: colorValues[colorVal]?.color,
-          val: val(r),
-          key: key,
-          selected: selectedSet == null ? null : selectedSet.has(key)
-        }
-      })
-    return { group: g, nodes }
+    const nodes: BubbleNode<T>[] = groupRows.map(r => {
+      const colorVals = r[colorBy as string]
+      const colorVal = Array.isArray(colorVals) ? first(colorVals.filter(cv => colorValues[cv])) : colorVals as string | number
+      const key = dataCfg.key(r)
+      return {
+        type: 'node',
+        title: dataCfg.title(r),
+        row: r,
+        color: colorValues[colorVal]?.color,
+        val: val(r),
+        key: key,
+        selected: selectedSet == null ? null : selectedSet.has(key)
+      }
+    })
+    return { group: g, nodes, groupRows }
   })
 
   return orderBy(groups, n => sumBy(n.nodes, c => c.val), 'desc')
@@ -136,7 +137,7 @@ export const buildBubbleNodes = <T extends object>(rows: T[], selections: Bubble
       (hierarchy(root, n => n.children))
       .descendants()
 
-    return { group: t.group, nodes: nodes, dim: getPackDim(nodes) }
+    return { group: t.group, nodes: nodes, dim: getPackDim(nodes), rows: t.groupRows }
   }).filter(t => t != null)
 
   const maxSize = max(groupedNodes.map(t => Math.max(t.dim.w, t.dim.h))) // max size for all charts

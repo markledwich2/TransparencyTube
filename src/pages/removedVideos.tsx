@@ -16,11 +16,10 @@ import { orderBy } from '../common/Pipe'
 import { DateRangeQueryState, InlineDateRange, rangeFromQuery } from '../components/DateRange'
 import SearchText from '../components/SearchText'
 import { Period } from '../components/Period'
-import ReactTooltip from 'react-tooltip'
 import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
-import { colMd, ColumnMdVal } from '../common/Metadata'
+import { ColumnMdVal } from '../common/Metadata'
 import ReactMarkdown from 'react-markdown'
 import { odyseeVideoUrl, OdyseeYtVideo, odyseeYtVideos } from '../common/Odysee'
 
@@ -156,7 +155,7 @@ const RemovedVideosPage = () => {
           const res = await odyseeYtVideos(vids.map(v => v.videoId))
           return res
         }}
-        contentBelow={(v) => v.odyseePath && <span>
+        contentBottom={(v) => v.odyseePath && <span>
           <span style={{ position: 'relative', top: '-7px', paddingRight: '0.5em' }}>available on:</span>
           <a href={odyseeVideoUrl(v.odyseePath)} target='_odysee' style={{ paddingTop: '0.2em' }}>
             <OdyseeLogo style={{ height: '25px' }} />

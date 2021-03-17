@@ -106,7 +106,6 @@ const PageStyle = styled(MinimalPage)`
 
 const NarrativesPage = () => {
   const narrative = useNarrative()
-  const { channels, videoRows, loading } = narrative
   const [copyOpen, setCopyOpen] = useState<string[]>(copySections.filter(s => s.open).map(s => s.title))
   const [recs, setRecs] = useState<NarrativeRecSupport[]>(null)
 
