@@ -50,8 +50,17 @@ export interface VideoRemoved extends VideoCommon {
   hasCaptions?: boolean
 }
 
-export const isVideoNarrative = (c: VideoCommon): c is VideoNarrative => (c as VideoNarrative).narrative != undefined
-export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
+
+export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
+export type NarrativeKey = { narrative?: string, uploadDate?: string }
+export type NarrativeIdx = {
+  videos: BlobIndex<NarrativeVideo, NarrativeKey>,
+  channels: BlobIndex<NarrativeChannel, NarrativeKey>,
+  captions: BlobIndex<NarrativeCaption, NarrativeCaptionKey>,
+}
+
+export const isVideoNarrative = (c: VideoCommon): c is NarrativeVideo => (c as NarrativeVideo).narrative != undefined
+export interface NarrativeVideo extends VideoCommon, VideoChannelExtra {
   narrative: string
   support: string
   supplement: string
@@ -61,6 +70,16 @@ export interface VideoNarrative extends VideoCommon, VideoChannelExtra {
    * views adjusted for precision/recall ratios
    */
   videoViewsAdjusted: number
+}
+
+export interface NarrativeCaptionKey {
+  narrative: string,
+  channelId: string,
+  videoId: string
+}
+
+export interface NarrativeCaption extends NarrativeCaptionKey {
+  captions?: string[]
 }
 
 

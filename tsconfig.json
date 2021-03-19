@@ -13,7 +13,8 @@
     "sourceMap": true,
     "outDir": "./build/",
     "moduleResolution": "node",
-    "allowJs": true
+    "allowJs": true,
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*"

@@ -47,7 +47,8 @@ export const filterIncludes = <T,>(filter: FilterState<T>, row: T) => {
     if (!filterValues) return true
     const rv = row?.[c]
     if (rv === undefined) {
-      console.error(`filtering by col '${c}' which is undefined on row:`, row)
+      //console.error(`filtering by col '${c}' which is undefined on row:`, row)
+
       return false
     }
     if (Array.isArray(rv)) return Array.isArray(filterValues) ? filterValues.every(fv => rv.includes(fv)) : rv.includes(filterValues)

@@ -5,7 +5,7 @@ import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Style'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
-import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, VideoNarrative, VideoCaption } from '../common/RecfluenceApi'
+import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, NarrativeVideo, VideoCaption } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md } from '../common/Channel'
 import { flatMap, groupBy, indexBy, map, pipe, take } from 'remeda'
 import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
@@ -225,7 +225,7 @@ const BMetric = styled.b`
 `
 
 // any of the possible video types. Pls don't add to this, we are moving to providing contentX attributions to customize display rather than switching inside here
-type VideoTypes = VideoRemoved | VideoViews | VideoCommon | VideoNarrative
+type VideoTypes = VideoRemoved | VideoViews | VideoCommon | NarrativeVideo
 
 interface VideoProps extends StyleProps {
   v: VideoTypes,

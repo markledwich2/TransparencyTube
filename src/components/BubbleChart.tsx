@@ -85,7 +85,6 @@ export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup,
 
   return <>
     { useMemo(() => {
-      console.log('BubbleCharts r')
       return <div style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null, ...style }}>
         {d.groupedNodes && d.groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...d.commonProps} />)}
         {openNodes && <BubbleChart groupNodes={openNodes} {...d.commonProps} isOpen />}

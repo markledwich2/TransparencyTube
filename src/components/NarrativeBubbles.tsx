@@ -1,9 +1,9 @@
-import React, { useEffect, useState, FunctionComponent as FC, useMemo, ReactNode } from "react"
+import React, { useEffect, useState, FunctionComponent as FC, useMemo, ReactNode, Fragment } from "react"
 import { groupBy, indexBy, pick, uniq, } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelStats, VideoNarrative } from '../common/RecfluenceApi'
+import { ChannelStats, NarrativeVideo, NarrativeCaption, NarrativeCaptionKey, NarrativeIdx, NarrativeChannel, NarrativeKey } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FlexRow, styles } from "../components/Style"
 import { Videos } from '../components/Video'
@@ -23,13 +23,6 @@ import { useTip, Tip } from './Tip'
 import { HelpTip } from './HelpTip'
 import styled from 'styled-components'
 
-export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
-
-export type NarrativeKey = { narrative?: string, uploadDate?: string }
-type NarrativeIdx = {
-  videos: BlobIndex<VideoNarrative, NarrativeKey>,
-  channels: BlobIndex<NarrativeChannel, NarrativeKey>,
-}
 
 const bubbleKeyString = <T extends { channelId: string }>(r: T, groupBy: keyof T) => `${r.channelId}|${r[groupBy]}`
 const bubbleKeyObject = (key: string) => {
@@ -53,7 +46,7 @@ const groupCol = 'support'
 export const useNarrative = (rawLocation?: boolean): UseNarrative => {
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation ? window.location : useLocation(), navigateNoHistory)
-  const [videos, setVideos] = useState<(VideoNarrative)[]>(null)
+  const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
@@ -77,8 +70,8 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
           bubbleKey: g,
           ...channels[channelId],
           [groupCol]: group,
-          views: vids ? sumBy(vids, v => v.videoViews) : 0,
-          viewsAdjusted: vids ? sumBy(vids, v => v.videoViewsAdjusted) : 0,
+          views: vids ? sumBy(vids, v => v.videoViews ?? 0) : 0,
+          viewsAdjusted: vids ? sumBy(vids, v => v.videoViewsAdjusted ?? 0) : 0,
         }) as NarrativeChannel
       })
 
@@ -90,9 +83,10 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
 
   useEffect(() => {
     Promise.all([
-      blobIndex<VideoNarrative, NarrativeKey>('narrative_videos'),
-      blobIndex<NarrativeChannel, NarrativeKey>('narrative_channels')
-    ]).then(([videos, channels]) => setIdx({ videos, channels }))
+      blobIndex<NarrativeVideo, NarrativeKey>('narrative_videos', true, "v2.1"),
+      blobIndex<NarrativeChannel, NarrativeKey>('narrative_channels', true),
+      blobIndex<NarrativeCaption, NarrativeCaptionKey>('narrative_captions')
+    ]).then(([videos, channels, captions]) => setIdx({ videos, channels, captions }))
   }, [])
 
   useEffect(() => { idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, q.narrative])
@@ -118,7 +112,7 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
     })
   }, [idx, channels, JSON.stringify(q)])
 
-  var res = { loading, videoFilter, setVideoFilter, channels, selectedChannels, videoRows, bubbleRows, videos, dateRange, q, setQuery }
+  var res = { loading, videoFilter, setVideoFilter, channels, selectedChannels, videoRows, bubbleRows, videos, dateRange, q, setQuery, idx }
   return res
 }
 
@@ -128,12 +122,13 @@ interface UseNarrative {
   setVideoFilter: (f: NarrativeFilterState) => void
   channels: Record<string, NarrativeChannel>
   selectedChannels: NarrativeChannel[]
-  videos: VideoNarrative[]
-  videoRows: VideoNarrative[]
+  videos: NarrativeVideo[]
+  videoRows: NarrativeVideo[]
   bubbleRows: NarrativeChannel[]
   dateRange: DateRangeValue
   q: NarrativeFilterState
   setQuery: (values: Partial<NarrativeFilterState>) => void
+  idx: NarrativeIdx
 }
 
 const supportValues = md.video.support.val
@@ -147,7 +142,8 @@ const PageStyle = styled.div`
     }
 `
 
-export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter, videos, videoRows, dateRange, channels, selectedChannels, q, setQuery, bubbleRows, loading }) => {
+export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter, videos, videoRows, dateRange, channels, selectedChannels,
+  q, setQuery, bubbleRows, loading, idx }) => {
   const selections: BubblesSelectionState<NarrativeChannel> = {
     groupBy: groupCol,
     colorBy: 'lr',
@@ -181,14 +177,14 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
         </FilterPart>
         <FilterPart>
           from channel
-        {channels && selectedChannels && selectedChannels.map(c => <>
-          <ChannelLogo c={c} key={c.channelId} style={{ height: '2em' }} useTip={channelTip} />
+        {channels && selectedChannels && selectedChannels.map(c => <Fragment key={c.channelId}>
+          <ChannelLogo c={c} style={{ height: '2em' }} useTip={channelTip} />
           <CloseOutline className='clickable'
             onClick={() => {
               const keys = q.selectedKeys?.filter(k => bubbleKeyObject(k).channelId != c.channelId)
               return setQuery({ selectedKeys: keys?.length > 0 ? keys : null })
             }} />
-        </>)}
+        </Fragment>)}
           {channels && !q.selectedKeys && <ChannelSearch onSelect={c => {
             const keys = bubbleRows.filter(b => b.channelId == c.channelId).map(b => bubbleKeyString(b, groupCol))
             setQuery({ selectedKeys: keys })
@@ -213,15 +209,13 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
           if (fViews == fAdjusted) return null
           return <span> (<b style={{ fontSize: '1.3em' }}>{fAdjusted}</b> bias-adjusted views <HelpTip useTip={helpTip}>
             <p><b>Bias-adjusted views</b> is an estimate of views adjusted for false positive &amp; false negative rates of the our model.</p>
-            <p>
-              <ul style={{ marginTop: '1em', marginLeft: '2em', lineHeight: '2em' }}>
-                <li><Tag label="manual" /> = 1</li>
-                <li><SupportTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.96 recall</li>
-                <li><SupportTag /> and uploaded after 2020-12-09 = 0.68 precision / 0.97 recall</li>
-                <li><DisputeTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.94 recall</li>
-                <li><DisputeTag /> and uploaded after 2020-12-09 = 0.80 precision / 0.97 recall</li>
-              </ul>
-            </p>
+            <ul style={{ marginTop: '1em', marginLeft: '2em', lineHeight: '2em' }}>
+              <li><Tag label="manual" /> = 1</li>
+              <li><SupportTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.96 recall</li>
+              <li><SupportTag /> and uploaded after 2020-12-09 = 0.68 precision / 0.97 recall</li>
+              <li><DisputeTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.94 recall</li>
+              <li><DisputeTag /> and uploaded after 2020-12-09 = 0.80 precision / 0.97 recall</li>
+            </ul>
           </HelpTip>)
           </span>
         }}
@@ -237,6 +231,12 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
         <p><b>Videos</b> with the relevant captions for context. Change filters, or select channels above to filter this list.</p>
       </TextSection>
       <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading}
+        defaultLimit={20}
+        loadExtraOnVisible={async (vids) => {
+          if (!idx?.captions) return []
+          const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
+          return res
+        }}
         contentSubTitle={v => {
           const supportOpt = md.video.support.val[v.support]
           const supplementOpt = md.video.supplement.val[v.supplement]
