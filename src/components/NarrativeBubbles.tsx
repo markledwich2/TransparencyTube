@@ -99,12 +99,16 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
       { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
     ).then(vids => {
       const vidsExtra = vids.map(v => {
+        let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
         const c = channels[v.channelId]
-        if (!c) return v
-        const vExtra = { ...v, ...pick(c, ['tags', 'lr']) }
-        vExtra.supplement = (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual'
-        vExtra.bubbleKey = bubbleKeyString(vExtra, groupCol) //2nd step so key can be derived from other calculated cols
-        return vExtra
+        if (!c) return r
+        r = {
+          ...r,
+          ...pick(c, ['tags', 'lr']),
+          supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
+          bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
+        }
+        return r
       })
       setVideos(vidsExtra)
       setLoading(false)
