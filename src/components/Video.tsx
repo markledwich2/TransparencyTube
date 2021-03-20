@@ -111,7 +111,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       })
   }, [videos?.length, limit, showAlls])
 
-  return <div style={style}> {useMemo(() => {
+  return <div className="videos-container" style={style}> {useMemo(() => {
     if (!videos) return <Spinner />
     const showMore = (groupedVidsTotal ?? videos?.length) > limit
     return <><div style={{
