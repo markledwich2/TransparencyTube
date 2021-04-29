@@ -37,13 +37,14 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
   lr?: string[]
   support?: string[]
   supplement?: string[]
-  narrative?: string
   errorType?: string[]
 }
 
 const groupCol = 'support'
 
-export const useNarrative = (rawLocation?: boolean): UseNarrative => {
+export const useNarrative = (narrative = '2020 Election Fraud',
+  defaultRange: DateRangeValue = { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
+  rawLocation?: boolean, narrativeIndexPrefix = 'narrative',): UseNarrative => {
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation ? window.location : useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
@@ -55,10 +56,8 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
 
-  const { narrative, dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
-
-    const narrative = q.narrative ?? idx?.videos.cols.narrative?.distinct[0] ?? ''
-    const dateRange = rangeFromQuery(q, new Date(2020, 11 - 1, 3), new Date(2021, 1 - 1, 31))
+  const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
+    const dateRange = rangeFromQuery(q, defaultRange.startDate, defaultRange.endDate)
 
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
     const bubbleRows = videos && channels && entries(
@@ -83,13 +82,13 @@ export const useNarrative = (rawLocation?: boolean): UseNarrative => {
 
   useEffect(() => {
     Promise.all([
-      blobIndex<NarrativeVideo, NarrativeKey>('narrative_videos', true, "v2.1"),
-      blobIndex<NarrativeChannel, NarrativeKey>('narrative_channels', true),
-      blobIndex<NarrativeCaption, NarrativeCaptionKey>('narrative_captions')
+      blobIndex<NarrativeVideo, NarrativeKey>(`${narrativeIndexPrefix}_videos`, true, "v2.1"),
+      blobIndex<NarrativeChannel, NarrativeKey>(`${narrativeIndexPrefix}_channels`, true),
+      blobIndex<NarrativeCaption, NarrativeCaptionKey>(`${narrativeIndexPrefix}_captions`)
     ]).then(([videos, channels, captions]) => setIdx({ videos, channels, captions }))
   }, [])
 
-  useEffect(() => { idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, q.narrative])
+  useEffect(() => { idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, narrative])
 
   useEffect(() => {
     if (!idx || !channels) return
