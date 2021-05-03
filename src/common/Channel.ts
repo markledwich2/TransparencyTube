@@ -107,6 +107,7 @@ Click on a channel to see more detail about the collection of video statistics.
     errorType: {
       label: 'Removed Reason',
       values: [
+        { value: 'Available', color: '#cca55a', label: 'Available', desc: `Video has not been removed by anyone` },
         { value: 'Removed by uploader', color: '#8a8acb', label: 'Removed by creator', desc: `The creator removed a video that was once public` },
         { value: 'Unavailable', color: '#444', desc: `The video's page reported *Unavailable* as the reason` },
         { value: 'Private', color: '#aa557f', desc: `A public video was made private by the creator` },

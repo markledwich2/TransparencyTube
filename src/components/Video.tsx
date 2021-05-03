@@ -12,7 +12,6 @@ import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
-import ReactTooltip from 'react-tooltip'
 import { Tip, useTip, UseTip } from './Tip'
 
 
@@ -94,10 +93,6 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
     }
     return { groupedVids, groupedVidsTotal }
   }, [limit, showAlls, extras, videos, channels, groupChannels])
-
-
-
-  useEffect(() => { ReactTooltip.rebuild() }, [videos?.length, limit])
 
   // load extra's for visible videos
   useEffect(() => {

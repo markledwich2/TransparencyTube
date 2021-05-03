@@ -16,7 +16,6 @@ import { ChannelDetails } from '../components/Channel'
 import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
-import ReactTooltip from 'react-tooltip'
 import { orderBy } from '../common/Pipe'
 
 interface QueryState extends Record<string, string> {

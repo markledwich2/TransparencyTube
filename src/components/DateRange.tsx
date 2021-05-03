@@ -144,6 +144,7 @@ export const InlineDateRange = ({ onClose, onChange, range, style, className, ..
         ranges={[currentRange]}
         direction='vertical'
         scroll={{ enabled: true }}
+        showMonthAndYearPickers
         months={3}
         onChange={v => {
           const r = (v as { range1: DateRangeValue }).range1

@@ -34,7 +34,7 @@ export interface VideoChannelExtra {
   media?: string
 }
 
-export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews).periodViews != undefined
+export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews)?.periodViews != undefined
 export interface VideoViews extends HasPeriod, VideoCommon {
   periodViews: number
   watchHours: number

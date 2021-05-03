@@ -8,9 +8,8 @@ import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FlexRow, styles } from "../components/Style"
 import { Videos } from '../components/Video'
 import { useLocation } from '@reach/router'
-import { delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
+import { assign, delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
-import ReactTooltip from 'react-tooltip'
 import { DateRangeQueryState, DateRangeValue, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
 import { entries, sumBy, values } from '../common/Pipe'
 import { BubbleCharts } from '../components/BubbleChart'
@@ -42,9 +41,21 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
 
 const groupCol = 'support'
 
-export const useNarrative = (narrative = '2020 Election Fraud',
-  defaultRange: DateRangeValue = { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
-  rawLocation?: boolean, narrativeIndexPrefix = 'narrative',): UseNarrative => {
+export interface UseNarrativePros {
+  narrative?: string
+  defaultRange?: DateRangeValue
+  rawLocation?: boolean,
+  narrativeIndexPrefix?: string
+}
+
+const defaultProps: UseNarrativePros = {
+  narrative: '2020 Election Fraud',
+  defaultRange: null, // new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
+  narrativeIndexPrefix: 'narrative'
+}
+
+export const useNarrative = (props: UseNarrativePros): UseNarrative => {
+  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation ? window.location : useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
@@ -55,8 +66,9 @@ export const useNarrative = (narrative = '2020 Election Fraud',
   const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
-
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
+    console.log('useNarrative - data memo')
+
     const dateRange = rangeFromQuery(q, defaultRange.startDate, defaultRange.endDate)
 
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
@@ -81,6 +93,7 @@ export const useNarrative = (narrative = '2020 Election Fraud',
   }, [toJson(q), videos, channels, idx])
 
   useEffect(() => {
+    console.log('useNarrative - index effect')
     Promise.all([
       blobIndex<NarrativeVideo, NarrativeKey>(`${narrativeIndexPrefix}_videos`, true, "v2.1"),
       blobIndex<NarrativeChannel, NarrativeKey>(`${narrativeIndexPrefix}_channels`, true),
@@ -88,10 +101,14 @@ export const useNarrative = (narrative = '2020 Election Fraud',
     ]).then(([videos, channels, captions]) => setIdx({ videos, channels, captions }))
   }, [])
 
-  useEffect(() => { idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId))) }, [idx, narrative])
+  useEffect(() => {
+    console.log('useNarrative - narrative channel effect')
+    idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId)))
+  }, [idx, narrative])
 
   useEffect(() => {
     if (!idx || !channels) return
+    console.log('useNarrative - loading')
     setLoading(true)
     idx.videos.rows(
       { narrative },
@@ -111,7 +128,6 @@ export const useNarrative = (narrative = '2020 Election Fraud',
       })
       setVideos(vidsExtra)
       setLoading(false)
-      delay(200).then(() => ReactTooltip.rebuild())
     })
   }, [idx, channels, JSON.stringify(q)])
 

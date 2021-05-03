@@ -198,11 +198,11 @@ const TagStyle = styled.span`
 
 interface TagProps { color?: string, label?: string }
 
-export const Tag: FC<TagProps & StyleProps> = ({ color, label, style, className, children }) =>
-  <TagStyle style={{ backgroundColor: color, color: '#fff', ...style }} className={className}>{label}{children}</TagStyle>
+export const Tag: FC<TagProps & StyleProps & { onClick?: React.MouseEventHandler<Element> }> = ({ color, label, style, className, onClick, children }) =>
+  <TagStyle style={{ backgroundColor: color, color: '#fff', ...style }} onClick={onClick} className={className}>{label}{children}</TagStyle>
 
 interface ChannelSearchProps<T extends Channel> {
-  onSelect: (T) => void
+  onSelect: (c: T) => void
   channels: T[]
   sortBy: keyof T
 }
@@ -212,7 +212,7 @@ export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 
   onSelect={onSelect}
   search={(q) => new Promise((resolve) => resolve(
     orderBy(
-      channels.filter(f => f.channelTitle.match(new RegExp(`${q}`, 'i'))),
+      channels.filter(f => f.channelTitle?.match(new RegExp(`${q}`, 'i'))),
       c => c[sortBy], 'desc')
   ))}
   itemRender={(c: Channel) => <ChannelTitle c={c} showTags style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect} />}
