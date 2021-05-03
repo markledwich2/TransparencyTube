@@ -13,7 +13,7 @@ import PurposeBanner from '../components/PurposeBanner'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { InlineDateRange, rangeToQuery } from '../components/DateRange'
 import { toJson } from '../common/Utils'
-import { MinimalPage, styles } from '../components/Style'
+import { GlobalStyle, MinimalPage, styles } from '../components/Style'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
 import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
@@ -51,16 +51,12 @@ const NarrativeVaccinePage = () => {
 
   var tip = useTip<NarrativeVideo>()
 
-  return <Layout>
-    <PurposeBanner>
-      <h2>Vaccine Hesitancy</h2>
-      Mollit sint laborum minim do ad pariatur magna eu deserunt culpa. Dolor officia consequat elit aute sunt Lorem id officia in occaecat incididunt. Qui ad pariatur consectetur laboris sit minim consequat cillum culpa sit officia. Consequat laboris reprehenderit id irure consectetur ullamco.
-    </PurposeBanner>
+  return <>
+    <GlobalStyle />
     <MinimalPage>
 
       <TextSection style={{ margin: '1em' }}>
-        <p>Video <b>bubbles</b> sized by <b>views</b>, arranged by <b>created</b> and colored by <b>removal status</b>
-        Click on on videos to see the context.</p>
+        <p>Video <b>bubbles</b> sized by <b>views</b>, arranged by <b>created</b> and colored by <b>removal status</b></p>
       </TextSection>
 
       <FilterHeader style={{ marginBottom: '2em' }}>
@@ -122,7 +118,7 @@ const NarrativeVaccinePage = () => {
         highlightWords={['vaccine']} />
 
     </MinimalPage>
-  </Layout>
+  </>
 }
 
 export default NarrativeVaccinePage
