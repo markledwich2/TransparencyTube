@@ -50,7 +50,7 @@ export interface UseNarrativePros {
 
 const defaultProps: UseNarrativePros = {
   narrative: '2020 Election Fraud',
-  defaultRange: null, // new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
+  defaultRange: { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
   narrativeIndexPrefix: 'narrative'
 }
 
