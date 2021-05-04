@@ -41,21 +41,22 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
 
 const groupCol = 'support'
 
-export interface UseNarrativePros {
+export interface UseNarrativeProps {
   narrative?: string
   defaultRange?: DateRangeValue
   rawLocation?: boolean,
   narrativeIndexPrefix?: string
+  videoMap?: (v: NarrativeVideo) => NarrativeVideo
 }
 
-const defaultProps: UseNarrativePros = {
+const defaultProps: UseNarrativeProps = {
   narrative: '2020 Election Fraud',
   defaultRange: { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
   narrativeIndexPrefix: 'narrative'
 }
 
-export const useNarrative = (props: UseNarrativePros): UseNarrative => {
-  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix } = assign(defaultProps, props)
+export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
+  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix, videoMap } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation ? window.location : useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
@@ -115,6 +116,7 @@ export const useNarrative = (props: UseNarrativePros): UseNarrative => {
       { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
     ).then(vids => {
       const vidsExtra = vids.map(v => {
+        v = videoMap ? videoMap(v) : v
         let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
         const c = channels[v.channelId]
         if (!c) return r

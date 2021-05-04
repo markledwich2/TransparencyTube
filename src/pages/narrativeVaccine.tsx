@@ -2,7 +2,7 @@ import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import { NarrativeVideo } from '../common/RecfluenceApi'
-import { useNarrative } from '../components/NarrativeBubbles'
+import { useNarrative, UseNarrativeProps } from '../components/NarrativeBubbles'
 import { Tip, useTip } from '../components/Tip'
 import { Video, Videos } from '../components/Video'
 import { BeeChart } from '../components/BeeChart'
@@ -21,10 +21,11 @@ import { colMd } from '../common/Metadata'
 import { useWindowDim } from '../common/Window'
 import '../components/main.css'
 
-const nProps = {
+const nProps: UseNarrativeProps = {
   narrative: 'Vaccine Personal',
   defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
-  narrativeIndexPrefix: 'narrative2'
+  narrativeIndexPrefix: 'narrative2',
+  videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' })
 }
 
 
@@ -32,11 +33,10 @@ const NarrativeVaccinePage = () => {
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
-  const { bubbles, videos, errorMd } = useMemo(() => {
+  const { bubbles, videos } = useMemo(() => {
     console.log('BeeSwarm - videoRows memo')
-    const videoRowsDerived = videoRows?.map(v => ({ ...v, errorType: v.errorType ?? 'Available' }))
-    const errorMd = colMd(md.video.errorType, videoRowsDerived)
-    const bubbles = videoRowsDerived?.map(v => ({
+    const errorMd = colMd(md.video.errorType, videoRows)
+    const bubbles = videoRows?.map(v => ({
       id: v.videoId,
       groupId: v.channelId,
       data: v,
@@ -46,8 +46,8 @@ const NarrativeVaccinePage = () => {
       img: channels[v.channelId].logoUrl,
       selected: q.channelId?.includes(v.channelId)
     }))
-    const videos = videoRowsDerived?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
-    return { bubbles, videos, errorMd }
+    const videos = videoRows?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
+    return { bubbles, videos }
   }, [videoRows, toJson(q)])
 
   var tip = useTip<NarrativeVideo>()
@@ -115,8 +115,7 @@ const NarrativeVaccinePage = () => {
           const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
           return res
         }}
-        highlightWords={['vaccine']} />
-
+        highlightWords={['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven']} />
     </MinimalPage>
   </>
 }

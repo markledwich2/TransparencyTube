@@ -102,11 +102,12 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
 
   useEffect(() => {
     if (!nodes) return
-    const lastNode = maxBy(nodes, b => b.date.valueOf())
-    const nodeEl = document.querySelector(`#chart g#${lastNode.id}`)
+    const id = maxBy(nodes, b => b.date.valueOf())?.id
+    if (!id) return
+    const nodeEl = document.querySelector(`#chart g#${id}`)
     if (nodeEl)
       scrollIntoView(nodeEl, { scrollMode: 'if-needed' })
-  }, [])
+  }, [!nodes])
 
   const onDeselect = useCallback(() => onSelect(null), [onSelect])
 
