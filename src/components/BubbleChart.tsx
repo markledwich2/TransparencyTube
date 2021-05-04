@@ -13,6 +13,7 @@ import { compact, pick } from 'remeda'
 import { HelpOutline } from 'styled-icons/material'
 import { TableMdRun } from '../common/Metadata'
 import { Tip, UseTip, useTip } from './Tip'
+import useDraggable from '../common/DragScroll'
 
 
 const FullscreenIcon = styled(Fullscreen)`
@@ -135,6 +136,7 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
   }
 
   const onDeselect = useCallback(() => onSelect(null), [onSelect])
+
 
   return useMemo(() => <>
     <BubbleDiv className='inline' onClick={onDeselect}>

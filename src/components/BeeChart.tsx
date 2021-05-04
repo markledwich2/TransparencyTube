@@ -12,6 +12,7 @@ import { assign, dateFormat, delay } from '../common/Utils'
 import { Spinner } from './Spinner'
 import { circleToRect, getBounds, offsetTransform } from '../common/Draw'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import useDraggable from '../common/DragScroll'
 
 export interface BeehiveNode<T> {
   id: string
@@ -34,7 +35,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
   bubbleSize?: number
 }) => {
 
-  var ticks = 200
+  var ticks = 120
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
   var { w } = useMemo(() => {
@@ -109,53 +110,56 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
       scrollIntoView(nodeEl, { scrollMode: 'if-needed' })
   }, [!nodes])
 
-  const onDeselect = useCallback(() => onSelect(null), [onSelect])
 
-  var el = useMemo(() => {
+
+  var svgEl = useMemo(() => {
     if (!fNodes || !axis) return <Spinner />
     console.log('BeeHive - render')
-
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
     const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
 
-    return <div id='chart' onClick={onDeselect} style={{ width: '100%', overflowX: 'auto' }}>
-      <SVGStyle style={{ width: b.w, height: b.h }} >
-        <defs>
-          {bubbles.filter(showImage)
-            .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath>)}
-        </defs>
+    return <SVGStyle style={{ width: b.w, height: b.h }} >
+      <defs>
+        {bubbles.filter(showImage)
+          .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath>)}
+      </defs>
 
-        <g >
-          <g className='bubbles' transform={offsetTransform(b)}>
-            {bubbles.map(b => {
-              const { id, x, y, r, color, selected, img } = b
-              const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
-              const elProps = {
-                ...props.tip.eventProps(b.data),
-                onClick: (e) => {
-                  e.stopPropagation()
-                  onSelect(b.data)
-                },
-                className: compact(['node', selectedClass]).join(' ')
-              }
-
-              return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
-                <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
-                {showImage(b) &&
-                  <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
-                    href={img} clipPath={`url(#clip-${b.id})`} {...elProps} />}
-              </g>
+      <g>
+        <g className='bubbles' transform={offsetTransform(b)}>
+          {bubbles.map(b => {
+            const { id, x, y, r, color, selected, img } = b
+            const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
+            const elProps = {
+              ...props.tip.eventProps(b.data),
+              onClick: (e) => {
+                e.stopPropagation()
+                onSelect(b.data)
+              },
+              className: compact(['node', selectedClass]).join(' ')
             }
-            )}
-          </g>
-          <g className='axis' transform={`translate(${-b.x}, 0)`}>
-            {/* only transform x. Append y raw */}
-            <DateAxis {...axis} top={b.h - 25} />
-          </g>
+
+            return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
+              <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
+              {showImage(b) &&
+                <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
+                  href={img} clipPath={`url(#clip-${b.id})`} {...elProps} />}
+            </g>
+          }
+          )}
         </g>
-      </SVGStyle></div>
+        <g className='axis' transform={`translate(${-b.x}, 0)`}>
+          {/* only transform x. Append y raw */}
+          <DateAxis {...axis} top={b.h - 25} />
+        </g>
+      </g>
+    </SVGStyle>
   }, [nodes, fNodes, tick, props.w])
-  return el
+
+  const { ref: dragRef, isDragging } = useDraggable([1], () => onSelect(null))
+  return <div id='chart' ref={dragRef}
+    style={{ width: '100%', overflowX: 'auto', cursor: isDragging ? 'grabbing' : 'grab' }}>
+    {svgEl}
+  </div>
 }
 
 const DateAxis: FC<AxisLayout & { top: number }> = ({ top, ticks, scale, tickFormat }) => {
@@ -169,7 +173,6 @@ const DateAxis: FC<AxisLayout & { top: number }> = ({ top, ticks, scale, tickFor
     })}
   </g>
 }
-
 
 interface AxisLayout {
   scale: ScaleTime<number, number>
