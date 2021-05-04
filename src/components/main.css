@@ -14,7 +14,7 @@
 html,
 body,
 input {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 @media (min-width: 1200px) {

@@ -7,9 +7,10 @@ import styled from 'styled-components'
 import { max, minMax } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
-import fns, { addDays, addMonths, eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns'
+import fns, { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns'
 import { assign, dateFormat, delay, simpleHash } from '../common/Utils'
 import { Spinner } from './Spinner'
+import { circleToRect, getBounds, offsetTransform } from '../common/Draw'
 
 export interface BeehiveNode<T> {
   id: string
@@ -23,34 +24,38 @@ export interface BeehiveNode<T> {
 
 type ForceNode = SimulationNodeDatum & { id: string, r: number, cx?: number, cy?: number }
 
-export const BeeChart = <T,>({ nodes, animate, onSelect, ...p }: {
+export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
   nodes: BeehiveNode<T>[]
   w: number
-  h: number
   tip: UseTip<any>
   onSelect: (data: T) => void
   animate?: boolean
+  bubbleSize?: number
 }) => {
-  var chartDim = { w: p.w - 10, h: p.h - 20 }
-  var ticks = 300
+
+  var ticks = 200
 
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
-  var { fNodes, axis, sim } = useMemo(() => {
+  var { fNodes, axis, sim, bubbleBounds } = useMemo(() => {
     if (!nodes) return { fNodes: null, axis: null, sim: null }
     console.log('BeeHive - layout')
 
-    const axis = monthAxisLayout(nodes, chartDim.w)
+    const dayRange = minMax(nodes.map(v => v.date.valueOf()))
+    const days = differenceInDays(dayRange[1], dayRange[0])
+    const w = max([props.w - 20, days * 4])
+
+    const axis = monthAxisLayout(nodes, w)
     const maxValue = max(nodes.map(n => n.value))
     const fNodes: ForceNode[] = nodes.map(n => ({
       id: n.id,
-      y: p.h / 2 + (Math.random() * p.h) / 8,
+      y: Math.random(),
       x: axis.scale(n.date) + (Math.random() - 0.5) * 0.05, // place on x but randomize slightly to avoid overlapping
-      r: Math.sqrt(n.value / maxValue) * 50
+      r: Math.sqrt(n.value / maxValue) * 50 * (props.bubbleSize ?? 1)
     }))
-    var force = forceSimulation(fNodes)
+    var sim = forceSimulation(fNodes)
       .force('forceX', forceX(d => d.x).strength(1))
-      .force('forceY', forceY(d => p.h / 2).strength(0.02))
+      .force('forceY', forceY(_ => 0).strength(0.02))
       .force('collide', forceCollide((d: ForceNode) => d.r + 1).iterations(1))
       .velocityDecay(0.2)
       //.on("tick", () => { })
@@ -58,13 +63,15 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...p }: {
 
     if (!animate) {
       var sw = performance.now()
-      force.tick(ticks)
-      force.stop()
+      sim.tick(ticks)
+      sim.stop()
       console.log(`BeeChart - sim took ${performance.now() - sw}ms`)
     }
 
-    return { fNodes, axis, sim: force }
-  }, [nodes?.length ?? 0, p.w, p.h])
+    const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
+
+    return { fNodes, axis, bubbleBounds, sim }
+  }, [nodes?.length ?? 0, props.bubbleSize])
 
   const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
   const imgPad = 2
@@ -97,39 +104,45 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...p }: {
     console.log('BeeHive - render')
 
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
-    return <div onClick={onDeselect}>
-      <SVGStyle width={p.w} height={p.h} >
+    const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
+
+    return <div onClick={onDeselect} style={{ width: '100%', overflowX: 'auto' }}>
+      <SVGStyle style={{ width: b.w, height: b.h }} >
         <defs>
           {bubbles.filter(showImage)
             .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath>)}
         </defs>
 
-        <g className="bubbles">
-          {bubbles.map(b => {
-            const { id, x, y, r, color, selected, img } = b
-            const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
-            const props = {
-              ...p.tip.eventProps(b.data),
-              onClick: (e) => {
-                e.stopPropagation()
-                onSelect(b.data)
-              },
-              className: compact(['node', selectedClass]).join(' ')
+        <g >
+          <g className='bubbles' transform={offsetTransform(b)}>
+            {bubbles.map(b => {
+              const { id, x, y, r, color, selected, img } = b
+              const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
+              const elProps = {
+                ...props.tip.eventProps(b.data),
+                onClick: (e) => {
+                  e.stopPropagation()
+                  onSelect(b.data)
+                },
+                className: compact(['node', selectedClass]).join(' ')
+              }
+
+              return <g key={id} transform={`translate(${x}, ${y})`}>
+                <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
+                {showImage(b) &&
+                  <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
+                    href={img} clipPath={`url(#clip-${b.id})`} {...elProps} />}
+              </g>
             }
-
-            return <g key={id} transform={`translate(${x}, ${y})`}>
-              <circle r={r} fill={color ?? 'var(--bg3)'} {...props} onTouchStart={e => e.preventDefault()} />
-              {showImage(b) &&
-                <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
-                  href={img} clipPath={`url(#clip-${b.id})`} {...props} />}
-            </g>
-          }
-          )}
-
-          <DateAxis {...axis} top={chartDim.h - 15} />
+            )}
+          </g>
+          <g className='axis' transform={`translate(${-b.x}, 0)`}>
+            {/* only transform x. Append y raw */}
+            <DateAxis {...axis} top={b.h - 25} />
+          </g>
         </g>
       </SVGStyle></div>
-  }, [nodes, fNodes, tick])
+  }, [nodes, fNodes, tick, props.w])
   return el
 }
 

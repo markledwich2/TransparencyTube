@@ -205,9 +205,10 @@ interface ChannelSearchProps<T extends Channel> {
   onSelect: (c: T) => void
   channels: T[]
   sortBy: keyof T
+  placeholder?: string
 }
 
-export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 'channelViews', style }: ChannelSearchProps<T> & StyleProps) => <SearchSelect
+export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 'channelViews', placeholder = 'search', style }: ChannelSearchProps<T> & StyleProps) => <SearchSelect
   style={{ width: '14em', ...style }}
   onSelect={onSelect}
   search={(q) => new Promise((resolve) => resolve(
@@ -218,5 +219,5 @@ export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 
   itemRender={(c: Channel) => <ChannelTitle c={c} showTags style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect} />}
   getKey={c => c.channelId}
   getLabel={c => c.channelTitle}
-  placeholder='search'
+  placeholder={placeholder}
 />

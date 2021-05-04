@@ -25,7 +25,6 @@ export const circleToRect = (c: Circle): Rect => ({ x: c.cx - c.r, y: c.cy - c.r
 
 /**
  * calculates dimensions to help resizing/zooming to fit containers
- * @param nodes circle packing nodes
  */
 export const getBounds = (rects: Rect[], padding: number = 0): Rect => {
   const x = min(rects.map(r => r.x)) - padding

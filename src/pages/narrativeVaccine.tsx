@@ -2,24 +2,23 @@ import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import { NarrativeVideo } from '../common/RecfluenceApi'
-import Layout from '../components/Layout'
 import { useNarrative } from '../components/NarrativeBubbles'
 import { Tip, useTip } from '../components/Tip'
 import { Video, Videos } from '../components/Video'
 import { BeeChart } from '../components/BeeChart'
-import { pick, uniq } from 'remeda'
+import { pick } from 'remeda'
 import { TextSection } from '../components/Markdown'
-import PurposeBanner from '../components/PurposeBanner'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { InlineDateRange, rangeToQuery } from '../components/DateRange'
 import { toJson } from '../common/Utils'
 import { GlobalStyle, MinimalPage, styles } from '../components/Style'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
-import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
+import { ChannelLogo, ChannelSearch } from '../components/Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { values } from '../common/Pipe'
-import { Channel, md } from '../common/Channel'
+import { md } from '../common/Channel'
 import { colMd } from '../common/Metadata'
+import '../components/main.css'
 
 const nProps = {
   narrative: 'Vaccine Personal',
@@ -51,6 +50,7 @@ const NarrativeVaccinePage = () => {
 
   var tip = useTip<NarrativeVideo>()
 
+
   return <>
     <GlobalStyle />
     <MinimalPage>
@@ -59,12 +59,19 @@ const NarrativeVaccinePage = () => {
         <p>Video <b>bubbles</b> sized by <b>views</b>, arranged by <b>created</b> and colored by <b>removal status</b></p>
       </TextSection>
 
-      <FilterHeader style={{ marginBottom: '2em' }}>
+      <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
         <FilterPart>
-          Uploaded between <InlineDateRange range={dateRange} onChange={r => setQuery(rangeToQuery(r))} />
+          Uploaded <InlineDateRange range={dateRange} onChange={r => setQuery(rangeToQuery(r))} />
         </FilterPart>
         <FilterPart>
-          <span>from channel</span>
+          video
+          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
+        </FilterPart>
+        <FilterPart>
+          channel
+        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
+        </FilterPart>
+        <FilterPart>
           {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>
             {/* useTip={channelTip} */}
             <ChannelLogo c={channels[c]} style={{ height: '2em' }} />
@@ -77,25 +84,18 @@ const NarrativeVaccinePage = () => {
           {channels && !q.channelId && <ChannelSearch
             style={styles.normalFont}
             onSelect={c => setQuery({ channelId: [c.channelId] })}
-            channels={values(channels)} sortBy='views' />}
-        </FilterPart>
-        <FilterPart>
-          video filter
-          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
-        </FilterPart>
-        <FilterPart>
-          channel filter
-        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
+            channels={values(channels)} sortBy='views' placeholder='channel search' />}
         </FilterPart>
       </FilterHeader>
 
-      <div style={{ height: '800px' }}>
+      <div>
         <ContainerDimensions>
           {({ width, height }) => <BeeChart
-            w={width - 5} h={height - 5}
+            w={width - 5}
             nodes={bubbles}
             onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
             tip={tip}
+            bubbleSize={1.5}
           />
           }
         </ContainerDimensions>
@@ -105,7 +105,7 @@ const NarrativeVaccinePage = () => {
         {tip.data && <Video v={tip.data} c={channels[tip.data.channelId]} showChannel showThumb />}
       </Tip>
 
-      <TextSection style={{ margin: '2em' }}><p>Top viewed videos with the context of mention</p></TextSection>
+      <TextSection style={{ margin: '1em' }}><p>Top viewed videos with the context of mention</p></TextSection>
 
       <Videos channels={channels} videos={videos} groupChannels showTags showChannels showThumb loading={loading}
 
