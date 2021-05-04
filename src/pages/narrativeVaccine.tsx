@@ -105,7 +105,7 @@ const NarrativeVaccinePage = () => {
         {tip.data && <Video v={tip.data} c={channels[tip.data.channelId]} showChannel showThumb />}
       </Tip>
 
-      <TextSection style={{ margin: '1em' }}><p>Top viewed videos with the context of mention</p></TextSection>
+      <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>
 
       <Videos channels={channels} videos={videos}
         groupChannels showTags showChannels showThumb loading={loading}
