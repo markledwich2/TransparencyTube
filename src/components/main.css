@@ -97,11 +97,12 @@ h4 {
 }
 
 *::-webkit-scrollbar {
-    width: 0.5em;
+    width: 0.8em;
+    height: 0.8em;
 }
 
 *::-webkit-scrollbar-thumb {
-    background-color: var(--bg2)
+    background-color: var(--bg3)
 }
 
 a {
@@ -119,7 +120,8 @@ p {
 }
 
 mark {
-    background-color: var(--bg-feature);
+    background-color: transparent;
+    font-weight: bold;
     color: #fff;
 }
 

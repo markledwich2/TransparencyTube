@@ -18,6 +18,7 @@ import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { values } from '../common/Pipe'
 import { md } from '../common/Channel'
 import { colMd } from '../common/Metadata'
+import { useWindowDim } from '../common/Window'
 import '../components/main.css'
 
 const nProps = {
@@ -29,6 +30,7 @@ const nProps = {
 
 const NarrativeVaccinePage = () => {
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
+  const windowDim = useWindowDim()
 
   const { bubbles, videos, errorMd } = useMemo(() => {
     console.log('BeeSwarm - videoRows memo')
@@ -49,7 +51,6 @@ const NarrativeVaccinePage = () => {
   }, [videoRows, toJson(q)])
 
   var tip = useTip<NarrativeVideo>()
-
 
   return <>
     <GlobalStyle />
@@ -90,12 +91,12 @@ const NarrativeVaccinePage = () => {
 
       <div>
         <ContainerDimensions>
-          {({ width, height }) => <BeeChart
+          {({ width }) => <BeeChart
             w={width - 5}
             nodes={bubbles}
             onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
             tip={tip}
-            bubbleSize={1.5}
+            bubbleSize={windowDim.h / 1200}
           />
           }
         </ContainerDimensions>

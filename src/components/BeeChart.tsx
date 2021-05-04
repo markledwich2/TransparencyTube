@@ -1,16 +1,17 @@
 import {
-  SimulationNodeDatum, scaleTime, extent, forceSimulation, forceX, forceY, forceCollide, ScaleTime
+  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime
 } from 'd3'
 import React, { FunctionComponent as FC, useCallback, useEffect, useMemo, useState } from 'react'
-import { compact, groupBy, indexBy } from 'remeda'
+import { compact, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { max, minMax } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
-import fns, { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns'
-import { assign, dateFormat, delay, simpleHash } from '../common/Utils'
+import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns'
+import { assign, dateFormat, delay } from '../common/Utils'
 import { Spinner } from './Spinner'
 import { circleToRect, getBounds, offsetTransform } from '../common/Draw'
+
 
 export interface BeehiveNode<T> {
   id: string
@@ -34,16 +35,15 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
 }) => {
 
   var ticks = 200
-
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
+
+  const dayRange = minMax(nodes.map(v => v.date.valueOf()))
+  const days = differenceInDays(dayRange[1], dayRange[0])
+  const w = max([props.w - 20, days * 4])
 
   var { fNodes, axis, sim, bubbleBounds } = useMemo(() => {
     if (!nodes) return { fNodes: null, axis: null, sim: null }
     console.log('BeeHive - layout')
-
-    const dayRange = minMax(nodes.map(v => v.date.valueOf()))
-    const days = differenceInDays(dayRange[1], dayRange[0])
-    const w = max([props.w - 20, days * 4])
 
     const axis = monthAxisLayout(nodes, w)
     const maxValue = max(nodes.map(n => n.value))
@@ -71,7 +71,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
 
     return { fNodes, axis, bubbleBounds, sim }
-  }, [nodes?.length ?? 0, props.bubbleSize])
+  }, [nodes?.length ?? 0, props.bubbleSize, w])
 
   const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
   const imgPad = 2
