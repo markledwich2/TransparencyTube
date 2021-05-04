@@ -48,10 +48,6 @@ const TopVideosPage = () => {
   }, [])
 
   useEffect(() => {
-    delay(200).then(() => ReactTooltip.rebuild())
-  }, [JSON.stringify(q)])
-
-  useEffect(() => {
     if (!videoIdx || !channels) return
     setLoading(true)
     videoIdx.rows({ period: periodString(period) }).then(vids => {
