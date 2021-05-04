@@ -4,14 +4,14 @@ import {
 import React, { FunctionComponent as FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { compact, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { max, minMax } from '../common/Pipe'
+import { max, maxBy, minMax } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
 import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns'
 import { assign, dateFormat, delay } from '../common/Utils'
 import { Spinner } from './Spinner'
 import { circleToRect, getBounds, offsetTransform } from '../common/Draw'
-
+import scrollIntoView from 'scroll-into-view-if-needed'
 
 export interface BeehiveNode<T> {
   id: string
@@ -37,9 +37,13 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
   var ticks = 200
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
-  const dayRange = minMax(nodes.map(v => v.date.valueOf()))
-  const days = differenceInDays(dayRange[1], dayRange[0])
-  const w = max([props.w - 20, days * 4])
+  var { w } = useMemo(() => {
+    if (!nodes) return { w: props.w }
+    const dayRange = minMax(nodes.map(v => v.date.valueOf()))
+    const days = differenceInDays(dayRange[1], dayRange[0])
+    const w = max([props.w - 20, days * 4])
+    return { w }
+  }, [nodes?.length ?? 0, props.w])
 
   var { fNodes, axis, sim, bubbleBounds } = useMemo(() => {
     if (!nodes) return { fNodes: null, axis: null, sim: null }
@@ -96,6 +100,13 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     return () => { cancel = true }
   }, [sim])
 
+  useEffect(() => {
+    if (!nodes) return
+    const lastNode = maxBy(nodes, b => b.date.valueOf())
+    const nodeEl = document.querySelector(`#chart g#${lastNode.id}`)
+    if (nodeEl)
+      scrollIntoView(nodeEl, { scrollMode: 'if-needed' })
+  }, [])
 
   const onDeselect = useCallback(() => onSelect(null), [onSelect])
 
@@ -106,7 +117,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
     const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
 
-    return <div onClick={onDeselect} style={{ width: '100%', overflowX: 'auto' }}>
+    return <div id='chart' onClick={onDeselect} style={{ width: '100%', overflowX: 'auto' }}>
       <SVGStyle style={{ width: b.w, height: b.h }} >
         <defs>
           {bubbles.filter(showImage)
@@ -127,7 +138,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
                 className: compact(['node', selectedClass]).join(' ')
               }
 
-              return <g key={id} transform={`translate(${x}, ${y})`}>
+              return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
                 <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
                 {showImage(b) &&
                   <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}

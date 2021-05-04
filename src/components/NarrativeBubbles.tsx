@@ -264,7 +264,9 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
             {v.supplement && <Tag label={supplementOpt?.label ?? v.supplement} color={supplementOpt?.color} />}
           </FlexRow>
         }}
-        highlightWords={['trump', 'Fraud', 'fraudulent', 'rigged', 'stole', 'stolen', 'steal', 'theft', 'cheat', 'cheated', 'election', 'vote', 'voted', 'ballot', 'ballots']} />
+        highlightWords={['trump', 'Fraud', 'fraudulent', 'rigged', 'stole', 'stolen', 'steal', 'theft', 'cheat', 'cheated', 'election', 'vote', 'voted', 'ballot', 'ballots']}
+        scrollCaptions
+      />
 
       <Tip {...helpTip.tipProps}>{helpTip.data}</Tip>
     </>}

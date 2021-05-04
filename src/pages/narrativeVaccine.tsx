@@ -23,7 +23,7 @@ import '../components/main.css'
 
 const nProps = {
   narrative: 'Vaccine Personal',
-  defaultRange: { startDate: new Date(2020, 1 - 1, 25), endDate: new Date(2021, 4 - 1, 30) },
+  defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
   narrativeIndexPrefix: 'narrative2'
 }
 
@@ -97,8 +97,7 @@ const NarrativeVaccinePage = () => {
             onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
             tip={tip}
             bubbleSize={windowDim.h / 1200}
-          />
-          }
+          />}
         </ContainerDimensions>
       </div>
 
@@ -108,8 +107,8 @@ const NarrativeVaccinePage = () => {
 
       <TextSection style={{ margin: '1em' }}><p>Top viewed videos with the context of mention</p></TextSection>
 
-      <Videos channels={channels} videos={videos} groupChannels showTags showChannels showThumb loading={loading}
-
+      <Videos channels={channels} videos={videos}
+        groupChannels showTags showChannels showThumb loading={loading}
         defaultLimit={20}
         loadExtraOnVisible={async (vids) => {
           if (!idx?.captions) return []

@@ -29,6 +29,7 @@ interface VideosProps<T extends VideoCommon, TExtra extends VideoId> {
   defaultLimit?: number
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
+  scrollCaptions?: boolean
   loadExtraOnVisible?: (v: T[]) => Promise<TExtra[]>
   contentSubTitle?: (v: (T & Partial<TExtra>)) => JSX.Element
   contentBottom?: (v: (T & Partial<TExtra>)) => JSX.Element
@@ -50,7 +51,7 @@ const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, defaultLimit, highlightWords,
-  loadCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
+  loadCaptions, scrollCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
 
   const [limit, setLimit] = useState(defaultLimit ?? 40)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
@@ -149,6 +150,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
+                    scrollCaptions={scrollCaptions}
                     contentSubTitle={contentSubTitle}
                     children={contentBottom?.(v)} />
                   {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
@@ -232,9 +234,10 @@ interface VideoProps extends StyleProps {
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
   contentSubTitle?: (v: (VideoTypes)) => JSX.Element
   useTip?: UseTip<Channel>
+  scrollCaptions?: boolean
 }
 
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, contentSubTitle, children, useTip }) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, contentSubTitle, children, useTip, scrollCaptions }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
@@ -276,7 +279,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         </FlexRow>
         {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
         {(captions || showLoadCaptions) &&
-          <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>
+          <div style={scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
               <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
