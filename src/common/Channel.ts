@@ -60,7 +60,8 @@ export const md = {
 * Essentialist concepts of racial differences
 * concerned about whites becoming a minority population in their country.` },
         { value: 'StateFunded', label: 'State Funded' },
-        { value: 'Fresh', color: '#444', label: 'Anonymous' }
+        { value: 'Fresh', color: '#444', label: 'Anonymous' },
+        { value: 'Non-political', color: '#444' }
       ]
     } as ColumnMd,
     lr: {

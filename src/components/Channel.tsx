@@ -104,12 +104,13 @@ export interface ChannelTitleProps {
   onLogoClick?: (c: Channel) => void
   highlightWords?: string[]
   useTip?: UseTip<ChannelWithStats | Channel>
+  metricsExtra?: () => JSX.Element
 }
 
 const tags = indexBy(md.channel.tags.values, t => t.value)
 
-export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo, style, className,
-  logoStyle, titleStyle, useTip, onLogoClick, statsLoading, highlightWords }: ChannelTitleProps & StyleProps) => {
+export const ChannelTitle: FC<ChannelTitleProps & StyleProps> = ({ c, showTags, showCollectionStats, showReviewInfo, style, className,
+  logoStyle, titleStyle, useTip, onLogoClick, statsLoading, highlightWords, children, ...props }) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
@@ -125,17 +126,17 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
           textToHighlight={c.channelTitle ?? ""}
         /> : c.channelTitle}</h2>
       <MetricsStyle space='1em' style={{ filter: statsLoading ? loadingFilter : null }}>
-        <span>
+        {(fViews || fChannelViews) && <span>
           {fViews && <b style={{ fontSize: '1.3em', color: 'var(--fg)' }}>{fViews}</b>}
           {fViews != fChannelViews && <span style={{ fontSize: '1em' }}>{fViews && fChannelViews && '/'}{fChannelViews}</span>}
           {fViews && ' views'}
-        </span>
+        </span>}
         {isChannelWithStats(c) && c.watchHours && <span><b>{hoursFormat(c.watchHours)}</b> watched</span>}
         {c.subs && <span><b>{numFormat(c.subs)}</b> subscribers</span>}
         {showCollectionStats && isChannelWithStats(c) && <span>
           {c.latestRefresh ? `Latest data collected on ${dateFormat(c.latestRefresh, 'UTC')} from ${numFormat(c.videos ?? 0)} videos` : 'No data collected during this period. Views presented are an estimate.'}
-        </span>
-        }
+        </span>}
+        {props.metricsExtra?.()}
       </MetricsStyle>
       {showTags && <TagDiv style={{ margin: '0.2em 0' }}>
         {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
@@ -148,6 +149,7 @@ export const ChannelTitle = ({ c, showTags, showCollectionStats, showReviewInfo,
         <Note type='reviewer' c={c} />
         <Note type='creator' c={c} />
       </>}
+      {children}
     </div>
   </ChannelTitleStyle>
 }

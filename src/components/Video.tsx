@@ -235,9 +235,12 @@ interface VideoProps extends StyleProps {
   contentSubTitle?: (v: (VideoTypes)) => JSX.Element
   useTip?: UseTip<Channel>
   scrollCaptions?: boolean
+  thumbStyle?: CSSProperties
+  captionsStyle?: CSSProperties
 }
 
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, contentSubTitle, children, useTip, scrollCaptions }) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords,
+  loadCaptions, contentSubTitle, children, useTip, scrollCaptions, ...props }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
@@ -247,10 +250,12 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
-  return <VideoStyle style={style}>
+  return <VideoStyle className='video' style={style}>
     <FlexRow style={{ flexWrap: 'wrap' }}>
       {showThumb && <div style={{ position: 'relative' }}>
-        <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px', marginTop: '1em' }} /></VideoA>
+        <VideoA id={v.videoId}><img
+          className='thumb' src={videoThumb(v.videoId, 'high')}
+          style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} /></VideoA>
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
       </div>}
@@ -269,6 +274,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
             &nbsp;views
           </div>}
           {!fPeriodViews && fViews && <div><BMetric>{fViews}</BMetric> views</div>}
+
           {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
           {contentSubTitle && contentSubTitle(v)}
           {isVideoError(v) && <>
@@ -279,7 +285,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         </FlexRow>
         {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
         {(captions || showLoadCaptions) &&
-          <div style={scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}}>
+          <div style={{ ...(scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}), ...props.captionsStyle }}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
               <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}

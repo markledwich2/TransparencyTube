@@ -5,9 +5,11 @@ import { GlobalStyle } from '../../../src/components/Style'
 
 
 const StyledRoot = styled.div`
+  width: 100%;
   text-align: left;
   font-size: 14px;
   line-height: 1.2em;
+  box-sizing: border-box;
 
   *::-webkit-scrollbar {
     width: 0.5em;
