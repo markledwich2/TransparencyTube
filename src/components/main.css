@@ -122,7 +122,7 @@ p {
 mark {
     background-color: transparent;
     font-weight: bold;
-    color: #fff;
+    color: var(--fg1);
 }
 
 p.subtle {

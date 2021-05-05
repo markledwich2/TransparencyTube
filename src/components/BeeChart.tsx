@@ -35,7 +35,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
   bubbleSize?: number
 }) => {
 
-  var ticks = 120
+  var ticks = 160
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
   var { w } = useMemo(() => {
