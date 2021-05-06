@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react'
 import { DateRangePicker, DateRangeProps } from 'react-date-range'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
-import { first } from 'remeda'
 import styled from 'styled-components'
 import { dateFormat, useDebounce } from '../common/Utils'
 import { InlineForm } from '../components/InlineForm'
@@ -61,7 +60,7 @@ const DateRangeStyle = styled.div`
   
 
   button.rdrDay .rdrDayNumber span {
-    color: var(--fg) !important;
+    color: var(--fg);
   }
 
   button.rdrDayPassive .rdrDayNumber span {
