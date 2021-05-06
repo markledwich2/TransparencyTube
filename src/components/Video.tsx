@@ -12,7 +12,6 @@ import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
-import ReactTooltip from 'react-tooltip'
 import { Tip, useTip, UseTip } from './Tip'
 
 
@@ -30,6 +29,7 @@ interface VideosProps<T extends VideoCommon, TExtra extends VideoId> {
   defaultLimit?: number
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
+  scrollCaptions?: boolean
   loadExtraOnVisible?: (v: T[]) => Promise<TExtra[]>
   contentSubTitle?: (v: (T & Partial<TExtra>)) => JSX.Element
   contentBottom?: (v: (T & Partial<TExtra>)) => JSX.Element
@@ -51,7 +51,7 @@ const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, defaultLimit, highlightWords,
-  loadCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
+  loadCaptions, scrollCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
 
   const [limit, setLimit] = useState(defaultLimit ?? 40)
   const [showAlls, setShowAlls] = useState<Record<string, boolean>>({})
@@ -94,10 +94,6 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
     }
     return { groupedVids, groupedVidsTotal }
   }, [limit, showAlls, extras, videos, channels, groupChannels])
-
-
-
-  useEffect(() => { ReactTooltip.rebuild() }, [videos?.length, limit])
 
   // load extra's for visible videos
   useEffect(() => {
@@ -154,6 +150,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     style={{ width: (videoWidth), ...videoStyle }}
                     highlightWords={highlightWords}
                     loadCaptions={loadCaptions}
+                    scrollCaptions={scrollCaptions}
                     contentSubTitle={contentSubTitle}
                     children={contentBottom?.(v)} />
                   {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
@@ -200,7 +197,7 @@ const VideoStyle = styled.div`
     height:2em;
     position:absolute;
     font-weight:bolder;
-    background-color: #ddd;
+    background-color: #eee;
     color:#333;
     text-align:center;
     border-radius: 2em;
@@ -237,9 +234,13 @@ interface VideoProps extends StyleProps {
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
   contentSubTitle?: (v: (VideoTypes)) => JSX.Element
   useTip?: UseTip<Channel>
+  scrollCaptions?: boolean
+  thumbStyle?: CSSProperties
+  captionsStyle?: CSSProperties
 }
 
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords, loadCaptions, contentSubTitle, children, useTip }) => {
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords,
+  loadCaptions, contentSubTitle, children, useTip, scrollCaptions, ...props }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
   const fPeriodViews = isVideoViews(v) ? numFormat(v.periodViews) : null
@@ -249,12 +250,14 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
 
-  return <VideoStyle style={style}>
+  return <VideoStyle className='video' style={style}>
     <FlexRow style={{ flexWrap: 'wrap' }}>
       {showThumb && <div style={{ position: 'relative' }}>
-        <VideoA id={v.videoId}><img src={videoThumb(v.videoId, 'high')} style={{ height: '140px', width: '186px', marginTop: '1em' }} /></VideoA>
+        <VideoA id={v.videoId}><img
+          className='thumb' src={videoThumb(v.videoId, 'high')}
+          style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} /></VideoA>
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
-        {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
+        {v.rank && <div className='rank'>{v.rank}</div>}
       </div>}
       <FlexCol style={{ color: 'var(--fg1)', maxWidth: '27em' }} space='0.2em'>
         <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>
@@ -271,6 +274,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
             &nbsp;views
           </div>}
           {!fPeriodViews && fViews && <div><BMetric>{fViews}</BMetric> views</div>}
+
           {v.uploadDate && <span>{dateFormat(v.uploadDate, 'UTC')}</span>}
           {contentSubTitle && contentSubTitle(v)}
           {isVideoError(v) && <>
@@ -281,7 +285,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         </FlexRow>
         {isVideoViews(v) && <span><b>{hoursFormat(v.watchHours)}</b> watched</span>}
         {(captions || showLoadCaptions) &&
-          <div style={{ overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' }}>
+          <div style={{ ...(scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}), ...props.captionsStyle }}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
               <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}

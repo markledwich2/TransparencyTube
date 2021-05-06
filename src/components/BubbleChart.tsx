@@ -136,6 +136,7 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
 
   const onDeselect = useCallback(() => onSelect(null), [onSelect])
 
+
   return useMemo(() => <>
     <BubbleDiv className='inline' onClick={onDeselect}>
       {info}

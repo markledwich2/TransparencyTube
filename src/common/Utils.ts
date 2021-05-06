@@ -167,7 +167,7 @@ export const useDebounce = <T>(value: T, delay: number) => {
   return debouncedValue
 }
 
-export const isSSR = () => typeof window === 'undefined'
+export const windowMissing = typeof window === 'undefined'
 
 export const logIfError = <T>(m: () => T): (T | null) => {
   try {
@@ -177,4 +177,15 @@ export const logIfError = <T>(m: () => T): (T | null) => {
     console.error(e)
   }
   return null
+}
+
+/*** This is a simple, *insecure* hash that's short, fast, and has no dependencies. see https://gist.github.com/jlevy/c246006675becc446360a798e2b2d781 */
+export const simpleHash = str => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash &= hash // Convert to 32bit integer
+  }
+  return hash
 }

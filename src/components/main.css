@@ -14,7 +14,7 @@
 html,
 body,
 input {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 @media (min-width: 1200px) {
@@ -60,7 +60,7 @@ input {
 
 input:focus {
     outline: none;
-    border-color: var(--bg-feature)
+    border-color: var(--bg-feature);
 }
 
 html,
@@ -98,10 +98,11 @@ h4 {
 
 *::-webkit-scrollbar {
     width: 0.5em;
+    height: 0.5em;
 }
 
 *::-webkit-scrollbar-thumb {
-    background-color: var(--bg2)
+    background-color: var(--bg3)
 }
 
 a {
@@ -119,8 +120,9 @@ p {
 }
 
 mark {
-    background-color: var(--bg-feature);
-    color: #fff;
+    background-color: transparent;
+    font-weight: bold;
+    color: var(--fg1);
 }
 
 p.subtle {

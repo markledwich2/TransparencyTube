@@ -133,7 +133,7 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
     }
 
     console.log(`index ${indexUrl} - ${filtered.length} rows returned for filter:`, filters)
-    console.table(filtered.slice(0, 10))
+    //console.table(filtered.slice(0, 10))
 
     return filtered
   }
