@@ -34,7 +34,6 @@ export const VaccineVideo: FC<{}> = () => {
   const windowDim = useWindowDim()
 
   const { bubbles, videos } = useMemo(() => {
-    console.log('BeeSwarm - videoRows memo')
     const errorMd = colMd(md.video.errorType, videoRows)
     const bubbles = videoRows?.map(v => ({
       id: v.videoId,
@@ -59,7 +58,7 @@ export const VaccineVideo: FC<{}> = () => {
 
     <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
       <FilterPart>
-        Uploaded <InlineDateRange range={dateRange} onChange={r => setQuery(rangeToQuery(r))} />
+        Uploaded <InlineDateRange range={dateRange} inputRange={nProps.defaultRange} onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
         video

@@ -1,7 +1,7 @@
 import {
   SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime
 } from 'd3'
-import React, { FunctionComponent as FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
 import { compact, indexBy } from 'remeda'
 import styled from 'styled-components'
 import { max, maxBy, minMax } from '../common/Pipe'
@@ -12,7 +12,7 @@ import { assign, dateFormat, delay } from '../common/Utils'
 import { Spinner } from './Spinner'
 import { circleToRect, getBounds, offsetTransform } from '../common/Draw'
 import scrollIntoView from 'scroll-into-view-if-needed'
-import useDraggable from '../common/DragScroll'
+import { HScroll } from './HScroll'
 
 export interface BeehiveNode<T> {
   id: string
@@ -42,14 +42,12 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     if (!nodes) return { w: props.w }
     const dayRange = minMax(nodes.map(v => v.date.valueOf()))
     const days = differenceInDays(dayRange[1], dayRange[0])
-    const w = max([props.w - 20, days * 4])
+    const w = max([props.w - 20, days * 5])
     return { w }
   }, [nodes?.length ?? 0, props.w])
 
   var { fNodes, axis, sim, bubbleBounds } = useMemo(() => {
     if (!nodes) return { fNodes: null, axis: null, sim: null }
-    console.log('BeeHive - layout')
-
     const axis = monthAxisLayout(nodes, w)
     const maxValue = max(nodes.map(n => n.value))
     const fNodes: ForceNode[] = nodes.map(n => ({
@@ -101,24 +99,24 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     return () => { cancel = true }
   }, [sim])
 
+  const chartRef = useRef<SVGSVGElement>()
+
   useEffect(() => {
     if (!nodes) return
     const id = maxBy(nodes, b => b.date.valueOf())?.id
     if (!id) return
-    const nodeEl = document.querySelector(`#chart g#${id}`)
+    const nodeEl = chartRef.current.querySelector(`.bee-chart g#${id}`)
     if (nodeEl)
       scrollIntoView(nodeEl, { scrollMode: 'if-needed' })
   }, [!nodes])
 
 
-
   var svgEl = useMemo(() => {
     if (!fNodes || !axis) return <Spinner />
-    console.log('BeeHive - render')
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
     const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
 
-    return <SVGStyle style={{ width: b.w, height: b.h }} >
+    return <SVGStyle style={{ width: b.w, height: b.h }} ref={chartRef} >
       <defs>
         {bubbles.filter(showImage)
           .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath>)}
@@ -155,11 +153,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
     </SVGStyle>
   }, [nodes, fNodes, tick, props.w])
 
-  const { ref: dragRef, isDragging } = useDraggable([1], () => onSelect(null))
-  return <div id='chart' ref={dragRef}
-    style={{ width: '100%', overflowX: 'auto', cursor: isDragging ? 'grabbing' : 'grab' }}>
-    {svgEl}
-  </div>
+  return <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
 }
 
 const DateAxis: FC<AxisLayout & { top: number }> = ({ top, ticks, scale, tickFormat }) => {

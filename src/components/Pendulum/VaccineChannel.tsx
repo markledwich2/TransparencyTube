@@ -9,6 +9,8 @@ import { Spinner } from '../Spinner'
 import { FlexRow, GlobalStyle, MinimalPage } from '../Style'
 import { Video } from '../Video'
 import { ChevronRightOutline } from '@styled-icons/evaicons-outline'
+import { orderBy } from '../../common/Pipe'
+import { HScroll } from '../HScroll'
 
 type HighlightRow = VideoChannelExtra & VideoCommon & {
   subs: number
@@ -32,30 +34,31 @@ export const VaccineChannel: FC<{}> = () => {
 
   useEffect(() => {
     setLoading(true)
-    getJsonlResult<HighlightRow>('narrative_vaccine_highlight').then(d => {
-      const rawData = d.map(r => ({
-        v: {
-          ...pick(r, ['videoId', 'channelId', 'channelTitle', 'videoTitle', 'videoViews', 'durationSecs']),
-          captions: [{ caption: r.caption, offsetSeconds: r.offsetSeconds }]
-        },
-        c: {
-          ...pick(r, ['channelId', 'channelTitle', 'lr', 'subs', 'mentionVideos', 'mentionVideoViews']),
-          logoUrl: r.channelLogo,
-          tags: r.tags?.length > 0 ? r.tags : ['Non-political']
-        },
-      }))
+    getJsonlResult<HighlightRow>('narrative_vaccine_highlight').then(rawRows => {
+      const _data = orderBy(rawRows, r => r.subs, 'desc')
+        .map((r, i) => ({
+          v: {
+            ...pick(r, ['videoId', 'channelId', 'channelTitle', 'videoTitle', 'videoViews', 'durationSecs']),
+            rank: i + 1,
+            captions: [{ caption: r.caption, offsetSeconds: r.offsetSeconds }]
+          },
+          c: {
+            ...pick(r, ['channelId', 'channelTitle', 'lr', 'subs', 'mentionVideos', 'mentionVideoViews']),
+            logoUrl: r.channelLogo,
+            tags: r.tags?.length > 0 ? r.tags : ['Non-political']
+          },
+        }))
 
-      setData(rawData)
+      setData(_data)
       setLoading(false)
     })
   }, [])
 
-  const tilesRef = useRef<HTMLDivElement>()
 
   if (loading) return <Spinner />
 
   return <StyleDiv style={{ position: 'relative' }}>
-    {data && <div className='tiles' ref={tilesRef}>
+    {data && <HScroll className='tiles' showScrollButton >
       {data.map(h => <div className='tile' key={h.v.videoId} style={{ minWidth: '27em' }}>
         <ChannelTitle c={h.c}
           // style={{ minHeight: '10em' }}
@@ -68,37 +71,22 @@ export const VaccineChannel: FC<{}> = () => {
           captionsStyle={{ maxHeight: '7em', overflowY: 'hidden' }}
           showThumb thumbStyle={{ width: '26em', height: '13em', objectFit: 'cover' }} />
       </div>)}
-    </div>}
-    <div className='right-scroll' style={{
-      position: 'absolute',
-      top: '0px', right: '0px',
-      height: '100%',
-      display: 'flex', alignItems: 'center',
-
-    }} onClick={(e) => {
-      const div = tilesRef.current
-      div.scrollBy(div.clientWidth - 10, 0)
-    }}>
-      <ChevronRightOutline style={{ width: '30px', height: '30px' }} />
-    </div>
+    </HScroll>}
   </StyleDiv>
 }
 
 const StyleDiv = styled.div`
-  width: 100%;
   .tiles {
-    width: 100%;
     display: flex;
     flex-direction: row;
-    overflow-x: auto;
-    scroll-behavior: smooth;
     flex-basis: content;
   }
 
   .tile {
     margin: 0.5em;
     padding: 1em;
-    box-shadow: 0 0.25rem 1rem rgb(48 55 66 / 15%);
+    box-shadow: 0 0.25rem 0.5rem rgb(48 55 66 / 15%);
+    border-radius: 1em;
   }
 
   .right-scroll {

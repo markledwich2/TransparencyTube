@@ -21,6 +21,7 @@ export interface VideoCommon {
   durationSecs?: number
   uploadDate?: string
   captions?: VideoCaption[]
+  rank?: number
 }
 
 export interface VideoCaption {
@@ -38,7 +39,6 @@ export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoView
 export interface VideoViews extends HasPeriod, VideoCommon {
   periodViews: number
   watchHours: number
-  rank: number
 }
 
 export const isVideoError = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined

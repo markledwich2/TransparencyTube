@@ -69,8 +69,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
-    console.log('useNarrative - data memo')
-
     const dateRange = rangeFromQuery(q, defaultRange.startDate, defaultRange.endDate)
 
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
@@ -95,7 +93,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   }, [toJson(q), videos, channels, idx])
 
   useEffect(() => {
-    console.log('useNarrative - index effect')
     Promise.all([
       blobIndex<NarrativeVideo, NarrativeKey>(`${narrativeIndexPrefix}_videos`, true, "v2.1"),
       blobIndex<NarrativeChannel, NarrativeKey>(`${narrativeIndexPrefix}_channels`, true),
@@ -104,13 +101,11 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   }, [])
 
   useEffect(() => {
-    console.log('useNarrative - narrative channel effect')
     idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId)))
   }, [idx, narrative])
 
   useEffect(() => {
     if (!idx || !channels) return
-    console.log('useNarrative - loading')
     setLoading(true)
     idx.videos.rows(
       { narrative },

@@ -67,7 +67,6 @@ const ChannelTitleStyle = styled.div`
     :hover {
       cursor: pointer;
     }
-    margin: 0.5em;
     @media (max-width: 600px) {
       width:50px;
     }

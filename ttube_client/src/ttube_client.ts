@@ -19,7 +19,6 @@ export class TTubeClient {
     private render(): void {
         document.querySelectorAll("div.ttube").forEach(e => {
             const name: keyof typeof chartRender = e.getAttribute("chart") ?? 'default' as any
-            console.log('rendering chart')
             const chartEl = chartRender[name]
             if (!chartEl) throw new Error(`no rendered with name ${name}`)
             ReactDOM.render(el(Root, null, chartEl(e)), e)

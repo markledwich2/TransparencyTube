@@ -197,7 +197,7 @@ const VideoStyle = styled.div`
     height:2em;
     position:absolute;
     font-weight:bolder;
-    background-color: #ddd;
+    background-color: #eee;
     color:#333;
     text-align:center;
     border-radius: 2em;
@@ -257,7 +257,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
           className='thumb' src={videoThumb(v.videoId, 'high')}
           style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} /></VideoA>
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
-        {isVideoViews(v) && v.rank && <div className='rank'>{v.rank}</div>}
+        {v.rank && <div className='rank'>{v.rank}</div>}
       </div>}
       <FlexCol style={{ color: 'var(--fg1)', maxWidth: '27em' }} space='0.2em'>
         <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>

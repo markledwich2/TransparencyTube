@@ -11,6 +11,10 @@ const StyledRoot = styled.div`
   line-height: 1.2em;
   box-sizing: border-box;
 
+  h1, h2, h3, h4 {
+    line-height: normal;
+  }
+
   *::-webkit-scrollbar {
     width: 0.5em;
   }
@@ -41,7 +45,7 @@ const StyledRoot = styled.div`
 `
 
 const colorCss = css`
---bg-feature:##cca45a;
+--bg-feature:#cca45a;
 --bg-feature2:#cca45a;
 --fg-feature:#cca45a;
 --fg-feature2:#cca45a;

@@ -58,9 +58,10 @@ const DateRangeStyle = styled.div`
   .rdrDayToday .rdrDayNumber span:after {
     background: var(--bg-feature);
   }
+  
 
   button.rdrDay .rdrDayNumber span {
-    color: var(--fg);
+    color: var(--fg) !important;
   }
 
   button.rdrDayPassive .rdrDayNumber span {
@@ -109,17 +110,16 @@ const DateRangeStyle = styled.div`
     color: var(--fg3);
     background-color: var(--bg1);
   }
-
-  
 `
 
 interface InlineDateRangeProps extends StyleProps, DateRangeProps {
-  range: DateRangeValue
+  range: DateRangeValue,
+  inputRange?: DateRangeValue,
   onClose?: () => void
   onChange?: (r: DateRangeValue) => void
 }
 
-export const InlineDateRange = ({ onClose, onChange, range, style, className, ...dateRageProps }: InlineDateRangeProps) => {
+export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, className, ...dateRageProps }: InlineDateRangeProps) => {
   const [openValue, setOpenValue] = useState<DateRangeValue>(null)
   const currentRange = openValue ?? range
   const debounceRange = useDebounce(currentRange, 300)
@@ -142,6 +142,8 @@ export const InlineDateRange = ({ onClose, onChange, range, style, className, ..
       <DateRangePicker
         {...dateRageProps}
         ranges={[currentRange]}
+        minDate={inputRange?.startDate}
+        maxDate={inputRange?.endDate}
         direction='vertical'
         scroll={{ enabled: true }}
         showMonthAndYearPickers
