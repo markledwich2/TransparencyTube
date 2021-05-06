@@ -108,8 +108,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     if (!idx || !channels) return
     setLoading(true)
     idx.videos.rows(
-      { narrative },
-      { from: { uploadDate: dateRange.startDate.toISOString() }, to: { uploadDate: dateRange.endDate.toISOString() } }
+      { from: { narrative, uploadDate: dateRange.startDate.toISOString() }, to: { narrative, uploadDate: dateRange.endDate.toISOString() } }
     ).then(vids => {
       const vidsExtra = vids.map(v => {
         v = videoMap ? videoMap(v) : v

@@ -1,7 +1,7 @@
 import React, { ReactElement, createElement as el } from 'react'
 import ReactDOM from 'react-dom'
-import { VaccineChannel } from '../../src/components/Pendulum/VaccineChannel'
-import { VaccineVideo } from '../../src/components/Pendulum/VaccineVideo'
+import { VaccineChannel } from '../../src/components/pendulum/VaccineChannel'
+import { VaccineVideo } from '../../src/components/pendulum/VaccineVideo'
 import { ElectionFraudNarrative } from './components/ElectionFraudNarrative'
 import { Root } from './components/Root'
 
