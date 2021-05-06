@@ -167,7 +167,7 @@ export const useDebounce = <T>(value: T, delay: number) => {
   return debouncedValue
 }
 
-export const isSSR = () => typeof window === 'undefined'
+export const windowMissing = typeof window === 'undefined'
 
 export const logIfError = <T>(m: () => T): (T | null) => {
   try {

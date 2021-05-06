@@ -1,6 +1,6 @@
 import { HierarchyCircularNode } from 'd3'
 import { max, maxBy, min, minBy } from './Pipe'
-import { isSSR } from './Utils'
+import { windowMissing } from './Utils'
 
 export interface Point {
   x: number
@@ -38,7 +38,7 @@ export const offsetTransform = (offset: Point) => `translate(${-offset.x}, ${-of
 export const pointTranslate = <T extends Point>(point: T, offset: Point) => ({ ...point, x: point.x + offset.x, y: point.y + offset.y })
 
 export const getTextWidth = (() => {
-  const container = isSSR() ? null : document?.createElement('canvas')
+  const container = windowMissing ? null : document?.createElement('canvas')
   const widthCache: Record<string, number> = {}
 
   return function (inputText?: string | number | null, font: string = null, backupFontSize = 12, backupRatio = 0.5) {
@@ -47,7 +47,7 @@ export const getTextWidth = (() => {
     const cached = widthCache[key]
     if (cached)
       return cached
-    if (isSSR()) return backupFontSize * backupRatio * text.length
+    if (windowMissing) return backupFontSize * backupRatio * text.length
 
     let context = container?.getContext('2d')
     if (context && document) {
