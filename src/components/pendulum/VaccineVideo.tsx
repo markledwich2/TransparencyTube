@@ -19,7 +19,6 @@ import { values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
 import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
-import '../../components/main.css'
 
 const nProps: UseNarrativeProps = {
   narrative: 'Vaccine Personal',
