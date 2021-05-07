@@ -67,6 +67,11 @@ const DateRangeStyle = styled.div`
     color: var(--fg3);
   }
 
+  .rdrDayDisabled {
+    background-color: var(--bg1);
+    > span.rdrDayNumber > span { color: var(--bg3); }
+  }
+
   .rdrStaticRange {
     border-bottom: 1px solid var(--bg2);
     background: var(--bg1);
