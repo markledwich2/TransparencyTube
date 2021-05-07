@@ -105,7 +105,7 @@ export const VaccineVideo: FC<{}> = () => {
 
     <Videos channels={channels} videos={videos}
       groupChannels showTags showChannels showThumb loading={loading}
-      defaultLimit={20}
+      defaultLimit={Math.floor(windowDim.w / 300)}
       loadExtraOnVisible={async (vids) => {
         if (!idx?.captions) return []
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
