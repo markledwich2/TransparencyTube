@@ -103,11 +103,8 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
 
   useEffect(() => {
     if (!nodes) return
-    const id = maxBy(nodes, b => b.date.valueOf())?.id
-    if (!id) return
-    const nodeEl = chartRef.current.querySelector(`.bee-chart g#${id}`)
-    if (nodeEl)
-      scrollIntoView(nodeEl, { scrollMode: 'if-needed' })
+    const chart = chartRef.current
+    chart.parentElement.scrollBy(chart.clientWidth, 0) // scroll all the way to right
   }, [!nodes])
 
 
