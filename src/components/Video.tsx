@@ -214,6 +214,12 @@ const VideoStyle = styled.div`
     right:0.5em;
     top:0.15em;
   }
+
+  mark {
+    font-weight:bold;
+    background-color:unset;
+    color: var(--fg);
+  }
 `
 
 const BMetric = styled.b`

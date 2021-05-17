@@ -1,7 +1,7 @@
 import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
-import { NarrativeVideo } from '../../common/RecfluenceApi'
+import { NarrativeName, NarrativeVideo } from '../../common/RecfluenceApi'
 import { useNarrative, UseNarrativeProps } from '../NarrativeBubbles'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
@@ -10,8 +10,8 @@ import { pick } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeToQuery } from '../DateRange'
-import { toJson } from '../../common/Utils'
-import { GlobalStyle, MinimalPage, styles } from '../Style'
+import { assign, toJson } from '../../common/Utils'
+import { styles } from '../Style'
 import { filterIncludes, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
@@ -28,8 +28,9 @@ const nProps: UseNarrativeProps = {
 }
 
 
-export const VaccineVideo: FC<{}> = () => {
-  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
+export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = (props) => {
+  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } =
+    useNarrative(assign(nProps, props)) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
   const { bubbles, videos } = useMemo(() => {
@@ -41,7 +42,7 @@ export const VaccineVideo: FC<{}> = () => {
       value: v.videoViews,
       color: errorMd.val[v.errorType]?.color ?? '#888',
       date: parseISO(v.uploadDate),
-      img: channels[v.channelId].logoUrl,
+      img: channels[v.channelId]?.logoUrl,
       selected: q.channelId?.includes(v.channelId)
     }))
     const videos = videoRows?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter

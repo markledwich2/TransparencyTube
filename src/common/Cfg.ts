@@ -3,7 +3,7 @@ import { Uri } from './Uri'
 
 //const env: NodeJS.ProcessEnv = typeof process == 'undefined' ? {} : process.env
 const branchEnv = tryCatch(() => process.env.GATSBY_BRANCH_ENV)
-const branchSuffix = branchEnv ? `-${branchEnv}` : ''
+const branchSuffix = branchEnv ? `-dev-${branchEnv}` : ''
 console.log('env info', { branchEnv, branchSuffix })
 const blobUri = new Uri(`https://pyt.blob.core.windows.net/data${branchSuffix}`)
 const blobCdnUri = branchSuffix ? blobUri : new Uri('https://pyt-data.azureedge.net/data')

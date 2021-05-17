@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { GlobalStyle, MinimalPage } from '../../components/Style'
-import { VaccineVideo } from '../../components/pendulum/VaccineVideo'
+import { NarrativeVideoComponent } from '../../components/pendulum/NarrativeVideo'
+import { NarrativeHighlightComponent } from '../../components/pendulum/NarrativeHighlight'
 
 const ReportPage = () => <>
   <GlobalStyle />
   <MinimalPage>
-    <VaccineVideo />
+    <NarrativeVideoComponent narrative='Vaccine DNA' />
+    <NarrativeHighlightComponent narrative='Vaccine DNA' />
   </MinimalPage>
 </>
 

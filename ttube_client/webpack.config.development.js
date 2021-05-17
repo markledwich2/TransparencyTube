@@ -1,5 +1,6 @@
 const path = require('path')
 const HtmlWebPackPlugin = require('html-webpack-plugin')
+const webpack = require('webpack')
 const { outputConfig, copyPluginPatterns, entryConfig, devServer } = require("./env.config")
 
 module.exports = (env, options) => {
@@ -29,6 +30,11 @@ module.exports = (env, options) => {
             publicPath: "",
         },
         plugins: [
+            new webpack.DefinePlugin({
+                'process.env': {
+                    GATSBY_BRANCH_ENV: JSON.stringify('ml')
+                },
+            }),
             new HtmlWebPackPlugin({
                 template: "./src/index.html",
                 inject: true,

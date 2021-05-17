@@ -3,7 +3,7 @@ import { groupBy, indexBy, pick, uniq, } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
-import { ChannelStats, NarrativeVideo, NarrativeCaption, NarrativeCaptionKey, NarrativeIdx, NarrativeChannel, NarrativeKey } from '../common/RecfluenceApi'
+import { ChannelStats, NarrativeVideo, NarrativeCaption, NarrativeCaptionKey, NarrativeIdx, NarrativeChannel, NarrativeKey, NarrativeName } from '../common/RecfluenceApi'
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FlexRow, styles } from "../components/Style"
 import { Videos } from '../components/Video'
@@ -42,7 +42,7 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
 const groupCol = 'support'
 
 export interface UseNarrativeProps {
-  narrative?: string
+  narrative?: NarrativeName
   defaultRange?: DateRangeValue
   rawLocation?: boolean,
   narrativeIndexPrefix?: string

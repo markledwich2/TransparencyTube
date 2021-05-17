@@ -13,6 +13,7 @@ const StyledRoot = styled.div`
 
   h1, h2, h3, h4 {
     line-height: normal;
+    margin: 0px;
   }
 
   *::-webkit-scrollbar {

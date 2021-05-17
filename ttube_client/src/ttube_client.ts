@@ -1,14 +1,20 @@
 import React, { ReactElement, createElement as el } from 'react'
 import ReactDOM from 'react-dom'
-import { VaccineChannel } from '../../src/components/pendulum/VaccineChannel'
-import { VaccineVideo } from '../../src/components/pendulum/VaccineVideo'
+import { NarrativeName } from '../../src/common/RecfluenceApi'
+import { NarrativeHighlightComponent } from '../../src/components/pendulum/NarrativeHighlight'
+import { NarrativeVideoComponent } from '../../src/components/pendulum/NarrativeVideo'
 import { ElectionFraudNarrative } from './components/ElectionFraudNarrative'
 import { Root } from './components/Root'
 
+
+
+
 const chartRender: { [prop: string]: (e: Element) => ReactElement } = {
     electionFraud: _ => el(ElectionFraudNarrative, {}),
-    vaccineChannel: _ => el(VaccineChannel, {}),
-    vaccineVideo: _ => el(VaccineVideo, {}),
+    vaccineChannel: _ => el(NarrativeHighlightComponent, {}), // backwards compatibility
+    vaccineVideo: _ => el(NarrativeVideoComponent, {}), // backwards compatibility
+    narrativeHighlight: (e) => el(NarrativeHighlightComponent, { narrative: e.getAttribute('narrative') as NarrativeName }),
+    narrativeVideo: (e) => el(NarrativeVideoComponent, { narrative: e.getAttribute('narrative') as NarrativeName }),
 }
 
 export class TTubeClient {
