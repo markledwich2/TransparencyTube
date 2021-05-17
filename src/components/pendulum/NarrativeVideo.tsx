@@ -20,17 +20,27 @@ import { md } from '../../common/Channel'
 import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
 
-const nProps: UseNarrativeProps = {
-  narrative: 'Vaccine Personal',
-  defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
-  narrativeIndexPrefix: 'narrative2',
-  videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' })
+
+const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & { words?: string[] } } = {
+  'Vaccine Personal': {
+    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
+    narrativeIndexPrefix: 'narrative2',
+    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
+    words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven']
+  },
+  'Vaccine DNA': {
+    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
+    narrativeIndexPrefix: 'narrative2',
+    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
+    words: ['dna']
+  },
+  '2020 Election Fraud': {}
 }
 
-
-export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = (props) => {
-  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } =
-    useNarrative(assign(nProps, props)) // ignore bubbles and go directly to video granularity
+export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = ({ narrative }) => {
+  narrative ??= 'Vaccine Personal'
+  const nProps = { ...narrativeProps[narrative], narrative }
+  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
   const { bubbles, videos } = useMemo(() => {
@@ -111,6 +121,6 @@ export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = (props
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
         return res
       }}
-      highlightWords={['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven']} />
+      highlightWords={nProps.words} />
   </>
 }
