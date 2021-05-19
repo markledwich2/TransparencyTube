@@ -78,7 +78,11 @@ export const useHighlight = (highlightName: NarrativeName) => {
   return { data, loading }
 }
 
-export const NarrativeHighlightComponent: FC<{ narrative?: NarrativeName }> = ({ narrative }) => {
+export interface NarrativeHighlightComponentProps {
+  narrative?: NarrativeName
+}
+
+export const NarrativeHighlightComponent: FC<NarrativeHighlightComponentProps> = ({ narrative }) => {
   narrative ??= 'Vaccine Personal'
 
   const { data, loading } = useHighlight(narrative)

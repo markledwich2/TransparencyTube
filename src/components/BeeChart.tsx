@@ -35,7 +35,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
   bubbleSize?: number
 }) => {
 
-  var ticks = 160
+  var ticks = 180
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
   var { w } = useMemo(() => {
@@ -193,7 +193,7 @@ const monthAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number) => {
 }
 
 const SVGStyle = styled.svg`
-  font-size: 0.8em;
+  font-size: 1em;
   pointer-events: visible;
 
   .axis .tick {
@@ -201,7 +201,7 @@ const SVGStyle = styled.svg`
       stroke: var(--fg3);
     }
     text {
-      stroke: var(--fg2);
+      fill: var(--fg1);
     }
   }
 

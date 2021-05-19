@@ -37,8 +37,14 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & { words?: 
   '2020 Election Fraud': {}
 }
 
-export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = ({ narrative }) => {
+export interface NarrativeVideoComponentProps {
+  narrative?: NarrativeName
+  sizeFactor?: number
+}
+
+export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor }) => {
   narrative ??= 'Vaccine Personal'
+  sizeFactor ??= 1
   const nProps = { ...narrativeProps[narrative], narrative }
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
@@ -102,7 +108,7 @@ export const NarrativeVideoComponent: FC<{ narrative?: NarrativeName }> = ({ nar
           nodes={bubbles}
           onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
           tip={tip}
-          bubbleSize={windowDim.h / 1200}
+          bubbleSize={windowDim.h / 1200 * sizeFactor}
         />}
       </ContainerDimensions>
     </div>
