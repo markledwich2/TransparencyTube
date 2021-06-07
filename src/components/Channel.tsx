@@ -96,6 +96,7 @@ export interface ChannelTitleProps {
   c: ChannelWithStats | Channel
   statsLoading?: boolean
   showTags?: boolean
+  showPlatform?: boolean
   showCollectionStats?: boolean
   showReviewInfo?: boolean
   logoStyle?: CSSProperties
@@ -107,12 +108,14 @@ export interface ChannelTitleProps {
 }
 
 const tags = indexBy(md.channel.tags.values, t => t.value)
+const platforms = indexBy(md.channel.platform.values, t => t.value)
 
-export const ChannelTitle: FC<ChannelTitleProps & StyleProps> = ({ c, showTags, showCollectionStats, showReviewInfo, style, className,
+export const ChannelTitle: FC<ChannelTitleProps & StyleProps> = ({ c, showTags, showPlatform, showCollectionStats, showReviewInfo, style, className,
   logoStyle, titleStyle, useTip, onLogoClick, statsLoading, highlightWords, children, ...props }) => {
   const lr = md.channel.lr.values.find(i => i.value == c.lr)
   const fViews = isChannelWithStats(c) ? (c.views ? numFormat(c.views) : null) : null
   const fChannelViews = numFormat(c.channelViews)
+  const platformMd = platforms[c.platform]
 
   return <ChannelTitleStyle style={{ position: 'relative', ...style }} className={className}>
     <div><ChannelLogo c={c} onClick={onLogoClick} style={logoStyle} useTip={useTip} /></div>
@@ -138,6 +141,7 @@ export const ChannelTitle: FC<ChannelTitleProps & StyleProps> = ({ c, showTags, 
         {props.metricsExtra?.()}
       </MetricsStyle>
       {showTags && <TagDiv style={{ margin: '0.2em 0' }}>
+        {showPlatform && platformMd && <Tag label={platformMd.label} color={platformMd.color} style={{ marginRight: '1em' }} />}
         {lr && <Tag label={lr.label} color={lr.color} style={{ marginRight: '1em' }} />}
         {c.tags?.map(t => <Tag key={t} label={tags[t]?.label ?? t} color={tags[t]?.color} />)}
       </TagDiv>}
@@ -217,7 +221,8 @@ export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 
       channels.filter(f => f.channelTitle?.match(new RegExp(`${q}`, 'i'))),
       c => c[sortBy], 'desc')
   ))}
-  itemRender={(c: Channel) => <ChannelTitle c={c} showTags style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect} />}
+  itemRender={(c: Channel) => <ChannelTitle c={c} showTags showPlatform style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect}
+    logoStyle={{ width: '100px' }} />}
   getKey={c => c.channelId}
   getLabel={c => c.channelTitle}
   placeholder={placeholder}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, FunctionComponent as FC, useMemo, ReactNode, Fragment } from "react"
-import { groupBy, indexBy, pick, uniq, } from 'remeda'
+import { compact, groupBy, indexBy, pick, pipe, take, uniq, } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -11,7 +11,7 @@ import { useLocation } from '@reach/router'
 import { assign, delay, windowMissing, navigateNoHistory, numFormat, toJson } from '../common/Utils'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
-import { entries, sumBy, values } from '../common/Pipe'
+import { entries, orderBy, sumBy, values } from '../common/Pipe'
 import { BubbleCharts } from '../components/BubbleChart'
 import ContainerDimensions from 'react-container-dimensions'
 import { ChannelDetails, ChannelLogo, ChannelSearch, Tag } from '../components/Channel'
@@ -34,6 +34,7 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
   channelId?: string[]
   tags?: string[]
   lr?: string[]
+  platform?: string[]
   support?: string[]
   supplement?: string[]
   errorType?: string[]
@@ -46,26 +47,29 @@ export interface UseNarrativeProps {
   defaultRange?: DateRangeValue
   rawLocation?: boolean,
   narrativeIndexPrefix?: string
+  maxVideos?: number
   videoMap?: (v: NarrativeVideo) => NarrativeVideo
+  showLr?: boolean
 }
 
 const defaultProps: UseNarrativeProps = {
   narrative: '2020 Election Fraud',
   defaultRange: { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
   narrativeIndexPrefix: 'narrative',
-  rawLocation: true
+  rawLocation: true,
+  showLr: true
 }
 
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
-  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix, videoMap } = assign(defaultProps, props)
+  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation && !windowMissing ? window.location : useLocation(), navigateNoHistory)
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
-  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'lr', 'support', 'channelId', 'supplement', 'errorType']))
-  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'supplement', 'errorType'])
+  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType']))
+  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'platform', 'supplement', 'errorType'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
@@ -86,7 +90,11 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
         }) as NarrativeChannel
       })
 
-    const videoRows = videos?.filter(v => filterIncludes(videoFilter, v))
+    const videoRows = pipe(
+      videos?.filter(v => filterIncludes(videoFilter, v)),
+      orderBy(v => v.videoViews, 'desc'),
+      take(props.maxVideos ?? 5000)
+    )
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
 
     return { narrative, dateRange, selectedChannels, videoRows, bubbleRows }
@@ -101,7 +109,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   }, [])
 
   useEffect(() => {
-    idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(chans, c => c.channelId)))
+    idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(showLr ? chans : chans.map(({ lr, ...c }) => c), c => c.channelId)))
   }, [idx, narrative])
 
   useEffect(() => {
@@ -110,6 +118,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     idx.videos.rows(
       { from: { narrative, uploadDate: dateRange.startDate.toISOString() }, to: { narrative, uploadDate: dateRange.endDate.toISOString() } }
     ).then(vids => {
+      const channelPicks = compact(['tags', 'platform', showLr ? 'lr' : null])
       const vidsExtra = vids.map(v => {
         v = videoMap ? videoMap(v) : v
         let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
@@ -117,7 +126,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
         if (!c) return r
         r = {
           ...r,
-          ...pick(c, ['tags', 'lr']),
+          ...pick(c, channelPicks),
           supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
           bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
         }
@@ -246,7 +255,7 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
       <TextSection>
         <p><b>Videos</b> with the relevant captions for context. Change filters, or select channels above to filter this list.</p>
       </TextSection>
-      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb loading={loading}
+      <Videos channels={channels} videos={videoRows} groupChannels showTags showChannels showThumb showPlatform loading={loading}
         defaultLimit={20}
         loadExtraOnVisible={async (vids) => {
           if (!idx?.captions) return []

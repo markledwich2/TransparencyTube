@@ -8,6 +8,7 @@ import { ColumnMd, Opt, tableMd } from './Metadata'
 export interface Channel {
   channelId: string
   channelTitle: string
+  platform?: PlatformName
   description?: string
   tags?: string[]
   logoUrl?: string
@@ -20,6 +21,8 @@ export interface Channel {
   publicReviewerNotes?: string
   publicCreatorNotes?: string
 }
+
+export type PlatformName = 'YouTube' | 'BitChute' | 'Rumble'
 
 export type ColumnMdOpt = Opt<keyof Channel> & { desc: string }
 
@@ -73,6 +76,15 @@ export const md = {
         { value: 'L', label: 'Left', color: '#3887be' },
         { value: 'C', label: 'Center', color: '#ab82e8' },
         { value: 'R', label: 'Right', color: '#da2d2d' }
+      ]
+    } as ColumnMd,
+    platform: {
+      label: 'Platform',
+      desc: 'The platform the video was uploaded to',
+      values: [
+        { value: 'YouTube', color: '#FF0000' },
+        { value: 'BitChute', color: '#4F4F4F' },
+        { value: 'Rumble', color: '#699D36' }
       ]
     } as ColumnMd,
     media: {

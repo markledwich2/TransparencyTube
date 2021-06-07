@@ -6,8 +6,7 @@ import { NarrativeHighlightComponent } from '../../components/pendulum/Narrative
 const ReportPage = () => <>
   <GlobalStyle />
   <MinimalPage>
-    <NarrativeVideoComponent narrative='Vaccine DNA' />
-    <NarrativeHighlightComponent narrative='Vaccine DNA' />
+    <NarrativeVideoComponent narrative='QAnon' colorBy='platform' />
   </MinimalPage>
 </>
 

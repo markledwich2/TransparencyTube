@@ -57,7 +57,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
       r: Math.sqrt(n.value / maxValue) * 50 * (props.bubbleSize ?? 1)
     }))
     var sim = forceSimulation(fNodes)
-      .force('forceX', forceX(d => d.x).strength(1))
+      .force('forceX', forceX(d => d.x).strength(0.8))
       .force('forceY', forceY(_ => 0).strength(0.02))
       .force('collide', forceCollide((d: ForceNode) => d.r + 1).iterations(1))
       .velocityDecay(0.2)

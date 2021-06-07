@@ -1,6 +1,6 @@
 import { getJsonl } from './Utils'
 import { BlobIndex, blobIndex, noCacheReq } from './BlobIndex'
-import { Channel } from './Channel'
+import { Channel, PlatformName } from './Channel'
 import { HasPeriod, parsePeriod, Period } from '../components/Period'
 import { blobCfg } from './Cfg'
 
@@ -22,6 +22,7 @@ export interface VideoCommon {
   uploadDate?: string
   captions?: VideoCaption[]
   rank?: number
+  thumb?: string
 }
 
 export interface VideoCaption {
@@ -33,6 +34,7 @@ export interface VideoChannelExtra {
   lr: string
   tags: string[]
   media?: string
+  platform?: PlatformName
 }
 
 export const isVideoViews = (c: VideoCommon): c is VideoViews => (c as VideoViews)?.periodViews != undefined
@@ -51,7 +53,7 @@ export interface VideoRemoved extends VideoCommon {
 }
 
 
-export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud'
+export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon'
 
 export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
 export type NarrativeKey = { narrative?: string, uploadDate?: string }

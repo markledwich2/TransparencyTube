@@ -31,7 +31,7 @@ export const max = (items: number[]) => firstBy(items, i => i, 'desc')
 export const values = <V>(o: Record<any, V>): V[] => Object.values(o)
 export const keys = <T>(o: T): (keyof T)[] => Object.keys(o) as unknown as (keyof T)[]
 export const entries = <X extends string, Y>(o: { [key in X]: Y }): [X, Y][] => Object.entries(o) as any
-export const minMax = (items: number[]) => [Math.min(...items), Math.max(...items)]
+export const minMax = (items: number[]) => [min(items), max(items)]
 
 export const treeToList = <T>(roots: T[], getChildren: (node: T) => T[]): T[] => {
   let working = [...roots], res: T[] = []

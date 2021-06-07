@@ -5,8 +5,8 @@ import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Style'
 import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
-import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, NarrativeVideo, VideoCaption } from '../common/RecfluenceApi'
-import { Channel, channelUrl, md } from '../common/Channel'
+import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, NarrativeVideo, VideoCaption, VideoChannelExtra } from '../common/RecfluenceApi'
+import { Channel, channelUrl, md, PlatformName } from '../common/Channel'
 import { flatMap, groupBy, indexBy, map, pipe, take } from 'remeda'
 import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
 import ContainerDimensions from 'react-container-dimensions'
@@ -26,6 +26,7 @@ interface VideosProps<T extends VideoCommon, TExtra extends VideoId> {
   showThumb?: boolean
   groupChannels?: boolean
   showTags?: boolean
+  showPlatform?: boolean
   defaultLimit?: number
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
@@ -50,7 +51,7 @@ interface VideoGroup<T extends VideoCommon, TExtra extends VideoId> {
 const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
-  groupChannels, showTags, defaultLimit, highlightWords,
+  groupChannels, showTags, showPlatform, defaultLimit, highlightWords,
   loadCaptions, scrollCaptions, loadExtraOnVisible, contentBottom, contentSubTitle, style, videoStyle }: StyleProps & VideosProps<T, TExtra>) => {
 
   const [limit, setLimit] = useState(defaultLimit ?? 40)
@@ -141,6 +142,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
                     v={v}
                     highlightWords={highlightWords}
                     showTags={showTags}
+                    showPlatform={showPlatform}
                     useTip={chanTip} />}
                   <Video
                     key={v.videoId}
@@ -228,13 +230,14 @@ const BMetric = styled.b`
 `
 
 // any of the possible video types. Pls don't add to this, we are moving to providing contentX attributions to customize display rather than switching inside here
-type VideoTypes = VideoRemoved | VideoViews | VideoCommon | NarrativeVideo
+type VideoTypes = VideoCommon & Partial<VideoRemoved> & Partial<VideoViews> & Partial<NarrativeVideo> & Partial<VideoChannelExtra>
 
 interface VideoProps extends StyleProps {
   v: VideoTypes,
   c?: Channel,
   onOpenChannel?: (c: Channel) => void,
   showThumb?: boolean
+  showPlatform?: boolean
   showChannel?: boolean
   highlightWords?: string[]
   loadCaptions?: (videoId: string) => Promise<VideoCaption[]>
@@ -245,7 +248,7 @@ interface VideoProps extends StyleProps {
   captionsStyle?: CSSProperties
 }
 
-export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, highlightWords,
+export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel, showThumb, showPlatform, highlightWords,
   loadCaptions, contentSubTitle, children, useTip, scrollCaptions, ...props }) => {
   const [loadedCaps, setLoadedCaps] = useState<VideoCaption[]>(null)
 
@@ -255,18 +258,18 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
 
   const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
+  const thumb = videoThumb(v, 'high')
 
   return <VideoStyle className='video' style={style}>
     <FlexRow style={{ flexWrap: 'wrap' }}>
       {showThumb && <div style={{ position: 'relative' }}>
-        <VideoA id={v.videoId}><img
-          className='thumb' src={videoThumb(v.videoId, 'high')}
-          style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} /></VideoA>
+        <VideoA id={v.videoId} platform={v.platform} >{thumb && <img className='thumb' src={thumb}
+          style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} />}</VideoA>
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         {v.rank && <div className='rank'>{v.rank}</div>}
       </div>}
       <FlexCol style={{ color: 'var(--fg1)', maxWidth: '27em' }} space='0.2em'>
-        <VideoA id={v.videoId}><h4 style={{ color: 'var(--fg)' }}>
+        <VideoA id={v.videoId} platform={v.platform} ><h4 style={{ color: 'var(--fg)' }}>
           {highlightWords ? <Highlighter
             searchWords={highlightWords}
             autoEscape
@@ -293,7 +296,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         {(captions || showLoadCaptions) &&
           <div style={{ ...(scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}), ...props.captionsStyle }}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-              <VideoA id={v.videoId} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
+              <VideoA id={v.videoId} platform={v.platform} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
                 textToHighlight={s.caption ?? ""}
               /> : s.caption}
@@ -301,7 +304,8 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
             {showLoadCaptions && <a onClick={_ => loadCaptions(v.videoId)?.then(caps => setLoadedCaps(caps))}>show captions</a>}
           </div>
         }
-        {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords} showTags={!isVideoError(v)} useTip={useTip} />}
+        {showChannel && <VideoChannel c={c} v={v} onOpenChannel={onOpenChannel} highlightWords={highlightWords}
+          showTags={!isVideoError(v)} showPlatform={showPlatform} useTip={useTip} />}
         {children}
       </FlexCol>
     </FlexRow>
@@ -314,16 +318,16 @@ interface VideoChannelProps {
   onOpenChannel?: (c: Channel) => void
   highlightWords?: string[]
   showTags?: boolean
+  showPlatform?: boolean
   useTip?: UseTip<Channel>
 }
-const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags, useTip }: VideoChannelProps) => {
+const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags, showPlatform, useTip }: VideoChannelProps) => {
   if (!c) c = { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
-  //if (!c) return v?.channelTitle ? <a href={channelUrl(v.channelId)} target='yt'><h3>{v.channelTitle}</h3></a> : <></>
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
     <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px' }} titleStyle={{ fontSize: '1em' }}
-      onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} useTip={useTip} />
+      onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} showPlatform={showPlatform} useTip={useTip} />
   </div>
 }
 
-export const VideoA = ({ id, children, offset, style }: PropsWithChildren<{ id: string, offset?: number } & StyleProps>) =>
-  <a href={videoUrl(id, offset)} target="tt_video" style={style}>{children}</a>
+export const VideoA = ({ id, children, offset, platform, style }: PropsWithChildren<{ id: string, offset?: number, platform?: PlatformName } & StyleProps>) =>
+  <a href={videoUrl(id, offset, platform)} target="tt_video" style={style}>{children}</a>

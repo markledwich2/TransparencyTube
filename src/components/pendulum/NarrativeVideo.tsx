@@ -21,42 +21,67 @@ import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
 
 
-const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & { words?: string[] } } = {
+const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
+  words?: string[],
+  showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number
+} } = {
   'Vaccine Personal': {
     defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven']
+    words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven'],
+    showCaptions: true
   },
   'Vaccine DNA': {
     defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['dna']
+    words: ['dna'],
+    showCaptions: true
   },
-  '2020 Election Fraud': {}
+  '2020 Election Fraud': {},
+  'QAnon': {
+    defaultRange: { startDate: new Date(2021, 5 - 1, 1), endDate: new Date(2021, 6 - 1, 6) },
+    narrativeIndexPrefix: 'narrative2',
+    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
+    words: ['dna'],
+    maxVideos: 3000,
+    showCaptions: false,
+    showLr: false,
+    showPlatform: true,
+    sizeFactor: 1
+  }
 }
 
 export interface NarrativeVideoComponentProps {
   narrative?: NarrativeName
   sizeFactor?: number
+  colorBy?: keyof NarrativeVideo
 }
 
-export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor }) => {
-  narrative ??= 'Vaccine Personal'
-  sizeFactor ??= 1
+export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy }) => {
   const nProps = { ...narrativeProps[narrative], narrative }
+  sizeFactor ??= nProps.sizeFactor ?? 1
+  narrative ??= 'Vaccine Personal'
+  colorBy ??= 'errorType'
+
+  console.log('sizeFactor', nProps.sizeFactor)
+
+
+  const colorMd = colMd(md.video[colorBy] ?? md.channel[colorBy])
+  const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
+
+
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
   const { bubbles, videos } = useMemo(() => {
-    const errorMd = colMd(md.video.errorType, videoRows)
     const bubbles = videoRows?.map(v => ({
       id: v.videoId,
       groupId: v.channelId,
       data: v,
       value: v.videoViews,
-      color: errorMd.val[v.errorType]?.color ?? '#888',
+      color: getColor(v),
       date: parseISO(v.uploadDate),
       img: channels[v.channelId]?.logoUrl,
       selected: q.channelId?.includes(v.channelId)
@@ -69,7 +94,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
 
   return <>
     <TextSection style={{ margin: '1em' }}>
-      <p>Video <b>bubbles</b> sized by <b>views</b>, arranged by <b>created</b> and colored by <b>removal status</b></p>
+      <p>Video <b>bubbles</b> sized by <b>views</b>, arranged by <b>upload date</b> and colored by <b>{colorMd.label}</b></p>
     </TextSection>
 
     <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
@@ -82,11 +107,10 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       </FilterPart>
       <FilterPart>
         channel
-        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>
-          {/* useTip={channelTip} */}
           <ChannelLogo c={channels[c]} style={{ height: '2em' }} />
           <CloseOutline className='clickable'
             onClick={() => {
@@ -120,13 +144,15 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
     <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>
 
     <Videos channels={channels} videos={videos}
-      groupChannels showTags showChannels showThumb loading={loading}
+      groupChannels showTags showChannels showThumb showPlatform={nProps.showPlatform}
+      loading={loading}
       defaultLimit={Math.floor(windowDim.w / 300)}
       loadExtraOnVisible={async (vids) => {
-        if (!idx?.captions) return []
+        if (!idx?.captions || !nProps.showCaptions) return []
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
         return res
       }}
-      highlightWords={nProps.words} />
+      highlightWords={nProps.words}
+    />
   </>
 }
