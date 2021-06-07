@@ -29,6 +29,7 @@ import { CloseOutline } from 'styled-icons/evaicons-outline'
 import { parseISO } from 'date-fns'
 import { Tip, useTip } from '../components/Tip'
 import styled from 'styled-components'
+import { Tab, Tabs } from '../components/Tab'
 
 type PrefixAll<T, P extends string> = {
   [K in keyof T & string as `${P}${Capitalize<K>}`]: T[K]
@@ -99,109 +100,113 @@ const PersonaPage = () => {
     </PurposeBanner>
     <MinimalPage>
       <TS>
-        <h2>History</h2>
+        <h2>Video's Watched</h2>
         Personas only watch video's from their own group (i.e. The socialist persona watched only videos in Socialist channels). Each day, 50 recent videos were watched randomly proportional to views.
       </TS>
 
       <PersonaSeen seen={watch} verb='watched' showSeen={openWatch => setQuery({ openWatch })} channels={chans} style={{ minHeight: '100vh' }} />
 
-      <TS>
-        <h2>Home page videos</h2>
-        Each day, personas refresh their home page many times, and we collect the videos that were shown. Bellow are the videos that were shown to the persona the most times.
-      </TS>
+      <Tabs titleStyle={{ textTransform: 'uppercase', marginLeft: '1em' }}>
+        <Tab label='Recommendations'>
+          {rs?.sets && <>
+            <TS>
+              The venn diagram shows the overlap of recommendation shown to personas from the same videos.
+            </TS>
 
-      <PersonaSeen seen={feed} verb='seen' showSeen={openFeed => setQuery({ openFeed })} channels={chans} />
-
-      {barFeeds && <>
-        <TS>
-          For each persona, this the portion of home page videos to different political categories.
-        </TS>
-        <NarrowSection>
-          <BarFilters
-            noun='Home page videos' verb='seen'
-            data={barFeeds}
-            md={barMd}
-            filter={{ accounts: q.feedAccounts }}
-            onFilter={f => setQuery({ feedAccounts: f.accounts, feedPeriod: f.period, feedTags: f.tags })}
-          />
-        </NarrowSection>
-        <PersonaBar data={barFeeds} filter={{ accounts: q.feedAccounts, period: q.feedPeriod, tags: q.feedTags }} />
-      </>}
-
-      {rs?.sets && <>
-        <TS>
-          <h2>Recommendations</h2>
-          The venn diagram shows the overlap of recommendation shown to personas from the same videos.
-        </TS>
-
-        <NarrowSection>
-          <FH>
-            <FP>Recommendations seen by personas <FV metadata={barMd}
-              filter={{ groupAccounts: rs.filter.vennAccounts }}
-              onFilter={f => setQuery({ vennAccounts: f.groupAccounts })}
-              rows={rs?.groups} />
-            </FP>
-            <FP>
-              in video collection <FV {...vennFilterProps} filter={{ label: rs?.filter?.vennLabel }} onFilter={f => setQuery({ vennLabel: f.label })} />
-            </FP>
-            {chans && <FP>from channel
+            <NarrowSection>
+              <FH>
+                <FP>Recommendations seen by personas <FV metadata={barMd}
+                  filter={{ groupAccounts: rs.filter.vennAccounts }}
+                  onFilter={f => setQuery({ vennAccounts: f.groupAccounts })}
+                  rows={rs?.groups} />
+                </FP>
+                <FP>
+                  in video collection <FV {...vennFilterProps} filter={{ label: rs?.filter?.vennLabel }} onFilter={f => setQuery({ vennLabel: f.label })} />
+                </FP>
+                {chans && <FP>from channel
               <SelectWithChannelSearch ids={rs?.filter.vennChannelIds}
-                onSelect={ids => setQuery({ vennChannelIds: ids?.length ? ids : undefined })}
-                channels={chans}
-                style={{ marginLeft: '1em' }}
-              />
-              {rs.availableChannelIds && <FP><button
-                style={{ ...styles.centerH, display: 'block' }}
-                onClick={() => {
-                  return setQuery({ vennChannelIds: [takeRandom(rs.availableChannelIds)], vennLabel: undefined, vennDay: undefined })
+                    onSelect={ids => setQuery({ vennChannelIds: ids?.length ? ids : undefined })}
+                    channels={chans}
+                    style={{ marginLeft: '1em' }}
+                  />
+                  {rs.availableChannelIds && <FP><button
+                    style={{ ...styles.centerH, display: 'block' }}
+                    onClick={() => {
+                      return setQuery({ vennChannelIds: [takeRandom(rs.availableChannelIds)], vennLabel: undefined, vennDay: undefined })
+                    }}
+                  >Random</button></FP>
+                  }
+                </FP>}
+                <FP>on day<FV {...vennFilterProps} filter={{ day: rs?.filter?.vennDay }}
+                  onFilter={f => setQuery({ vennDay: f.day })} /></FP>
+              </FH>
+            </NarrowSection>
+
+            {rs?.fromVideos && <FlexRow style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'center' }}>
+              <div><div style={{ marginBottom: '1em' }}>Showing recommendations from <b>{numFormat(rs.fromVideos.length)}</b> videos</div>
+                <RotateContent
+                  data={rs.fromVideos}
+                  getDelay={() => 4000 + Math.random() * 1000}
+                  style={{ maxWidth: '100%' }}
+                  template={(v) => {
+                    if (!v) return
+                    const c = chans?.[v.channelId] ?? { channelId: v.channelId, channelTitle: v.channelTitle }
+                    return <Video v={v} c={c} showThumb showChannel useTip={chanTip} />
+                  }} />
+              </div>
+            </FlexRow>}
+
+            <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
+              <ContainerDimensions>
+                {({ width, height }) => {
+                  return <PersonaVenn channels={chans} sets={rs.sets} width={width} height={height} videos={rs.byId} />
                 }}
-              >Random</button></FP>
-              }
-            </FP>}
-            <FP>on day<FV {...vennFilterProps} filter={{ day: rs?.filter?.vennDay }}
-              onFilter={f => setQuery({ vennDay: f.day })} /></FP>
-          </FH>
-        </NarrowSection>
+              </ContainerDimensions>
+            </div>
+          </>}
 
-        {rs?.fromVideos && <FlexRow style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'center' }}>
-          <div><div style={{ marginBottom: '1em' }}>Showing recommendations from <b>{numFormat(rs.fromVideos.length)}</b> videos</div>
-            <RotateContent
-              data={rs.fromVideos}
-              getDelay={() => 4000 + Math.random() * 1000}
-              style={{ maxWidth: '100%' }}
-              template={(v) => {
-                if (!v) return
-                const c = chans?.[v.channelId] ?? { channelId: v.channelId, channelTitle: v.channelTitle }
-                return <Video v={v} c={c} showThumb showChannel useTip={chanTip} />
-              }} />
-          </div>
-        </FlexRow>}
-
-        <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
-          <ContainerDimensions>
-            {({ width, height }) => {
-              return <PersonaVenn channels={chans} sets={rs.sets} width={width} height={height} videos={rs.byId} />
-            }}
-          </ContainerDimensions>
-        </div>
-      </>}
-
-      {barRecs && <>
-        <NarrowSection>
-          <TS style={{ marginTop: '5em', marginBottom: '1em', }}>
-            See how recommendations are personalized overall
+          {barRecs && <>
+            <NarrowSection>
+              <TS style={{ marginTop: '5em', marginBottom: '1em', }}>
+                See how recommendations are personalized overall
           </TS>
-        </NarrowSection>
+            </NarrowSection>
 
-        <BarFilters
-          noun='Recommendations' verb='recommended'
-          data={barRecs}
-          md={barMd}
-          filter={{ accounts: q.vennAccounts }}
-          onFilter={f => setQuery({ recAccounts: f.accounts, recPeriod: f.period, recTags: f.tags })}
-        />
-        <PersonaBar data={barRecs} filter={{ accounts: q.recAccounts, period: q.recPeriod, tags: q.recTags }} />
-      </>}
+            <BarFilters
+              noun='Recommendations' verb='recommended'
+              data={barRecs}
+              md={barMd}
+              filter={{ accounts: q.vennAccounts }}
+              onFilter={f => setQuery({ recAccounts: f.accounts, recPeriod: f.period, recTags: f.tags })}
+            />
+            <PersonaBar data={barRecs} filter={{ accounts: q.recAccounts, period: q.recPeriod, tags: q.recTags }} />
+          </>}
+        </Tab>
+        <Tab label='Home Page'>
+          <TS>
+            Each day, personas refresh their home page many times, and we collect the videos that were shown. Bellow are the videos that were shown to the persona the most times.
+          </TS>
+
+          <PersonaSeen seen={feed} verb='seen' showSeen={openFeed => setQuery({ openFeed })} channels={chans} />
+
+          {barFeeds && <>
+            <TS>
+              For each persona, this the portion of home page videos to different political categories.
+            </TS>
+            <NarrowSection>
+              <BarFilters
+                noun='Home page videos' verb='seen'
+                data={barFeeds}
+                md={barMd}
+                filter={{ accounts: q.feedAccounts }}
+                onFilter={f => setQuery({ feedAccounts: f.accounts, feedPeriod: f.period, feedTags: f.tags })}
+              />
+            </NarrowSection>
+            <PersonaBar data={barFeeds} filter={{ accounts: q.feedAccounts, period: q.feedPeriod, tags: q.feedTags }} />
+          </>}
+        </Tab>
+      </Tabs>
+
     </MinimalPage>
 
     <PersonaSeenPopup verb='watched' isOpen={q.openWatch != null} onClose={() => setQuery({ openWatch: undefined })} account={q.openWatch} channels={chans} useSeen={watch} />

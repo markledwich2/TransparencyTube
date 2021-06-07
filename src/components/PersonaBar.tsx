@@ -50,7 +50,7 @@ const PersonaBar: FC<{ data: PersonaBarData, filter: BarFilter }> = ({ data, fil
     <ContainerDimensions >
       {({ width }) => {
         const charts = layoutCharts(statsByAccount, getRefBar,
-          { width: (width - legend.bounds.w - 40) / 3, height: legend.bounds.h, font: legend.cfg.labelFont })
+          { width: (width - legend.bounds.w - 60) / 3, height: legend.bounds.h, font: legend.cfg.labelFont })
         return <div>
           {charts.map((accountCharts, i) => {
             const account = accountCharts.account
@@ -68,7 +68,7 @@ const PersonaBar: FC<{ data: PersonaBarData, filter: BarFilter }> = ({ data, fil
                       {legend.items.map(l => {
                         const r = l.rect
                         return <g transform={`translate(${r.x}, ${r.y})`} key={l.tag}>
-                          <rect rx={5} width={r.w} height={r.h} style={{ fill: r.fill }}></rect>
+                          <rect rx={5} width={r.w ?? 0} height={r.h} style={{ fill: r.fill }}></rect>
                           <use xlinkHref='#video-icon' x={r.w - legend.cfg.iconWidth - 3} y={5} />
                           <text className='tag' x={10} y={r.h - 6}>{l.label}</text>
                         </g>
