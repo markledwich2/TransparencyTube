@@ -6,7 +6,7 @@ import { NarrativeHighlightComponent } from '../../components/pendulum/Narrative
 const ReportPage = () => <>
   <GlobalStyle />
   <MinimalPage>
-    <NarrativeVideoComponent narrative='QAnon' colorBy='platform' />
+    <NarrativeVideoComponent narrative='QAnon' colorBy='platform' showFlipX />
   </MinimalPage>
 </>
 

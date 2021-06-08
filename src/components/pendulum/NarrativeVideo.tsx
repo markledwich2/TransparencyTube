@@ -1,5 +1,5 @@
 import { parseISO } from 'date-fns'
-import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
+import React, { Fragment, useMemo, FunctionComponent as FC, useState } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
 import { useNarrative, UseNarrativeProps } from '../NarrativeBubbles'
@@ -58,9 +58,10 @@ export interface NarrativeVideoComponentProps {
   narrative?: NarrativeName
   sizeFactor?: number
   colorBy?: keyof NarrativeVideo
+  showFlipX?: boolean
 }
 
-export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy }) => {
+export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy, showFlipX }) => {
   const nProps = { ...narrativeProps[narrative], narrative }
   sizeFactor ??= nProps.sizeFactor ?? 1
   narrative ??= 'Vaccine Personal'
@@ -87,6 +88,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   }, [videoRows, toJson(q)])
 
   var tip = useTip<NarrativeVideo>()
+
+  const [flipX, setFlipX] = useState(false)
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -119,6 +122,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onSelect={c => setQuery({ channelId: [c.channelId] })}
           channels={values(channels)} sortBy='views' placeholder='channel search' />}
       </FilterPart>
+
+      {showFlipX && <><input type='checkbox' checked={flipX} onChange={e => setFlipX(e.target.checked)} /><b>flip X</b></>}
     </FilterHeader>
 
     <div>
@@ -130,6 +135,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           tip={tip}
           bubbleSize={windowDim.h / 1200 * sizeFactor}
           ticks={nProps.ticks}
+          flipX={flipX}
         />}
       </ContainerDimensions>
     </div>

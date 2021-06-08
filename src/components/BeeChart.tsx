@@ -34,6 +34,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   animate?: boolean
   bubbleSize?: number
   ticks?: number
+  flipX?: boolean
 }) => {
 
   ticks ??= 180
@@ -114,6 +115,8 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
     const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
 
+    console.log('flipX', props.flipX)
+
     return <SVGStyle style={{ width: b.w, height: b.h }} ref={chartRef} >
       <defs>
         {bubbles.filter(showImage)
@@ -134,7 +137,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
               className: compact(['node', selectedClass]).join(' ')
             }
 
-            return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
+            return <g key={id} id={id} transform={`translate(${props.flipX ? bubbleBounds.w - x : x}, ${y})`}>
               <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
               {showImage(b) &&
                 <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
@@ -149,7 +152,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         </g>
       </g>
     </SVGStyle>
-  }, [nodes, fNodes, tick, props.w])
+  }, [nodes, fNodes, tick, props.w, props.flipX])
 
   return <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
 }
