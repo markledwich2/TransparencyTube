@@ -58,7 +58,7 @@ const VideoTile: FC<{
   useTip?: UseTip<Channel>
   verb: string
 }> = ({ s, c, useTip, verb }) => <VideoTileStyle data-video-id={s.videoId}>
-  <VideoA id={s.videoId}><img src={videoThumb(s.videoId, 'high')} style={{ height: '230px' }} /></VideoA>
+  <VideoA id={s.videoId}><img src={videoThumb(s, 'high')} style={{ height: '230px' }} /></VideoA>
   <div className="title">{s.videoTitle}</div>
   {c && <ChannelTitle className='channel' c={c} titleStyle={{ fontSize: '1rem' }} logoStyle={{ height: '50px' }} useTip={useTip} />}
   <SeenVideoExtra s={s} verb={verb} />

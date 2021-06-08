@@ -1,7 +1,7 @@
 import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
-import { NarrativeName, NarrativeVideo } from '../../common/RecfluenceApi'
+import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
 import { useNarrative, UseNarrativeProps } from '../NarrativeBubbles'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
@@ -23,7 +23,7 @@ import { useWindowDim } from '../../common/Window'
 
 const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
   words?: string[],
-  showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number
+  showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number, ticks?: number
 } } = {
   'Vaccine Personal': {
     defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
@@ -44,12 +44,13 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     defaultRange: { startDate: new Date(2021, 5 - 1, 1), endDate: new Date(2021, 6 - 1, 6) },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['dna'],
+    words: ['qanon', 'trump', 'august', 'reinstate', 'jfk'],
     maxVideos: 3000,
-    showCaptions: false,
+    showCaptions: true,
     showLr: false,
     showPlatform: true,
-    sizeFactor: 1
+    sizeFactor: 1,
+    ticks: 400
   }
 }
 
@@ -65,13 +66,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   narrative ??= 'Vaccine Personal'
   colorBy ??= 'errorType'
 
-  console.log('sizeFactor', nProps.sizeFactor)
-
-
   const colorMd = colMd(md.video[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
-
-
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
@@ -103,7 +99,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       </FilterPart>
       <FilterPart>
         video
-          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
+          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         channel
@@ -133,6 +129,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
           tip={tip}
           bubbleSize={windowDim.h / 1200 * sizeFactor}
+          ticks={nProps.ticks}
         />}
       </ContainerDimensions>
     </div>
@@ -149,7 +146,12 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       defaultLimit={Math.floor(windowDim.w / 300)}
       loadExtraOnVisible={async (vids) => {
         if (!idx?.captions || !nProps.showCaptions) return []
+        const capsFilter = (c: VideoCaption) => videoFilter.keywords ? videoFilter.keywords?.some(k => c.tags?.some(t => t == k)) ?? false : true
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
+          .then(caps => {
+            console.log('caps filtering', { videoFilter, caps })
+            return caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) }))
+          })
         return res
       }}
       highlightWords={nProps.words}

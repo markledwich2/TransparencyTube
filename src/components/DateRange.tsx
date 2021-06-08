@@ -1,7 +1,7 @@
 
-import { parseISO, addDays, startOfToday, endOfToday } from 'date-fns'
+import { parseISO, addDays, startOfToday, endOfToday, isSameDay, startOfDay, startOfWeek, endOfWeek, endOfDay, startOfMonth, endOfMonth, addMonths, startOfYear, endOfYear, addYears } from 'date-fns'
 import React, { useEffect, useState } from 'react'
-import { DateRangePicker, DateRangeProps } from 'react-date-range'
+import { DateRangePicker, DateRangeProps, defaultStaticRanges } from 'react-date-range'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
 import styled from 'styled-components'
@@ -123,6 +123,60 @@ interface InlineDateRangeProps extends StyleProps, DateRangeProps {
   onChange?: (r: DateRangeValue) => void
 }
 
+const staticRangeHandler = {
+  range: {},
+  isSelected(range) {
+    const definedRange = this.range()
+    return (
+      isSameDay(range.startDate, definedRange.startDate) &&
+      isSameDay(range.endDate, definedRange.endDate)
+    )
+  },
+}
+
+export function createStaticRanges(ranges) {
+  return ranges.map(range => ({ ...staticRangeHandler, ...range }))
+}
+
+const dates = {
+  startOfWeek: startOfWeek(new Date()),
+  endOfWeek: endOfWeek(new Date()),
+  startOfLastWeek: startOfWeek(addDays(new Date(), -7)),
+  endOfLastWeek: endOfWeek(addDays(new Date(), -7)),
+  startOfToday: startOfDay(new Date()),
+  endOfToday: endOfDay(new Date()),
+  startOfYesterday: startOfDay(addDays(new Date(), -1)),
+  endOfYesterday: endOfDay(addDays(new Date(), -1)),
+  startOfMonth: startOfMonth(new Date()),
+  endOfMonth: endOfMonth(new Date()),
+  startOfLastMonth: startOfMonth(addMonths(new Date(), -1)),
+  endOfLastMonth: endOfMonth(addMonths(new Date(), -1)),
+}
+
+const ranges = defaultStaticRanges.concat(createStaticRanges(
+  [30, 60, 90, 120].map(d => ({
+    label: `Last ${d} days`,
+    range: () => ({
+      startDate: addDays(dates.endOfToday, -d),
+      endDate: dates.endOfToday,
+    })
+  })).concat([
+    {
+      label: 'This Year',
+      range: () => ({
+        startDate: startOfYear(new Date()),
+        endDate: endOfYear(new Date()),
+      })
+    },
+    {
+      label: 'Last Year',
+      range: () => ({
+        startDate: startOfYear(addYears(new Date(), -1)),
+        endDate: endOfYear(addYears(new Date(), -1)),
+      })
+    }
+  ])))
+
 export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, className, ...dateRageProps }: InlineDateRangeProps) => {
   const [openValue, setOpenValue] = useState<DateRangeValue>(null)
   const currentRange = openValue ?? range
@@ -151,6 +205,7 @@ export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, c
         direction='vertical'
         scroll={{ enabled: true }}
         showMonthAndYearPickers
+        staticRanges={ranges}
         months={3}
         onChange={v => {
           const r = (v as { range1: DateRangeValue }).range1

@@ -155,6 +155,9 @@ Click on a channel to see more detail about the collection of video statistics.
         { value: 'heur_tag', label: 'Auto - similar channels' },
         { value: 'manual', label: 'Manual review' },
       ]
+    } as ColumnMd,
+    keywords: {
+      label: 'Keywords'
     } as ColumnMd
   })
 }

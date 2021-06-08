@@ -38,6 +38,7 @@ export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelect
   support?: string[]
   supplement?: string[]
   errorType?: string[]
+  keywords?: string[]
 }
 
 const groupCol = 'support'
@@ -68,8 +69,8 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
-  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType']))
-  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'platform', 'supplement', 'errorType'])
+  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
+  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'platform', 'supplement', 'errorType', 'keywords'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
@@ -91,7 +92,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
       })
 
     const videoRows = pipe(
-      videos?.filter(v => filterIncludes(videoFilter, v)),
+      videos?.filter(v => filterIncludes(videoFilter, v, false)),
       orderBy(v => v.videoViews, 'desc'),
       take(props.maxVideos ?? 5000)
     )

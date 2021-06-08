@@ -26,8 +26,11 @@ export interface VideoCommon {
 }
 
 export interface VideoCaption {
-  offsetSeconds: number,
   caption: string
+  offsetSeconds: number
+  heuristic?: boolean
+  part?: string
+  tags?: string[]
 }
 
 export interface VideoChannelExtra {
@@ -70,6 +73,7 @@ export interface NarrativeVideo extends VideoCommon, VideoChannelExtra {
   supplement: string
   bubbleKey: string
   errorType: string
+  keywords?: string[]
   /**
    * views adjusted for precision/recall ratios
    */
@@ -83,9 +87,8 @@ export interface NarrativeCaptionKey {
 }
 
 export interface NarrativeCaption extends NarrativeCaptionKey {
-  captions?: string[]
+  captions?: VideoCaption[]
 }
-
 
 export type ChannelKey = { channelId: string }
 export type ChannelAndPeriodKey = ChannelKey & HasPeriod

@@ -26,16 +26,17 @@ export interface BeehiveNode<T> {
 
 type ForceNode = SimulationNodeDatum & { id: string, r: number, cx?: number, cy?: number }
 
-export const BeeChart = <T,>({ nodes, animate, onSelect, ...props }: {
+export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   nodes: BeehiveNode<T>[]
   w: number
   tip: UseTip<any>
   onSelect: (data: T) => void
   animate?: boolean
   bubbleSize?: number
+  ticks?: number
 }) => {
 
-  var ticks = 180
+  ticks ??= 180
   var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
   var { w } = useMemo(() => {

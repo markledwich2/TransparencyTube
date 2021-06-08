@@ -40,7 +40,7 @@ interface FilterFormProps<TRow, TFilter extends FilterState<Partial<TRow>>> {
   showCount?: boolean
 }
 
-export const filterIncludes = <T,>(filter: FilterState<T>, row: T) => {
+export const filterIncludes = <T,>(filter: FilterState<T>, row: T, allInArray = true) => {
   if (!filter || !row) return true
   const colTest = (c: Extract<keyof T, string>): boolean => {
     var filterValues: string | string[] = filter[c]
@@ -48,10 +48,9 @@ export const filterIncludes = <T,>(filter: FilterState<T>, row: T) => {
     const rv = row?.[c]
     if (rv === undefined) {
       //console.error(`filtering by col '${c}' which is undefined on row:`, row)
-
       return false
     }
-    if (Array.isArray(rv)) return Array.isArray(filterValues) ? filterValues.every(fv => rv.includes(fv)) : rv.includes(filterValues)
+    if (Array.isArray(rv)) return Array.isArray(filterValues) ? (allInArray ? filterValues.every(fv => rv.includes(fv)) : filterValues.some(fv => rv.includes(fv))) : rv.includes(filterValues)
     if (typeof rv == 'string' || rv == null) return filterValues.includes(rv as any as string | null)
     throw 'not implemented. Only support string[] | string'
   }
