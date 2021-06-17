@@ -19,7 +19,7 @@ import { values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
 import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
-
+import { pickFull } from '../../common/Pipe'
 
 const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
   words?: string[],
@@ -102,7 +102,6 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   }, [videoRows, toJson(q)])
 
   var tip = useTip<NarrativeVideo>()
-
   const [flipX, setFlipX] = useState(false)
 
   return <>
@@ -116,11 +115,11 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       </FilterPart>
       <FilterPart>
         video
-        <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType', 'keywords', 'tags'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={md.video} filter={pickFull(videoFilter, ['errorType', 'keywords', 'tags'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         channel
-        <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={md.video} filter={pickFull(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>

@@ -3,10 +3,9 @@ import { toKey } from 'react-select/src/utils'
 import { blobCfg, webCfg } from './Cfg'
 import { Uri } from './Uri'
 import { getJson, getJsonl, PartialRecord } from './Utils'
-import { flatMap, indexBy, splitAt } from 'remeda'
+import { flatMap, indexBy, splitAt, mapToObj } from 'remeda'
 import { entries } from './Pipe'
 import { isNamedExportBindings } from 'typescript'
-import { mapToObj } from './remeda/mapToObj'
 
 export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   keyFiles: IndexFile<TKey>[]

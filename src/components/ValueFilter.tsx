@@ -1,10 +1,9 @@
 import { StringKeyOf } from 'elastic-ts/dist/elasticBuilder/utils'
 import React from "react"
-import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact, uniqBy, concat } from 'remeda'
+import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact, uniqBy, concat, mapToObj } from 'remeda'
 import styled from 'styled-components'
 import { colMd, ColumnMd, ColumnMdRun, ColumnMdVal, Opt, TableMd, TablesMetadata } from '../common/Metadata'
 import { asArray, entries, keys, orderBy, values } from '../common/Pipe'
-import { mapToObj } from '../common/remeda/mapToObj'
 import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
 import { InlineForm } from './InlineForm'
@@ -146,7 +145,8 @@ const FilterForm = <TRow extends object, TFilter>({ filter, onFilter, rows, meta
   </div>
   const onSelect = (o: FilterColOption, col: Extract<keyof TFilter, string>) =>
     onFilter(filterWithSelect(filter, col, md[col], o.value.value, o.selected))
-  return < FilterFormStyle >
+  console.log('filterOptions', filterOptions)
+  return <FilterFormStyle>
     {values(filterOptions).map(f => <OptionList key={f.col} options={f.options} itemRender={tagRender} onChange={o => onSelect(o, f.col as any)} />)}
   </FilterFormStyle >
 }

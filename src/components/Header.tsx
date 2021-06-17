@@ -1,11 +1,10 @@
 import { Link } from "gatsby"
 import PropTypes from "prop-types"
 import React, { Fragment } from "react"
-import { compact, first, flatMap } from 'remeda'
+import { compact, first, flatMap, mapToObj } from 'remeda'
 import styled from 'styled-components'
 import { Pages } from 'styled-icons/material'
 import { treeParents, treeToList } from '../common/Pipe'
-import { mapToObj } from '../common/remeda/mapToObj'
 import { uri } from '../common/Uri'
 import { safeLocation } from '../common/Utils'
 import { Burger } from './Burger'
