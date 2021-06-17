@@ -2,7 +2,7 @@ import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo, FunctionComponent as FC, useState } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
-import { useNarrative, UseNarrativeProps } from '../NarrativeBubbles'
+import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../NarrativeBubbles'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
 import { BeeChart } from '../BeeChart'
@@ -40,7 +40,7 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     showCaptions: true
   },
   '2020 Election Fraud': {},
-  'QAnon': {
+  QAnon: {
     defaultRange: { startDate: new Date(2021, 5 - 1, 1), endDate: new Date(2021, 6 - 1, 6) },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
@@ -51,14 +51,28 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     showPlatform: true,
     sizeFactor: 1,
     ticks: 400
+  },
+  Comcast: {
+    defaultRange: { startDate: new Date(2019, 0, 1), endDate: new Date(2021, 7 - 1, 6) },
+    narrativeIndexPrefix: 'narrative2',
+    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
+    words: ['5g', 'verizon', 'comcast'], // we should have a unique in the index for this
+    maxVideos: 3000,
+    showCaptions: true,
+    showLr: false,
+    showPlatform: true,
+    sizeFactor: 1,
+    ticks: 400
   }
 }
+
 
 export interface NarrativeVideoComponentProps {
   narrative?: NarrativeName
   sizeFactor?: number
   colorBy?: keyof NarrativeVideo
   showFlipX?: boolean
+  videoFilter?: (keyof NarrativeFilterState)[]
 }
 
 export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy, showFlipX }) => {
@@ -102,11 +116,11 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       </FilterPart>
       <FilterPart>
         video
-          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType', 'keywords', 'tags'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         channel
-        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>

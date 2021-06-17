@@ -56,7 +56,7 @@ export interface VideoRemoved extends VideoCommon {
 }
 
 
-export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon'
+export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon' | 'Comcast'
 
 export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
 export type NarrativeKey = { narrative?: string, uploadDate?: string }
@@ -67,13 +67,15 @@ export type NarrativeIdx = {
 }
 
 export const isVideoNarrative = (c: VideoCommon): c is NarrativeVideo => (c as NarrativeVideo).narrative != undefined
-export interface NarrativeVideo extends VideoCommon, VideoChannelExtra {
+export interface NarrativeVideo extends VideoCommon, Partial<VideoChannelExtra> {
   narrative: string
   support: string
   supplement: string
   bubbleKey: string
   errorType: string
   keywords?: string[]
+  tags?: string[]
+  channelTags?: string[]
   /**
    * views adjusted for precision/recall ratios
    */

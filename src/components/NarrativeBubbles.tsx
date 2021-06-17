@@ -33,6 +33,7 @@ const bubbleKeyObject = (key: string) => {
 export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
   channelId?: string[]
   tags?: string[]
+  channelTags?: string[]
   lr?: string[]
   platform?: string[]
   support?: string[]
@@ -69,8 +70,8 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
-  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
-  const bubbleFilter = pick(q, ['tags', 'lr', 'support', 'platform', 'supplement', 'errorType', 'keywords'])
+  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'channelTags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
+  const bubbleFilter = pick(q, ['tags', 'channelTags', 'lr', 'support', 'platform', 'supplement', 'errorType', 'keywords'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
@@ -119,7 +120,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     idx.videos.rows(
       { from: { narrative, uploadDate: dateRange.startDate.toISOString() }, to: { narrative, uploadDate: dateRange.endDate.toISOString() } }
     ).then(vids => {
-      const channelPicks = compact(['tags', 'platform', showLr ? 'lr' : null])
       const vidsExtra = vids.map(v => {
         v = videoMap ? videoMap(v) : v
         let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
@@ -127,7 +127,9 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
         if (!c) return r
         r = {
           ...r,
-          ...pick(c, channelPicks),
+          platform: c.platform,
+          lr: showLr ? c.lr : null,
+          channelTags: c.tags, // channelTags because there is a conflict
           supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
           bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
         }
@@ -189,28 +191,28 @@ export const NarrativeBubbles: FC<UseNarrative> = ({ videoFilter, setVideoFilter
       <FilterHeader style={{ marginBottom: '2em' }}>
         <FilterPart>
           Videos filter
-        <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
+          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['support', 'supplement', 'errorType'])} onFilter={setVideoFilter} rows={videos} showCount />
         </FilterPart>
         <FilterPart>
           channel filter
-        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
+          <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr'])} onFilter={setVideoFilter} rows={videos} showCount />
         </FilterPart>
-      in period
-      <FilterPart>
+        in period
+        <FilterPart>
           <InlineDateRange
             range={dateRange}
             onChange={r => setQuery(rangeToQuery(r))} />
         </FilterPart>
         <FilterPart>
           from channel
-        {channels && selectedChannels && selectedChannels.map(c => <Fragment key={c.channelId}>
-          <ChannelLogo c={c} style={{ height: '2em' }} useTip={channelTip} />
-          <CloseOutline className='clickable'
-            onClick={() => {
-              const keys = q.selectedKeys?.filter(k => bubbleKeyObject(k).channelId != c.channelId)
-              return setQuery({ selectedKeys: keys?.length > 0 ? keys : null })
-            }} />
-        </Fragment>)}
+          {channels && selectedChannels && selectedChannels.map(c => <Fragment key={c.channelId}>
+            <ChannelLogo c={c} style={{ height: '2em' }} useTip={channelTip} />
+            <CloseOutline className='clickable'
+              onClick={() => {
+                const keys = q.selectedKeys?.filter(k => bubbleKeyObject(k).channelId != c.channelId)
+                return setQuery({ selectedKeys: keys?.length > 0 ? keys : null })
+              }} />
+          </Fragment>)}
           {channels && !q.selectedKeys && <ChannelSearch onSelect={c => {
             const keys = bubbleRows.filter(b => b.channelId == c.channelId).map(b => bubbleKeyString(b, groupCol))
             setQuery({ selectedKeys: keys })

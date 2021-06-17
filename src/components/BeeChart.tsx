@@ -115,8 +115,6 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
     const b = { ...bubbleBounds, h: bubbleBounds.h + 25 }
 
-    console.log('flipX', props.flipX)
-
     return <SVGStyle style={{ width: b.w, height: b.h }} ref={chartRef} >
       <defs>
         {bubbles.filter(showImage)
