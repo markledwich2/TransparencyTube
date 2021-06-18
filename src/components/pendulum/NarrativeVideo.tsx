@@ -9,10 +9,10 @@ import { BeeChart } from '../BeeChart'
 import { pick } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
-import { InlineDateRange, rangeToQuery } from '../DateRange'
+import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
 import { assign, toJson } from '../../common/Utils'
 import { styles } from '../Style'
-import { filterIncludes, InlineValueFilter } from '../ValueFilter'
+import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { values } from '../../common/Pipe'
@@ -26,14 +26,14 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
   showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number, ticks?: number
 } } = {
   'Vaccine Personal': {
-    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
+    defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven'],
     showCaptions: true
   },
   'Vaccine DNA': {
-    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
+    defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['dna'],
@@ -41,7 +41,7 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
   },
   '2020 Election Fraud': {},
   QAnon: {
-    defaultRange: { startDate: new Date(2021, 5 - 1, 1), endDate: new Date(2021, 6 - 1, 6) },
+    defaultFilter: { start: '2020-05-01', end: '2021-06-1' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['qanon', 'trump', 'august', 'reinstate', 'jfk'],
@@ -53,19 +53,41 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     ticks: 400
   },
   Comcast: {
-    defaultRange: { startDate: new Date(2019, 0, 1), endDate: new Date(2021, 7 - 1, 6) },
+    defaultFilter: { start: '2019-01-01', tags: ['comcast'] },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['5g', 'verizon', 'comcast'], // we should have a unique in the index for this
-    maxVideos: 3000,
+    words: ['5g', 'verizon', 'comcast', 'net neutrality', ''], // we should have a unique in the index for this
+    maxVideos: 1000,
     showCaptions: true,
     showLr: false,
     showPlatform: true,
     sizeFactor: 1,
-    ticks: 400
+    ticks: 150
   }
 }
 
+const videoMd: FilterTableMd = {
+  ...md.video,
+  tags: {
+    ...md.video.tags,
+    singleSelect: true,
+    hideAll: true,
+    values: [
+      {
+        value: 'netneutrality',
+        label: 'Net Neutrality',
+      },
+      {
+        value: 'comcast',
+        label: 'Comcast'
+      },
+      {
+        value: '5g',
+        label: '5G'
+      }
+    ]
+  }
+}
 
 export interface NarrativeVideoComponentProps {
   narrative?: NarrativeName
@@ -81,7 +103,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   narrative ??= 'Vaccine Personal'
   colorBy ??= 'errorType'
 
-  const colorMd = colMd(md.video[colorBy] ?? md.channel[colorBy])
+  const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
@@ -98,6 +120,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       selected: q.channelId?.includes(v.channelId)
     }))
     const videos = videoRows?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
+    console.log('narrative component new data', { videoLength: videos?.length, q })
     return { bubbles, videos }
   }, [videoRows, toJson(q)])
 
@@ -111,15 +134,15 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
 
     <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
       <FilterPart>
-        Uploaded <InlineDateRange range={dateRange} inputRange={nProps.defaultRange} onChange={r => setQuery(rangeToQuery(r))} />
+        Uploaded <InlineDateRange range={dateRange} inputRange={rangeFromQuery(nProps.defaultFilter)} onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
-        video
-        <InlineValueFilter metadata={md.video} filter={pickFull(videoFilter, ['errorType', 'keywords', 'tags'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['tags'])} onFilter={setVideoFilter} rows={videos} display='buttons' />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         channel
-        <InlineValueFilter metadata={md.video} filter={pickFull(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterPart>
       <FilterPart>
         {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>

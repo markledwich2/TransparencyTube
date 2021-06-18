@@ -55,7 +55,7 @@ const RemovedVideosPage = () => {
   const [removedIdx, setRemovedIdx] = useState<BlobIndex<VideoRemoved, { lastSeen?: string }>>(null)
   const [captionIdx, setCaptionIdx] = useState<BlobIndex<CaptionData, { videoId?: string }>>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
   const [loading, setLoading] = useState(false)
   const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)

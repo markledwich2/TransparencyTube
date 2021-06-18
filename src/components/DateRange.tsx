@@ -19,9 +19,9 @@ export interface DateRangeQueryState {
   end?: string
 }
 
-export const rangeFromQuery = (q: DateRangeQueryState, defaultStart: Date = null, defaultEnd: Date = null): DateRangeValue => ({
-  startDate: q.start ? parseISO(q.start) : (defaultStart ?? addDays(startOfToday(), -7)),
-  endDate: q.end ? parseISO(q.end) : defaultEnd ?? endOfToday()
+export const rangeFromQuery = (q: DateRangeQueryState, defaultStart: string = null, defaultEnd: string = null): DateRangeValue => ({
+  startDate: q.start ? parseISO(q.start) : ((defaultStart ? parseISO(defaultStart) : null) ?? addDays(startOfToday(), -7)),
+  endDate: q.end ? parseISO(q.end) : (defaultEnd ? parseISO(defaultEnd) : null) ?? endOfToday()
 })
 
 export const rangeToQuery = (r: DateRangeValue): DateRangeQueryState => ({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })

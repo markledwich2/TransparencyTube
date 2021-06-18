@@ -52,7 +52,7 @@ const PersonaPage = () => {
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
 
   const [rs, setRecState] = useState<RecState>()
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
   const [chans, setChannels] = useState<Record<string, Channel>>()
 
   const watch = useSeen('us_watch')
@@ -124,7 +124,7 @@ const PersonaPage = () => {
                   in video collection <FV {...vennFilterProps} filter={{ label: rs?.filter?.vennLabel }} onFilter={f => setQuery({ vennLabel: f.label })} />
                 </FP>
                 {chans && <FP>from channel
-              <SelectWithChannelSearch ids={rs?.filter.vennChannelIds}
+                  <SelectWithChannelSearch ids={rs?.filter.vennChannelIds}
                     onSelect={ids => setQuery({ vennChannelIds: ids?.length ? ids : undefined })}
                     channels={chans}
                     style={{ marginLeft: '1em' }}
@@ -169,7 +169,7 @@ const PersonaPage = () => {
             <NarrowSection>
               <TS style={{ marginTop: '5em', marginBottom: '1em', }}>
                 See how recommendations are personalized overall
-          </TS>
+              </TS>
             </NarrowSection>
 
             <BarFilters

@@ -9,6 +9,7 @@ const ReportPage = () => <>
     <NarrativeVideoComponent narrative='Comcast' colorBy='platform' />
   </MinimalPage>
 </>
+console.log('toast')
 
 
 export default ReportPage

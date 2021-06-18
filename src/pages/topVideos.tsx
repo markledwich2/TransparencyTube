@@ -31,7 +31,7 @@ const TopVideosPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [videoIdx, setVideoIdx] = useState<BlobIndex<VideoViews, HasPeriod>>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
   const [videos, setVideos] = useState<VideoViews[]>(null)
   const [loading, setLoading] = useState(false)
   const periods = videoIdx ? indexPeriods(videoIdx) : []
@@ -70,10 +70,10 @@ const TopVideosPage = () => {
     </PurposeBanner>
     <MinimalPage>
       <FilterHeader style={{ marginBottom: '2em' }}>Top viewed videos in
-    <PeriodSelect periods={periods} period={period} onPeriod={(p) => {
+        <PeriodSelect periods={periods} period={period} onPeriod={(p) => {
           setQuery({ period: periodString(p) })
         }} />
-  filtered to <InlineValueFilter metadata={{ ...md.channel, ...md.video }} filter={videoFilter} onFilter={setVideoFilter} rows={videos} showCount />
+        filtered to <InlineValueFilter metadata={{ ...md.channel, ...md.video }} filter={videoFilter} onFilter={setVideoFilter} rows={videos} showCount />
       </FilterHeader>
       <Videos channels={channels} onOpenChannel={onOpenChannel} videos={videos} showChannels showThumb loading={loading} />
       <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>

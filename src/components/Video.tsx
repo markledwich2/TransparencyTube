@@ -118,7 +118,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       flexWrap: 'wrap',
       width: '100%'
     }}>
-      {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
+      {videos?.length === 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
       {groupedVids &&
         <ContainerDimensions>
           {({ width }) => {
@@ -296,7 +296,8 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         {(captions || showLoadCaptions) &&
           <div style={{ ...(scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}), ...props.captionsStyle }}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-              <VideoA id={v.videoId} platform={v.platform} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
+              {s.offsetSeconds && <VideoA id={v.videoId} platform={v.platform} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>}
+              {s.part && ['keyword', 'description'].includes(s.part) && <span style={{ color: "var(--fg3)" }}>{s.part}: </span>}
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
                 textToHighlight={s.caption ?? ""}
               /> : s.caption}

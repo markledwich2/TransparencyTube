@@ -31,7 +31,7 @@ export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [indexes, setIndexes] = useState<ChannelViewIndexes>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
 
   useEffect(() => {
     getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))

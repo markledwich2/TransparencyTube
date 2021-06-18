@@ -11,12 +11,12 @@ export const UlStyled = styled.ul`
   li {
     padding:0em 1em;
     cursor:pointer;
-    &.selected {
+    /* &.selected {
       background-color: var(--bg1);
-    }
-    :hover, &.focused {
+    } */
+    /* :hover, &.focused {
       background-color: var(--bg2);
-    }
+    } */
   }
 `
 
@@ -41,14 +41,16 @@ export interface OptionListProps<TVal, TOpt extends Opt<TVal>> extends StyleProp
   options: TOpt[]
   onChange?: (o: TOpt) => void
   itemRender?: (o: TOpt) => JSX.Element
+  liStyle?: CSSProperties
 }
 
 export const OptionList = <TVal, TOpt extends Opt<TVal> & { selected?: boolean }>(
-  { options, onChange, itemRender, style, className }: OptionListProps<TVal, TOpt>) => {
+  { options, onChange, itemRender, style, className, liStyle }: OptionListProps<TVal, TOpt>) => {
   return <UlStyled style={style} className={className}>
     {options.map(o => <li
       key={JSON.stringify(o.value)}
       className={o.selected ? 'selected' : null}
+      style={liStyle}
       onClick={_ => {
         onChange && onChange({ ...o, selected: !o.selected })
       }}>{itemRender ? itemRender(o) : o.label}</li>)}

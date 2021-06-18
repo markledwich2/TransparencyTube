@@ -45,6 +45,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     const dayRange = minMax(nodes.map(v => v.date.valueOf()))
     const days = differenceInDays(dayRange[1], dayRange[0])
     const w = max([props.w - 20, days * 5])
+    console.log('bubble render', { length: nodes?.length, w })
     return { w }
   }, [nodes?.length ?? 0, props.w])
 
@@ -76,7 +77,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
 
     return { fNodes, axis, bubbleBounds, sim }
-  }, [nodes?.length ?? 0, props.bubbleSize, w])
+  }, [nodes, props.bubbleSize, w])
 
   const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
   const imgPad = 2

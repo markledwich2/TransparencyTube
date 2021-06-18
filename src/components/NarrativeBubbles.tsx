@@ -46,7 +46,7 @@ const groupCol = 'support'
 
 export interface UseNarrativeProps {
   narrative?: NarrativeName
-  defaultRange?: DateRangeValue
+  defaultFilter?: NarrativeFilterState
   rawLocation?: boolean,
   narrativeIndexPrefix?: string
   maxVideos?: number
@@ -56,16 +56,20 @@ export interface UseNarrativeProps {
 
 const defaultProps: UseNarrativeProps = {
   narrative: '2020 Election Fraud',
-  defaultRange: { startDate: new Date(2020, 11 - 1, 3), endDate: new Date(2021, 1 - 1, 31) },
+  defaultFilter: { start: '2020-11-03', end: '2021-01-31' },
   narrativeIndexPrefix: 'narrative',
   rawLocation: true,
   showLr: true
 }
 
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
-  const { rawLocation, defaultRange, narrative, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
+  const { rawLocation, defaultFilter, narrative, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
-  const [q, setQuery] = useQuery<NarrativeFilterState>(rawLocation && !windowMissing ? window.location : useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<NarrativeFilterState>({
+    location: rawLocation && !windowMissing ? window.location : useLocation(),
+    navigate: navigateNoHistory,
+    defaultState: defaultFilter
+  })
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
@@ -75,7 +79,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
 
   const { dateRange, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
-    const dateRange = rangeFromQuery(q, defaultRange.startDate, defaultRange.endDate)
+    const dateRange = rangeFromQuery(q)
 
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
     const bubbleRows = videos && channels && entries(
@@ -98,6 +102,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
       take(props.maxVideos ?? 5000)
     )
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
+    console.log('useNarrative filter data')
 
     return { narrative, dateRange, selectedChannels, videoRows, bubbleRows }
   }, [toJson(q), videos, channels, idx])
