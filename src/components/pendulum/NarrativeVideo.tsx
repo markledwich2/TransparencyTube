@@ -60,7 +60,7 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     words: ['5g', 'verizon', 'comcast', 'net neutrality', 'Brian Roberts'], // we should have a unique in the index for this
     maxVideos: 2000,
     showCaptions: true,
-    showLr: false,
+    showLr: true,
     showPlatform: true,
     sizeFactor: 1,
     ticks: 150
