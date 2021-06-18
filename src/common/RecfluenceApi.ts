@@ -73,6 +73,7 @@ export interface NarrativeVideo extends VideoCommon, Partial<VideoChannelExtra> 
   supplement: string
   bubbleKey: string
   errorType: string
+  mentions?: [{ keywords: string[], mentions: number }]
   keywords?: string[]
   tags?: string[]
   channelTags?: string[]

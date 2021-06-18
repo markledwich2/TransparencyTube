@@ -10,16 +10,17 @@ import { pick, take } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
-import { assign, toJson } from '../../common/Utils'
+import { assign, numFormat, toJson } from '../../common/Utils'
 import { styles } from '../Style'
 import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
-import { values } from '../../common/Pipe'
+import { sumBy, values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
 import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
 import { pickFull } from '../../common/Pipe'
+import styled from 'styled-components'
 
 const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
   words?: string[],
@@ -108,9 +109,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
 
-  const { bubbles, videos } = useMemo(() => {
-    if (!videoRows) return { bubbles: null, videos: null }
-    const bubbles = take(videoRows, props.maxVideos ?? 5000)
+  const { bubbles, videos, stats } = useMemo(() => {
+    const bubbles = videoRows && take(videoRows, props.maxVideos ?? 5000)
       .map(v => ({
         id: v.videoId,
         groupId: v.channelId,
@@ -121,9 +121,14 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
         img: channels[v.channelId]?.logoUrl,
         selected: q.channelId?.includes(v.channelId)
       }))
-    const videos = videoRows?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
+    const videos = videoRows && videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
     console.log('narrative component new data', { videoLength: videos?.length, q })
-    return { bubbles, videos }
+    const stats = {
+      views: videos && sumBy(videos, v => v.videoViews),
+      mentions: videos && sumBy(videos, v => sumBy(v.mentions.filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)),
+      videos: videos?.length
+    }
+    return { bubbles, videos, stats }
   }, [videoRows, toJson(q)])
 
   var tip = useTip<NarrativeVideo>()
@@ -164,6 +169,12 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       {showFlipX && <><input type='checkbox' checked={flipX} onChange={e => setFlipX(e.target.checked)} /><b>flip X</b></>}
     </FilterHeader>
 
+    <TextSection style={{ margin: '1em' }}>
+      <Num num={stats.videos} label='videos' />
+      <Num num={stats.mentions} label='mentions' />
+      <Num num={stats.views} label='views' />
+    </TextSection>
+
     <div>
       <ContainerDimensions>
         {({ width }) => <BeeChart
@@ -202,3 +213,12 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
     />
   </>
 }
+
+const NumStyle = styled.span`
+  font-size:2em;
+  font-weight:bold;
+`
+
+const Num: FC<{ num: number, label: string }> = ({ num, label }) => <>
+  {num && <span style={{ paddingRight: '1em' }}><span style={{ fontSize: '1.5em', fontWeight: 'bolder' }}>{numFormat(num)}</span> {label}</span>}
+</>
