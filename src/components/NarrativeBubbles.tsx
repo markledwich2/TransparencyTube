@@ -98,8 +98,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
 
     const videoRows = pipe(
       videos?.filter(v => filterIncludes(videoFilter, v, false)),
-      orderBy(v => v.videoViews, 'desc'),
-      take(props.maxVideos ?? 5000)
+      orderBy(v => v.videoViews, 'desc')
     )
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
     console.log('useNarrative filter data')
