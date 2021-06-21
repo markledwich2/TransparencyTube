@@ -63,7 +63,7 @@ export type NarrativeKey = { narrative?: string, uploadDate?: string }
 export type NarrativeIdx = {
   videos: BlobIndex<NarrativeVideo, NarrativeKey>,
   channels: BlobIndex<NarrativeChannel, NarrativeKey>,
-  captions: BlobIndex<NarrativeCaption, NarrativeCaptionKey>,
+  captions: BlobIndex<NarrativeCaption, Narrative2CaptionKey>,
 }
 
 export const isVideoNarrative = (c: VideoCommon): c is NarrativeVideo => (c as NarrativeVideo).narrative != undefined
@@ -89,7 +89,14 @@ export interface NarrativeCaptionKey {
   videoId: string
 }
 
+export interface Narrative2CaptionKey {
+  narrative: string,
+  uploadDate: string
+}
+
 export interface NarrativeCaption extends NarrativeCaptionKey {
+  videoId: string,
+  channelId: string
   captions?: VideoCaption[]
 }
 

@@ -1,7 +1,7 @@
 import { parseISO } from 'date-fns'
-import React, { Fragment, useMemo, FunctionComponent as FC, useState } from 'react'
+import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
-import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
+import { Narrative2CaptionKey, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
 import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../NarrativeBubbles'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
@@ -10,7 +10,7 @@ import { pick, take, uniqBy } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
-import { assign, dateFormat, numFormat, toJson } from '../../common/Utils'
+import { dateFormat, numFormat, toJson } from '../../common/Utils'
 import { styles } from '../Style'
 import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
@@ -106,7 +106,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
 
   const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
-  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
+  const { videoRows, channels, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
   const selectRange = rangeFromQuery(q, null, 'selected-')
   const inSelectRange = (v: NarrativeVideo) => {
@@ -116,7 +116,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   }
 
   const { bubbles, videos, stats } = useMemo(() => {
-    const bubbles = videoRows && take(videoRows, props.maxVideos ?? 5000)
+    const bubbles = videoRows ? take(videoRows, props.maxVideos ?? 5000)
       .map(v => {
         return {
           id: v.videoId,
@@ -128,11 +128,11 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           img: channels[v.channelId]?.logoUrl,
           selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
         }
-      })
-    const videos = videoRows && videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false)
+      }) : null
+    const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
     const stats = {
-      views: videos && sumBy(videos, v => v.videoViews),
-      mentions: videos && sumBy(videos, v => sumBy((v.mentions ?? []).filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)),
+      views: videos ? sumBy(videos, v => v.videoViews) : null,
+      mentions: videos ? sumBy(videos, v => sumBy((v.mentions ?? []).filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)) : null,
       videos: videos?.length
     }
     return { bubbles, videos, stats }
@@ -148,7 +148,10 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
 
     <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
       <FilterPart>
-        Uploaded <InlineDateRange range={dateRange} inputRange={rangeFromQuery(props.defaultFilter)} onChange={r => setQuery(rangeToQuery(r))} />
+        Uploaded <InlineDateRange
+          range={dateRange}
+          inputRange={dateRangeIdx}
+          onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
         <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['tags'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />
@@ -222,8 +225,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       defaultLimit={Math.floor(windowDim.w / 300)}
       loadExtraOnVisible={async (vids) => {
         if (!idx?.captions || !props.showCaptions) return []
-        const capsFilter = (c: VideoCaption) => videoFilter.keywords ? videoFilter.keywords?.some(k => c.tags?.some(t => t == k)) ?? false : true
-        const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
+        const capsFilter = (s: VideoCaption) => videoFilter.keywords ? (videoFilter.keywords?.some(k => s.tags?.some(t => t == k)) ?? false) : true
+        const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'uploadDate']) as Narrative2CaptionKey), { andOr: 'or' })
           .then(caps => {
             console.log('caps filtering', { videoFilter, caps })
             return caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) }))

@@ -17,7 +17,7 @@ import { LinkData, NodeData, Sankey } from '../components/Sankey'
 import { SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
 import { Tab, Tabs } from '../components/Tab'
-import { NarrativeBubbles, useNarrative } from '../components/NarrativeBubbles'
+import { useNarrative } from '../components/NarrativeBubbles'
 
 
 const findings = {
@@ -136,7 +136,7 @@ const NarrativesPage = () => {
       <ContainerDimensions>
         {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
-            <NarrativeBubbles {...narrative} />
+            {/* <NarrativeBubbles {...narrative} />  TODO replace with new control */}
           </Tab>
           <Tab label='Recommendations'>
             <TextSection>

@@ -84,7 +84,7 @@ export interface ChannelLogoProps {
 }
 
 export const ChannelLogo: FC<StyleProps & ChannelLogoProps & { useTip?: UseTip<ChannelWithStats | Channel> }> =
-  ({ c, style, onClick, useTip }) => <img
+  ({ c, style, onClick, useTip }) => c && <img
     src={c.logoUrl}
     onClick={_ => onClick ? onClick(c) : openYtChannel(c.channelId)}
     className='logo'

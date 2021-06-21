@@ -28,11 +28,13 @@ export interface BlobIndexFile<TRow, TKey extends Partial<TRow>> {
   cols: IndexCol<TRow>[]
 }
 
-interface IndexCol<TRow> {
+export interface IndexCol<TRow> {
   name: keyof TRow,
   inIndex: boolean,
   dbName?: string,
-  distinct?: string[]
+  distinct?: string[],
+  min: string,
+  max: string
 }
 
 interface IndexFile<TKey> {
