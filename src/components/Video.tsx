@@ -178,7 +178,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         children={contentBottom?.(v as T & Partial<TExtra>)} />)}
     </div>
       {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
-        <a onClick={_ => setLimit(limit + 200)}>show more</a>
+        <a onClick={_ => setLimit(limit + 100)}>show more</a>
       </div>}
     </>
   }, [videos, groupedVids, loading, limit])}

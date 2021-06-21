@@ -2,16 +2,15 @@ import {
   SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear
 } from 'd3'
 import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
-import { compact, groupBy, indexBy } from 'remeda'
+import { compact, indexBy } from 'remeda'
 import styled from 'styled-components'
-import { groupMap, mapEntries, max, maxBy, minMax, sumBy } from '../common/Pipe'
+import { groupMap, max, minMax, sumBy } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
-import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, formatISO, getWeek, getYear, parseISO, startOfMonth, startOfWeek } from 'date-fns'
-import { assign, dateFormat, delay } from '../common/Utils'
+import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, formatISO, parseISO, startOfMonth, startOfWeek } from 'date-fns'
+import { assign, dateFormat, delay, toJson } from '../common/Utils'
 import { Spinner } from './Spinner'
 import { circleToRect, getBounds, offsetTransform, Rect } from '../common/Draw'
-import scrollIntoView from 'scroll-into-view-if-needed'
 import { HScroll } from './HScroll'
 import { DateRangeValue } from './DateRange'
 
@@ -40,9 +39,9 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
 }) => {
 
   ticks ??= 180
-  var nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
+  const nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
 
-  var { w } = useMemo(() => {
+  const { w } = useMemo(() => {
     if (!nodes) return { w: props.w }
     const dayRange = minMax(nodes.map(v => v.date.valueOf()))
     const days = differenceInDays(dayRange[1], dayRange[0])
@@ -81,7 +80,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
 
     return { fNodes, axis, bubbleBounds, sim, bars }
-  }, [nodes, props.bubbleSize, w])
+  }, [toJson(nodes?.map(n => [n.id])), props.bubbleSize, w])
 
   const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
   const imgPad = 2
@@ -169,7 +168,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         </g>
       </g>
     </SVGStyle>
-  }, [nodes, fNodes, tick, props.w])
+  }, [toJson(nodes?.map(n => [n.id, n.selected])), tick, props.w])
 
   return <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
 }

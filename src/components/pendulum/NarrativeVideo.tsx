@@ -222,7 +222,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
     <Videos channels={channels} videos={videos}
       groupChannels showTags showChannels showThumb showPlatform={props.showPlatform}
       loading={loading}
-      defaultLimit={Math.floor(windowDim.w / 300)}
+      defaultLimit={Math.floor(windowDim.w / 100)}
       loadExtraOnVisible={async (vids) => {
         if (!idx?.captions || !props.showCaptions) return []
         const capsFilter = (s: VideoCaption) => videoFilter.keywords ? (videoFilter.keywords?.some(k => s.tags?.some(t => t == k)) ?? false) : true

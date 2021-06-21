@@ -188,7 +188,7 @@ const ranges = (inputRange: DateRangeValue) => createStaticRanges(pipe(
       endDate: dates.endOfToday,
     }
   })))
-).filter(r => inRange(r.range.startDate, inputRange) || inRange(r.range.endDate, inputRange)))
+).filter(r => r.range && (inRange(r.range.startDate, inputRange) || inRange(r.range.endDate, inputRange))))
 
 export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, className, ...dateRageProps }: InlineDateRangeProps) => {
   const [openValue, setOpenValue] = useState<DateRangeValue>(null)
