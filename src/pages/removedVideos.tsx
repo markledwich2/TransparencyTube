@@ -24,10 +24,8 @@ import ReactMarkdown from 'react-markdown'
 import { odyseeVideoUrl, OdyseeYtVideo, odyseeYtVideos } from '../common/Odysee'
 
 
-interface QueryState extends DateRangeQueryState {
+type QueryState = DateRangeQueryState<''> & {
   openChannelId?: string
-  start?: string
-  end?: string
   search?: string
   tags?: string,
   lr?: string,
@@ -82,8 +80,8 @@ const RemovedVideosPage = () => {
     setLoading(true)
     removedIdx.rows(
       {
-        from: { lastSeen: dateRange.startDate.toISOString() },
-        to: { lastSeen: dateRange.endDate.toISOString() }
+        from: { lastSeen: dateRange.start.toISOString() },
+        to: { lastSeen: dateRange.end.toISOString() }
       }).then(async vids => {
         setVideos(vids)
         setLoading(false)
@@ -113,7 +111,7 @@ const RemovedVideosPage = () => {
           Removed videos last seen
           <InlineDateRange
             range={dateRange}
-            onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
+            onChange={r => setQuery({ start: r.start?.toISOString(), end: r.end?.toISOString() })}
           />
         </FilterPart>
         <FilterPart>

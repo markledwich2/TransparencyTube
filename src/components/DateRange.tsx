@@ -10,21 +10,31 @@ import { InlineForm } from '../components/InlineForm'
 import { StyleProps } from './Style'
 
 export interface DateRangeValue {
-  startDate: Date
-  endDate: Date
+  start: Date
+  end: Date
 }
 
-export interface DateRangeQueryState {
-  start?: string
-  end?: string
+export type DateRangeQueryState<Prefix extends string> = {
+  [Property in keyof DateRangeValue as `${Prefix}${Property}`]?: string
 }
 
-export const rangeFromQuery = (q: DateRangeQueryState, defaultStart: string = null, defaultEnd: string = null): DateRangeValue => ({
-  startDate: q.start ? parseISO(q.start) : ((defaultStart ? parseISO(defaultStart) : null) ?? addDays(startOfToday(), -7)),
-  endDate: q.end ? parseISO(q.end) : (defaultEnd ? parseISO(defaultEnd) : null) ?? endOfToday()
-})
+export const rangeFromQuery = (q: DateRangeQueryState<typeof prefix>, defaultRange: DateRangeValue = null, prefix?: string): DateRangeValue => {
+  prefix ??= ''
+  const r = {
+    start: q[`${prefix}start`] as string,
+    end: q[`${prefix}end`] as string
+  }
 
-export const rangeToQuery = (r: DateRangeValue): DateRangeQueryState => ({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })
+  return {
+    start: r.start ? parseISO(r.start) : defaultRange?.start,
+    end: r.end ? parseISO(r.end) : defaultRange?.end,
+  }
+}
+
+export const rangeToQuery = (r: DateRangeValue, prefix?: string): DateRangeQueryState<typeof prefix> => {
+  prefix ??= ''
+  return ({ [`${prefix}start`]: r?.start?.toISOString(), [`${prefix}end`]: r?.end?.toISOString() })
+}
 
 const DateRangeStyle = styled.div`
   .rdrDateRangePickerWrapper, .rdrDateDisplayWrapper, .rdrDefinedRangesWrapper, .rdrStaticRange, .rdrMonths, .rdrMonthAndYearWrapper, .rdrCalendarWrapper  {
@@ -116,7 +126,7 @@ const DateRangeStyle = styled.div`
   }
 `
 
-interface InlineDateRangeProps extends StyleProps, DateRangeProps {
+interface InlineDateRangeProps extends StyleProps {
   range: DateRangeValue,
   inputRange?: DateRangeValue,
   onClose?: () => void
@@ -192,16 +202,16 @@ export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, c
   return <InlineForm
     style={style}
     value={currentRange}
-    inlineRender={r => r ? <span>{dateFormat(r.startDate)} - {dateFormat(r.endDate)}</span> : <></>}
+    inlineRender={r => r ? <span>{dateFormat(r.start)} - {dateFormat(r.end)}</span> : <></>}
     keepOpenOnChange={true}
     onClose={() => onClose?.()}
   >
     <DateRangeStyle>
       <DateRangePicker
         {...dateRageProps}
-        ranges={[currentRange]}
-        minDate={inputRange?.startDate}
-        maxDate={inputRange?.endDate}
+        ranges={[{ startDate: currentRange?.start, endDate: currentRange?.end }]}
+        minDate={inputRange?.start}
+        maxDate={inputRange?.end}
         direction='vertical'
         scroll={{ enabled: true }}
         showMonthAndYearPickers

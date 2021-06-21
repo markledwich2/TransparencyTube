@@ -30,17 +30,19 @@ const bubbleKeyObject = (key: string) => {
   return { channelId, group }
 }
 
-export interface NarrativeFilterState extends DateRangeQueryState, BubblesSelectionState<NarrativeChannel> {
-  channelId?: string[]
-  tags?: string[]
-  channelTags?: string[]
-  lr?: string[]
-  platform?: string[]
-  support?: string[]
-  supplement?: string[]
-  errorType?: string[]
-  keywords?: string[]
-}
+export type NarrativeFilterState = DateRangeQueryState<''> & DateRangeQueryState<'select-'>
+  & BubblesSelectionState<NarrativeChannel>
+  & {
+    channelId?: string[]
+    tags?: string[]
+    channelTags?: string[]
+    lr?: string[]
+    platform?: string[]
+    support?: string[]
+    supplement?: string[]
+    errorType?: string[]
+    keywords?: string[]
+  }
 
 const groupCol = 'support'
 
@@ -101,8 +103,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
       orderBy(v => v.videoViews, 'desc')
     )
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
-    console.log('useNarrative filter data')
-
     return { narrative, dateRange, selectedChannels, videoRows, bubbleRows }
   }, [toJson(q), videos, channels, idx])
 
@@ -122,7 +122,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     if (!idx || !channels) return
     setLoading(true)
     idx.videos.rows(
-      { from: { narrative, uploadDate: dateRange.startDate.toISOString() }, to: { narrative, uploadDate: dateRange.endDate.toISOString() } }
+      { from: { narrative, uploadDate: dateRange.start?.toISOString() }, to: { narrative, uploadDate: dateRange.end?.toISOString() } }
     ).then(vids => {
       const vidsExtra = vids.map(v => {
         v = videoMap ? videoMap(v) : v

@@ -1,4 +1,4 @@
-import { mapToObj, purry } from 'remeda'
+import { groupBy, mapToObj, purry } from 'remeda'
 import _orderBy from 'lodash.orderby'
 
 type Many<T> = T | readonly T[]
@@ -61,5 +61,9 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
 export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.includes(n))
 export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (values: T, key: string, i: number) => U): U[] =>
   entries(group).map(([key, values], i) => groupMap(values, key, i))
+
+export const groupMap = <T, TVal>(items: T[], getKey: (item: T) => string, getVal: (values: T[], key: string) => TVal): TVal[] =>
+  mapEntries(groupBy(items, getKey), getVal)
+
 export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null
 export const asArray = <T,>(v: Array<T> | T) => !v ? [] : Array.isArray(v) ? v as Array<T> : [v as T]

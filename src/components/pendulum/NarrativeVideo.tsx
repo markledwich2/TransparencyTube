@@ -5,12 +5,12 @@ import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '.
 import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../NarrativeBubbles'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
-import { BeeChart } from '../BeeChart'
-import { pick, take } from 'remeda'
+import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
+import { pick, take, uniqBy } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
-import { assign, numFormat, toJson } from '../../common/Utils'
+import { assign, dateFormat, numFormat, toJson } from '../../common/Utils'
 import { styles } from '../Style'
 import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
@@ -54,7 +54,7 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     ticks: 400
   },
   Comcast: {
-    defaultFilter: { start: '2019-01-01', tags: ['comcast'] },
+    defaultFilter: { start: '2021-01-01', tags: ['comcast'] },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['5g', 'verizon', 'comcast', 'net neutrality', 'Brian Roberts'], // we should have a unique in the index for this
@@ -108,31 +108,38 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
   const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
+  const selectRange = rangeFromQuery(q, null, 'selected-')
+  const inSelectRange = (v: NarrativeVideo) => {
+    const upload = parseISO(v.uploadDate)
+    if (!selectRange.start) return null
+    return selectRange.start <= upload && selectRange.end > upload
+  }
 
   const { bubbles, videos, stats } = useMemo(() => {
     const bubbles = videoRows && take(videoRows, props.maxVideos ?? 5000)
-      .map(v => ({
-        id: v.videoId,
-        groupId: v.channelId,
-        data: v,
-        value: v.videoViews,
-        color: getColor(v),
-        date: parseISO(v.uploadDate),
-        img: channels[v.channelId]?.logoUrl,
-        selected: q.channelId?.includes(v.channelId)
-      }))
-    const videos = videoRows && videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
-    console.log('narrative component new data', { videoLength: videos?.length, q })
+      .map(v => {
+        return {
+          id: v.videoId,
+          groupId: v.channelId,
+          data: v,
+          value: v.videoViews,
+          color: getColor(v),
+          date: parseISO(v.uploadDate),
+          img: channels[v.channelId]?.logoUrl,
+          selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
+        }
+      })
+    const videos = videoRows && videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false)
     const stats = {
       views: videos && sumBy(videos, v => v.videoViews),
-      mentions: videos && sumBy(videos, v => sumBy(v.mentions.filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)),
+      mentions: videos && sumBy(videos, v => sumBy((v.mentions ?? []).filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)),
       videos: videos?.length
     }
     return { bubbles, videos, stats }
   }, [videoRows, toJson(q)])
 
-  var tip = useTip<NarrativeVideo>()
-  const [flipX, setFlipX] = useState(false)
+  const tip = useTip<NarrativeVideo>()
+  const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -165,8 +172,6 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onSelect={c => setQuery({ channelId: [c.channelId] })}
           channels={values(channels)} sortBy='views' placeholder='channel search' />}
       </FilterPart>
-
-      {showFlipX && <><input type='checkbox' checked={flipX} onChange={e => setFlipX(e.target.checked)} /><b>flip X</b></>}
     </FilterHeader>
 
     <TextSection style={{ margin: '1em' }}>
@@ -180,17 +185,33 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
         {({ width }) => <BeeChart
           w={width - 5}
           nodes={bubbles}
-          onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
+          onSelect={(n) => setQuery({
+            channelId: n ? n.bubbleKeys : null,
+            ...rangeToQuery(n?.dateRange, 'selected-')
+          })}
+          selectedRange={rangeFromQuery(q, null, 'selected-')}
           tip={tip}
+          barTip={barTip}
           bubbleSize={windowDim.h / 1200 * sizeFactor}
           ticks={props.ticks}
-          flipX={flipX}
         />}
       </ContainerDimensions>
     </div>
 
     <Tip {...tip.tipProps}>
       {tip.data && <Video v={tip.data} c={channels[tip.data.channelId]} showChannel showThumb />}
+    </Tip>
+
+    <Tip {...barTip.tipProps}>
+      {barTip.data && <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ marginBottom: '0.5em' }}>
+          <Subtle style={{ marginRight: '0.5em' }}>Week of</Subtle>
+          <NumStyle style={{ fontSize: '1.5em' }}>{dateFormat(barTip.data.date)}</NumStyle>
+        </span>
+        <Num num={barTip.data.data.length} label='videos' />
+        <Num num={barTip.data.value} label='views' />
+        <Num num={uniqBy(barTip.data.data, d => d.data.channelId).length} label='channels' />
+      </div>}
     </Tip>
 
     <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>
@@ -219,6 +240,13 @@ const NumStyle = styled.span`
   font-weight:bold;
 `
 
+const Subtle = styled.span`
+  color:var(--fg2);
+`
+
 const Num: FC<{ num: number, label: string }> = ({ num, label }) => <>
-  {num && <span style={{ paddingRight: '1em' }}><span style={{ fontSize: '1.5em', fontWeight: 'bolder' }}>{numFormat(num)}</span> {label}</span>}
+  {!num ? <></> : <span style={{ paddingRight: '1em' }}>
+    <span style={{ fontSize: '1.5em', fontWeight: 'bolder' }}>{numFormat(num)}</span>
+    <Subtle> {label}</Subtle>
+  </span>}
 </>
