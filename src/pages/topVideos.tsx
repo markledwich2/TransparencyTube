@@ -9,7 +9,6 @@ import Layout from '../components/Layout'
 import { MinimalPage } from "../components/Style"
 import { parsePeriod, PeriodSelect, periodString, HasPeriod } from '../components/Period'
 import { Videos } from '../components/Video'
-import { useLocation } from '@reach/router'
 import { delay, navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails } from '../components/Channel'

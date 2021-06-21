@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { mapToObj } from 'remeda'
 import { entries } from './Pipe'
 import { assign } from './Utils'
-import { useLocation } from '@reach/router'
+import { useLocation } from '@gatsbyjs/reach-router'
 
 export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
 
@@ -15,11 +15,11 @@ export type QsResult<T> = {
 } & Array<any>
 
 interface QueryOptions<T> {
-  location: Location,
+  location?: Location,
   navigate?: (path: string) => void,
   parseOptions?: ParseOptions,
   stringifyOptions?: StringifyOptions,
-  defaultState?: T
+  defaultState?: Partial<T>
 }
 
 export const useQuery = <T>(options?: QueryOptions<T>): QsResult<T> => {
@@ -31,7 +31,7 @@ export const useQuery = <T>(options?: QueryOptions<T>): QsResult<T> => {
     ...options
   }
   const stringifyOps: StringifyOptions = { arrayFormat: 'bracket' }
-  const initState = assign(defaultState, parse(location.search, { ...stringifyOps, ...parseOptions }) as any as T)
+  const initState = assign(defaultState, parse(location.search, { ...stringifyOps, ...parseOptions }) as any as Partial<T>)
   const [state, setState] = useState<Partial<T>>(initState)
 
   // pick and other functions can introduces undefined values, and we don't want to consider it when performing the spread.override of new values

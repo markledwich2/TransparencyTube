@@ -171,7 +171,7 @@ const SeenStyle = styled.div`
 `
 
 const MediaPage = () => {
-  const list = seenIn.map(s => s.videoId ? { ...s, url: s.url ?? videoUrl(s.videoId), thumb: s.thumb ?? videoThumb(s.videoId, 'high') } : s)
+  const list = seenIn.map(s => s.videoId ? { ...s, url: s.url ?? videoUrl(s.videoId), thumb: s.thumb ?? videoThumb({ videoId: s.videoId }, 'high') } : s)
   const byPublisher = entries(groupBy(list, g => g.publisher)).map(([name, items]) => ({ name, items }))
 
   return <Layout>

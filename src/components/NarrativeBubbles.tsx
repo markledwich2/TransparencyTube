@@ -7,7 +7,6 @@ import { ChannelStats, NarrativeVideo, NarrativeCaption, NarrativeCaptionKey, Na
 import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import { FlexRow, styles } from "../components/Style"
 import { Videos } from '../components/Video'
-import { useLocation } from '@reach/router'
 import { assign, delay, windowMissing, navigateNoHistory, numFormat, toJson } from '../common/Utils'
 import { filterIncludes, InlineValueFilter } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, InlineDateRange, rangeFromQuery, rangeToQuery } from '../components/DateRange'
@@ -67,11 +66,7 @@ const defaultProps: UseNarrativeProps = {
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const { rawLocation, defaultFilter, narrative, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
-  const [q, setQuery] = useQuery<NarrativeFilterState>({
-    location: rawLocation && !windowMissing ? window.location : useLocation(),
-    navigate: navigateNoHistory,
-    defaultState: defaultFilter
-  })
+  const [q, setQuery] = useQuery<NarrativeFilterState>({ defaultState: defaultFilter })
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)

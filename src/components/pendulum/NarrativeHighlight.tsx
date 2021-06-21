@@ -63,7 +63,8 @@ export const highlightData: { [index in NarrativeName]: () => Promise<HighlightD
   },
 
   '2020 Election Fraud': () => { throw 'not implemented' },
-  'QAnon': () => { throw 'not implemented' }
+  'QAnon': () => { throw 'not implemented' },
+  'Comcast': () => { throw 'not implemented' },
 }
 
 export const useHighlight = (highlightName: NarrativeName) => {

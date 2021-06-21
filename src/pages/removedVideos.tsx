@@ -8,8 +8,6 @@ import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout from '../components/Layout'
 import { FlexRow, MinimalPage, StyleProps } from "../components/Style"
 import { VideoId, Videos } from '../components/Video'
-import { useLocation } from '@reach/router'
-import { navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
 import { orderBy } from '../common/Pipe'

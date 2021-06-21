@@ -1,7 +1,7 @@
 import React, { ReactElement, createElement as el } from 'react'
 import ReactDOM from 'react-dom'
 import { NarrativeName, NarrativeVideo } from '../../src/common/RecfluenceApi'
-import { mapToObj } from '../../src/common/remeda/mapToObj'
+import { mapToObj } from 'remeda'
 import { NarrativeHighlightComponent, NarrativeHighlightComponentProps } from '../../src/components/pendulum/NarrativeHighlight'
 import { NarrativeVideoComponent, NarrativeVideoComponentProps } from '../../src/components/pendulum/NarrativeVideo'
 import { ElectionFraudNarrative } from './components/ElectionFraudNarrative'
