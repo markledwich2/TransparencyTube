@@ -92,6 +92,17 @@ const videoMd: FilterTableMd = {
         value: 'Jews Control Media',
       }
     ]
+  },
+  keywords: {
+    ...md.video.keywords,
+    values: [
+      {
+        value: 'non-connectivity',
+      },
+      {
+        value: 'connectivity',
+      }
+    ]
   }
 }
 
@@ -160,7 +171,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
       </FilterPart>
       <FilterPart>
         <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />
-        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['tags', 'errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>
         channel
@@ -194,7 +205,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
           w={width - 5}
           nodes={bubbles}
           onSelect={(n) => setQuery({
-            channelId: n ? n.bubbleKeys : null,
+            channelId: n?.data?.channelId ? [n?.data?.channelId] : null,
             ...rangeToQuery(n?.dateRange, 'selected-')
           })}
           selectedRange={rangeFromQuery(q, null, 'selected-')}

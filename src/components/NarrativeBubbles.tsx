@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react"
-import { groupBy, indexBy, pick, pipe, uniq, } from 'remeda'
+import { groupBy, indexBy, pick, pipe, uniq, omit } from 'remeda'
 import { blobIndex, IndexCol } from '../common/BlobIndex'
 import { md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -140,7 +140,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
         })
       })
 
-  }, [idx, JSON.stringify(q)])
+  }, [idx, JSON.stringify(pick(q, ['narrative', 'start', 'end']))])
 
   var res = { loading, videoFilter, setVideoFilter, channels, selectedChannels, videoRows, bubbleRows, videos, dateRange, dateRangeIdx, q, setQuery, idx }
   return res

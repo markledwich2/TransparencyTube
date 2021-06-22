@@ -5,11 +5,9 @@
     /* border: solid 1px red; */
 }
 
-
-/* * {
-    outline: 1px solid red;
-    outline-offset: -1px;
-} */
+html {
+    overflow-y: scroll;
+}
 
 html,
 body,

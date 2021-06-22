@@ -48,7 +48,7 @@ interface VideoGroup<T extends VideoCommon, TExtra extends VideoId> {
   showChannel: boolean
 }
 
-const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
+const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 14
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, showPlatform, defaultLimit, highlightWords,
@@ -123,7 +123,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         <ContainerDimensions>
           {({ width }) => {
             const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
-            const videoWidth = width / numCols - videoPadding
+            const videoWidth = width / numCols - videoPadding * numCols
             // flex doesn't do a column wrap. Se we do this ourselves
             var colGroups: VideoGroup<T, TExtra>[][] = [...Array(numCols)].map(_ => [...new Array(0)])
 
@@ -288,7 +288,6 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
           {contentSubTitle && contentSubTitle(v)}
           {isVideoError(v) && <>
             <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
-            {/* <span><b>{numFormat(v.videoViews)} views</b></span> */}
             {v.lastSeen && <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>}
           </>}
         </FlexRow>

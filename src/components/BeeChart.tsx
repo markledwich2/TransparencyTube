@@ -1,5 +1,5 @@
 import {
-  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear
+  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear, Simulation
 } from 'd3'
 import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
 import { compact, indexBy } from 'remeda'
@@ -31,7 +31,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   w: number
   tip: UseTip<any>
   barTip: UseTip<BarNode<BeehiveNode<T>>>
-  onSelect: (selection: { bubbleKeys?: string[], dateRange?: DateRangeValue }) => void
+  onSelect: (selection: { data?: T, dateRange?: DateRangeValue }) => void
   animate?: boolean
   bubbleSize?: number
   ticks?: number
@@ -40,47 +40,48 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
 
   ticks ??= 180
   const nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
+  const nodeIdsString = toJson(nodes?.map(n => [n.id]))
 
   const { w } = useMemo(() => {
     if (!nodes) return { w: props.w }
     const dayRange = minMax(nodes.map(v => v.date.valueOf()))
     const days = differenceInDays(dayRange[1], dayRange[0])
     const w = max([props.w - 20, days * 5])
-    console.log('bubble render', { length: nodes?.length, w })
     return { w }
-  }, [nodes?.length ?? 0, props.w])
+  }, [nodeIdsString, props.w])
 
   const barHeight = 100
-  var { fNodes, axis, sim, bubbleBounds, bars } = useMemo(() => {
-    if (!nodes) return { fNodes: null, axis: null, sim: null }
-    const axis = dateAxisLayout(nodes, w)
-    const bars = barChartLayout(axis.scale, barHeight, nodes.map(n => n))
-    const maxValue = max(nodes.map(n => n.value))
-    const fNodes: ForceNode[] = nodes.map(n => ({
-      id: n.id,
-      y: Math.random(),
-      x: axis.scale(n.date) + (Math.random() - 0.5) * 0.05, // place on x but randomize slightly to avoid overlapping
-      r: Math.sqrt(n.value / maxValue) * 50 * (props.bubbleSize ?? 1)
-    }))
-    var sim = forceSimulation(fNodes)
-      .force('forceX', forceX(d => d.x).strength(0.8))
-      .force('forceY', forceY(_ => 0).strength(0.02))
-      .force('collide', forceCollide((d: ForceNode) => d.r + 1).iterations(1))
-      .velocityDecay(0.2)
-      //.on("tick", () => { })
-      .stop()
+  var { fNodes, axis, sim, bubbleBounds, bars }:
+    { fNodes?: ForceNode[], axis?: AxisLayout, sim?: Simulation<ForceNode, any>, bubbleBounds?: Rect, bars?: LayoutBar<BeehiveNode<T>>[] }
+    = useMemo(() => {
+      if (!nodes) return { fNodes: null, axis: null, sim: null }
+      const axis = dateAxisLayout(nodes, w)
+      const bars = barChartLayout(axis.scale, barHeight, nodes.map(n => n))
+      const maxValue = max(nodes.map(n => n.value))
+      const fNodes: ForceNode[] = nodes.map(n => ({
+        id: n.id,
+        y: Math.random(),
+        x: axis.scale(n.date) + (Math.random() - 0.5) * 0.05, // place on x but randomize slightly to avoid overlapping
+        r: Math.sqrt(n.value / maxValue) * 50 * (props.bubbleSize ?? 1)
+      }))
+      var sim = forceSimulation(fNodes)
+        .force('forceX', forceX(d => d.x).strength(0.8))
+        .force('forceY', forceY(_ => 0).strength(0.02))
+        .force('collide', forceCollide((d: ForceNode) => d.r + 1).iterations(1))
+        .velocityDecay(0.2)
+        //.on("tick", () => { })
+        .stop()
 
-    if (!animate) {
-      var sw = performance.now()
-      sim.tick(ticks)
-      sim.stop()
-      console.log(`BeeChart - sim took ${performance.now() - sw}ms`)
-    }
+      if (!animate) {
+        var sw = performance.now()
+        sim.tick(ticks)
+        sim.stop()
+        console.log(`BeeChart - sim took ${performance.now() - sw}ms`, { w, nodes: nodes.length })
+      }
 
-    const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
-
-    return { fNodes, axis, bubbleBounds, sim, bars }
-  }, [toJson(nodes?.map(n => [n.id])), props.bubbleSize, w])
+      const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
+      return { fNodes, axis, bubbleBounds, sim, bars }
+    }, [nodeIdsString, w])
 
   const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
   const imgPad = 2
@@ -134,7 +135,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
               ...props.tip.eventProps(b.data),
               onClick: (e) => {
                 e.stopPropagation()
-                onSelect({ bubbleKeys: [b.data] })
+                onSelect({ data: b.data })
               },
               className: compact(['node', selectedClass]).join(' ')
             }
@@ -168,7 +169,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         </g>
       </g>
     </SVGStyle>
-  }, [toJson(nodes?.map(n => [n.id, n.selected])), tick, props.w])
+  }, [toJson(nodes?.map(n => [n.id, n.selected])), tick, w])
 
   return <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
 }
@@ -191,7 +192,7 @@ interface AxisLayout {
   tickFormat: (v: Date, i: number) => string
 }
 
-const dateAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number) => {
+const dateAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number): AxisLayout => {
   const [minVal, maxVal] = nodes?.length > 0
     ? minMax(nodes.map(n => n.date.valueOf()))
     : [startOfMonth(new Date()).valueOf(), endOfMonth(new Date()).valueOf()]
@@ -214,9 +215,10 @@ const dateAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number) => {
 
 interface DateVal { date: Date, value: number }
 export type BarNode<T> = { data: T[], date: Date, range: DateRangeValue, value: number }
+type LayoutBar<T> = Rect & BarNode<T> & { key: string }
 
-const barChartLayout = <T extends DateVal>(xScale: ScaleTime<number, number>, height: number, data: T[]):
-  (Rect & BarNode<T> & { key: string })[] => {
+
+const barChartLayout = <T extends DateVal>(xScale: ScaleTime<number, number>, height: number, data: T[]): LayoutBar<T>[] => {
   const barData = groupMap(data,
     v => formatISO(startOfWeek(v.date)),
     (g, d) => ({ date: parseISO(d), value: sumBy(g, v => v.value), data: g }))
