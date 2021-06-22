@@ -217,18 +217,22 @@ interface DateVal { date: Date, value: number }
 export type BarNode<T> = { data: T[], date: Date, range: DateRangeValue, value: number }
 type LayoutBar<T> = Rect & BarNode<T> & { key: string }
 
+const barPadding = 1
 
 const barChartLayout = <T extends DateVal>(xScale: ScaleTime<number, number>, height: number, data: T[]): LayoutBar<T>[] => {
   const barData = groupMap(data,
     v => formatISO(startOfWeek(v.date)),
     (g, d) => ({ date: parseISO(d), value: sumBy(g, v => v.value), data: g }))
-  const w = xScale(new Date()) - xScale(addDays(new Date(), -7)) - 1
+
+  const w = xScale(new Date()) - xScale(addDays(new Date(), -7)) - barPadding * 2
   const yScale = scaleLinear([0, max(barData.map(b => b.value))], [0, height])
   // center on given date group, fit space between
   return barData.map(b => ({
     key: formatISO(b.date),
-    x: xScale(b.date) - w / 2, w,
-    y: 0, h: yScale(b.value),
+    x: xScale(b.date) + barPadding,
+    w,
+    y: 0,
+    h: yScale(b.value),
     range: { start: b.date, end: addDays(b.date, 7) },
     ...b
   }))

@@ -148,7 +148,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
     const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
     const stats = {
       views: videos ? sumBy(videos, v => v.videoViews) : null,
-      mentions: videos ? sumBy(videos, v => sumBy((v.mentions ?? []).filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))), m => m.mentions)) : null,
+      mentions: videos ? sumBy(videos, v => sumBy(v.mentions?.filter(m => m.keywords.some(k => !q.keywords || q.keywords.includes(k))) ?? [], m => m.mentions)) : null,
       videos: videos?.length
     }
     return { bubbles, videos, stats }
