@@ -164,7 +164,7 @@ const dates = {
   endOfLastMonth: endOfMonth(addMonths(new Date(), -1)),
 }
 
-export const inRange = <T,>(v: T, range: { start: T, end: T }) => v >= range.start && v <= range.end
+export const inRange = <T,>(v: T, range: { start: T, end: T }) => range && v && v >= range.start && v <= range.end
 
 const ranges = (inputRange: DateRangeValue) => createStaticRanges(pipe(
   [{
