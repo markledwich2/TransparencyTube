@@ -24,6 +24,7 @@ const bubbleKeyObject = (key: string) => {
 export type NarrativeFilterState = DateRangeQueryState<''> & DateRangeQueryState<'select-'>
   & BubblesSelectionState<NarrativeChannel>
   & {
+    narrative?: string[]
     channelId?: string[]
     tags?: string[]
     channelTags?: string[]
@@ -38,7 +39,7 @@ export type NarrativeFilterState = DateRangeQueryState<''> & DateRangeQueryState
 const groupCol = 'support'
 
 export interface UseNarrativeProps {
-  narrative?: NarrativeName
+  narratives?: NarrativeName[]
   defaultFilter?: NarrativeFilterState
   narrativeIndexPrefix?: string
   maxVideos?: number
@@ -47,25 +48,30 @@ export interface UseNarrativeProps {
 }
 
 const defaultProps: UseNarrativeProps = {
-  narrative: '2020 Election Fraud',
+  narratives: ['2020 Election Fraud'],
   defaultFilter: { start: '2020-11-03', end: '2021-01-31' },
   narrativeIndexPrefix: 'narrative',
   showLr: true
 }
 
+const idxVersion = "v2.3"
+
 export const idxColDateRange = (col: IndexCol<any>): DateRangeValue => ({ start: col?.min && parseISO(col.min), end: col?.max && parseISO(col.max) })
 
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
-  const { defaultFilter, narrative, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
+  const { defaultFilter, narratives, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>({ defaultState: defaultFilter })
   const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
   const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
   const [loading, setLoading] = useState(false)
 
-  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['tags', 'channelTags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
-  const bubbleFilter = pick(q, ['tags', 'channelTags', 'lr', 'support', 'platform', 'supplement', 'errorType', 'keywords'])
+  const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['narrative', 'tags', 'channelTags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
+  const bubbleFilter = pick(q, ['narrative', 'tags', 'channelTags', 'lr', 'support', 'platform', 'supplement', 'errorType', 'keywords'])
   const videoFilter = { ...bubbleFilter, bubbleKey: q.selectedKeys }
+
+
+  const selectedNarratives = q.narrative ?? narratives ?? []
 
   const { dateRange, dateRangeIdx, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
     const dateRangeIdx = idxColDateRange(idx?.videos?.cols.uploadDate)
@@ -91,46 +97,50 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
       orderBy(v => v.videoViews, 'desc')
     ) : null
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
-    return { narrative, dateRange, dateRangeIdx, selectedChannels, videoRows, bubbleRows }
+    return { narratives, dateRange, dateRangeIdx, selectedChannels, videoRows, bubbleRows }
   }, [toJson(q), videos, channels, idx])
 
   useEffect(() => {
     Promise.all([
-      blobIndex<NarrativeVideo, NarrativeKey>(`${narrativeIndexPrefix}_videos`, true, "v2.2"),
-      blobIndex<NarrativeChannel, NarrativeKey>(`${narrativeIndexPrefix}_channels`, true),
-      blobIndex<NarrativeCaption, Narrative2CaptionKey>(`${narrativeIndexPrefix}_captions`, false, "v2.2")
+      blobIndex<NarrativeVideo, NarrativeKey>(`${narrativeIndexPrefix}_videos`, true, idxVersion),
+      blobIndex<NarrativeChannel, NarrativeKey>(`${narrativeIndexPrefix}_channels`, true, idxVersion),
+      blobIndex<NarrativeCaption, Narrative2CaptionKey>(`${narrativeIndexPrefix}_captions`, false, idxVersion)
     ]).then(([videos, channels, captions]) => setIdx({ videos, channels, captions }))
   }, [])
 
-  useEffect(() => {
-    idx?.channels.rows({ narrative }).then(chans => setChannels(indexBy(showLr ? chans : chans.map(({ lr, ...c }) => c), c => c.channelId)))
-  }, [idx, narrative])
 
   useEffect(() => {
-    if (!idx || !channels) return
+    if (!idx) return
     setLoading(true)
-    idx.videos.rows(
-      { from: { narrative, uploadDate: dateRange.start?.toISOString() }, to: { narrative, uploadDate: dateRange.end?.toISOString() } }
-    ).then(vids => {
-      const vidsExtra = vids.map(v => {
-        v = videoMap ? videoMap(v) : v
-        let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
-        const c = channels[v.channelId]
-        if (!c) return r
-        r = {
-          ...r,
-          platform: c.platform,
-          lr: showLr ? c.lr : null,
-          channelTags: c.tags, // channelTags because there is a conflict
-          supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
-          bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
-        }
-        return r
+    idx?.channels.rows(...selectedNarratives.map(n => ({ narrative: n })))
+      .then(chans => {
+        const newChans = indexBy(showLr ? chans : chans.map(c => ({ ...c, lr: null })), c => c.channelId)
+        setChannels(newChans)
+        idx.videos.rowsWith(
+          selectedNarratives.map(n => ({ from: { narrative: n, uploadDate: dateRange.start?.toISOString() }, to: { narrative: n, uploadDate: dateRange.end?.toISOString() } })),
+          { andOr: 'or' }
+        ).then(vids => {
+          const vidsExtra = vids.map(v => {
+            v = videoMap ? videoMap(v) : v
+            let r = { videoViews: null, videoViewsAdjusted: null, ...v } // for metrics, ensure null instead of undefined to make it easier to work with
+            const c = newChans[v.channelId]
+            if (!c) return r
+            r = {
+              ...r,
+              platform: c.platform,
+              lr: showLr ? c.lr : null,
+              channelTags: c.tags, // channelTags because there is a conflict
+              supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
+              bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
+            }
+            return r
+          })
+          setVideos(vidsExtra)
+          setLoading(false)
+        })
       })
-      setVideos(vidsExtra)
-      setLoading(false)
-    })
-  }, [idx, channels, JSON.stringify(q)])
+
+  }, [idx, JSON.stringify(q)])
 
   var res = { loading, videoFilter, setVideoFilter, channels, selectedChannels, videoRows, bubbleRows, videos, dateRange, dateRangeIdx, q, setQuery, idx }
   return res

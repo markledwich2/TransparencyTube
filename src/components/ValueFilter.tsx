@@ -202,7 +202,7 @@ const isSelected = <TFilter,>(filter: TFilter, col: string, v: string) => {
 const filterWithSelect = <TFilter,>(f: TFilter, col: string, colMd: FilterColMd, val: string, select: boolean): TFilter => {
   // if toggling all: undefined means no filter, null means null values, []/'' means filter to no results
   if (val == '_all') return { ...f, [col]: select ? null : colMd.singleSelect ? '' : [] }
-  if (colMd.singleSelect) return { ...f, [col]: val }
+  if (colMd.singleSelect) return { ...f, [col]: [val] } // place in array, even for single select for consistency
   const filterVal = colMd.singleSelect ? f[col] as string : f[col] as string[]
   if (!filterVal) return { ...f, [col]: [val] } // when previous value was null (all), then deselecting is selecting...
   const selection = select ? uniq((f[col] as string[] ?? []).concat(val)) : (f[col] as string[] ?? []).filter(v => v != val)

@@ -22,18 +22,17 @@ import { useWindowDim } from '../../common/Window'
 import { pickFull } from '../../common/Pipe'
 import styled from 'styled-components'
 
-const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
-  words?: string[],
-  showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number, ticks?: number
-} } = {
-  'Vaccine Personal': {
+export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } = {
+  vaccinePersonal: {
+    narratives: ['Vaccine Personal'],
     defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven'],
     showCaptions: true
   },
-  'Vaccine DNA': {
+  vaccineDna: {
+    narratives: ['Vaccine DNA'],
     defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
@@ -41,7 +40,8 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     showCaptions: true
   },
   '2020 Election Fraud': {},
-  QAnon: {
+  qanon: {
+    narratives: ['QAnon'],
     defaultFilter: { start: '2020-05-01', end: '2021-06-1' },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
@@ -53,8 +53,9 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     sizeFactor: 1,
     ticks: 400
   },
-  Comcast: {
-    defaultFilter: { start: '2021-01-01', tags: ['comcast'] },
+  comcast: {
+    narratives: ['comcast', '5g', 'netneutrality', 'Jews Control Media'],
+    defaultFilter: { start: '2021-01-01', narrative: ['comcast'] },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['5g', 'verizon', 'comcast', 'net neutrality', 'Brian Roberts'], // we should have a unique in the index for this
@@ -63,14 +64,15 @@ const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
     showLr: true,
     showPlatform: true,
     sizeFactor: 1,
-    ticks: 150
+    ticks: 150,
+    colorBy: 'platform'
   }
 }
 
 const videoMd: FilterTableMd = {
   ...md.video,
-  tags: {
-    ...md.video.tags,
+  narrative: {
+    ...md.video.narrative,
     singleSelect: true,
     hideAll: true,
     values: [
@@ -85,24 +87,27 @@ const videoMd: FilterTableMd = {
       {
         value: '5g',
         label: '5G'
+      },
+      {
+        value: 'Jews Control Media',
       }
     ]
   }
 }
 
-export interface NarrativeVideoComponentProps {
-  narrative?: NarrativeName
-  sizeFactor?: number
+export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   colorBy?: keyof NarrativeVideo
-  showFlipX?: boolean
-  videoFilter?: (keyof NarrativeFilterState)[]
+  showLr?: boolean
+  showCaptions?: boolean
+  showPlatform?: boolean
+  sizeFactor?: number
+  ticks?: number
+  words?: string[]
 }
 
-export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy, showFlipX }) => {
-  const props = { ...narrativeProps[narrative], narrative }
-  sizeFactor ??= props.sizeFactor ?? 1
-  narrative ??= 'Vaccine Personal'
-  colorBy ??= 'errorType'
+export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ sizeFactor, colorBy, ...props }) => {
+  sizeFactor ??= 1
+  colorBy ??= 'platform'
 
   const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
@@ -154,8 +159,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
-        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['tags'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />
-        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['tags', 'errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>
         channel
