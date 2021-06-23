@@ -62,8 +62,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   const { defaultFilter, narratives, narrativeIndexPrefix, videoMap, showLr } = assign(defaultProps, props)
   const [idx, setIdx] = useState<NarrativeIdx>(null)
   const [q, setQuery] = useQuery<NarrativeFilterState>({ defaultState: defaultFilter })
-  const [videos, setVideos] = useState<(NarrativeVideo)[]>(null)
-  const [channels, setChannels] = useState<Record<string, NarrativeChannel>>(null)
+  const [vidChans, setVidChans] = useState<{ videos?: (NarrativeVideo)[], channels?: Record<string, NarrativeChannel> }>({ videos: null, channels: null })
   const [loading, setLoading] = useState(false)
 
   const setVideoFilter = (f: NarrativeFilterState) => setQuery(pick(f, ['narrative', 'tags', 'channelTags', 'lr', 'platform', 'support', 'channelId', 'supplement', 'errorType', 'keywords']))
@@ -77,8 +76,10 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     const dateRangeIdx = idxColDateRange(idx?.videos?.cols.uploadDate)
     const dateRange = rangeFromQuery(q, dateRangeIdx)
 
+    const { videos, channels } = vidChans
+
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
-    const bubbleRows = videos && channels && entries(
+    const bubbleRows = videos && entries(
       groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
     )
       .map(([g, vids]) => {
@@ -98,7 +99,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     ) : null
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
     return { narratives, dateRange, dateRangeIdx, selectedChannels, videoRows, bubbleRows }
-  }, [toJson(q), videos, channels, idx])
+  }, [toJson(omit(q, ['narrative', 'start', 'end'])), vidChans, idx])
 
   useEffect(() => {
     Promise.all([
@@ -115,7 +116,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
     idx.channels.rows(...selectedNarratives.map(n => ({ narrative: n })))
       .then(chans => {
         const newChans = indexBy(showLr ? chans : chans.map(c => ({ ...c, lr: null })), c => c.channelId)
-        setChannels(newChans)
         idx.videos.rowsWith(
           selectedNarratives.map(n => ({ from: { narrative: n, uploadDate: dateRange.start?.toISOString() }, to: { narrative: n, uploadDate: dateRange.end?.toISOString() } })),
           { andOr: 'or' }
@@ -135,14 +135,14 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
             }
             return r
           })
-          setVideos(vidsExtra)
+          setVidChans({ videos: vidsExtra, channels: newChans })
           setLoading(false)
         })
       })
 
   }, [idx, JSON.stringify(pick(q, ['narrative', 'start', 'end']))])
 
-  var res = { loading, videoFilter, setVideoFilter, channels, selectedChannels, videoRows, bubbleRows, videos, dateRange, dateRangeIdx, q, setQuery, idx }
+  var res = { loading, videoFilter, setVideoFilter, channels: vidChans.channels, selectedChannels, videoRows, bubbleRows, dateRange, dateRangeIdx, q, setQuery, idx }
   return res
 }
 
@@ -152,7 +152,6 @@ interface UseNarrative {
   setVideoFilter: (f: NarrativeFilterState) => void
   channels: Record<string, NarrativeChannel>
   selectedChannels: NarrativeChannel[]
-  videos: NarrativeVideo[]
   videoRows: NarrativeVideo[]
   bubbleRows: NarrativeChannel[]
   dateRange: DateRangeValue

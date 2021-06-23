@@ -6,7 +6,7 @@ import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../Narrat
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
 import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
-import { flatMap, pick, take, uniqBy } from 'remeda'
+import { flatMap, pick, omit, take, uniqBy } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
@@ -130,7 +130,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
   const videoMd = getVideoMd(props)
   const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
-  const { videoRows, channels, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
+  const { channels, videoRows, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
   const selectRange = rangeFromQuery(q, null, 'selected-')
   const inSelectRange = (v: NarrativeVideo) => {
@@ -160,7 +160,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
       videos: videos?.length
     }
     return { bubbles, videos, stats }
-  }, [videoRows, toJson(q)])
+  }, [videoRows, channels]) // videRows will update with new data form indexes, so ignore those on q to keep showing existing data until it's ready 
 
   const tip = useTip<NarrativeVideo>()
   const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
@@ -253,7 +253,6 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
         const capsFilter = (s: VideoCaption) => videoFilter.keywords ? (videoFilter.keywords?.some(k => s.tags?.some(t => t == k)) ?? false) : true
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'uploadDate']) as Narrative2CaptionKey), { andOr: 'or' })
           .then(caps => {
-            console.log('caps filtering', { videoFilter, caps })
             return caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) }))
           })
         return res
