@@ -43,7 +43,7 @@ export const useQuery = <T>(options?: QueryOptions<T>): QsResult<T> => {
       ...removeUndefined(values)
     }
     setState(newQuery)
-    console.log('setQuery', { state, values, newQuery })
+    //console.log('setQuery', { state, values, newQuery })
     navigate(location.pathname + '?' + stringify(newQuery as any, { ...stringifyOps, ...stringifyOptions }))
   }
 

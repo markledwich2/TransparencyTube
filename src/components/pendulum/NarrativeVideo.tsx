@@ -15,7 +15,7 @@ import { loadingFilter, styles } from '../Style'
 import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
-import { sumBy, values } from '../../common/Pipe'
+import { min, sumBy, values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
 import { colMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
@@ -59,7 +59,7 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['comcast', 'verizon'],
-    maxVideos: 4000,
+    maxVideos: 2000,
     showCaptions: true,
     showLr: true,
     showPlatform: true,

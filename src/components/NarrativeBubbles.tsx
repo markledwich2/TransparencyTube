@@ -7,7 +7,7 @@ import { NarrativeVideo, NarrativeCaption, NarrativeIdx, NarrativeChannel, Narra
 import { assign, toJson } from '../common/Utils'
 import { filterIncludes } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, rangeFromQuery } from '../components/DateRange'
-import { entries, orderBy, sumBy } from '../common/Pipe'
+import { entries, min, orderBy, sumBy } from '../common/Pipe'
 import { Tag } from '../components/Channel'
 import { BubblesSelectionState } from '../common/Bubble'
 import styled from 'styled-components'
@@ -71,13 +71,11 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
 
 
   const selectedNarratives = q.narrative ?? narratives ?? []
+  const dateRangeIdx = idxColDateRange(idx?.videos?.cols.uploadDate)
+  const dateRange = rangeFromQuery(q, dateRangeIdx)
 
-  const { dateRange, dateRangeIdx, selectedChannels, videoRows, bubbleRows } = useMemo(() => {
-    const dateRangeIdx = idxColDateRange(idx?.videos?.cols.uploadDate)
-    const dateRange = rangeFromQuery(q, dateRangeIdx)
-
+  const { selectedChannels, videoRows, bubbleRows } = useMemo(() => {
     const { videos, channels } = vidChans
-
     // aggregate videos into channel/group-by granularity. Use these rows for bubbles
     const bubbleRows = videos && entries(
       groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
@@ -140,7 +138,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
         })
       })
 
-  }, [idx, JSON.stringify(pick(q, ['narrative', 'start', 'end']))])
+  }, [idx, JSON.stringify({ ...pick(q, ['narrative']), ...dateRange })])
 
   var res = { loading, videoFilter, setVideoFilter, channels: vidChans.channels, selectedChannels, videoRows, bubbleRows, dateRange, dateRangeIdx, q, setQuery, idx }
   return res
