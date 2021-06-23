@@ -54,11 +54,11 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
     ticks: 400
   },
   comcast: {
-    narratives: ['comcast', '5g', 'netneutrality', 'Jews Control Media'],
+    narratives: ['comcast', '5g', 'netneutrality', 'Jews Control Media', 'Comcast Exec', 'Brian Roberts'],
     defaultFilter: { start: '2021-01-01', narrative: ['comcast'] },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['5g', 'verizon', 'comcast', 'net neutrality', 'Brian Roberts'], // we should have a unique in the index for this
+    words: ['5g', 'verizon', 'comcast', 'net neutrality', 'roberts', ''], // we should have a unique in the index for this
     maxVideos: 2000,
     showCaptions: true,
     showLr: true,
@@ -69,29 +69,19 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
   }
 }
 
-const videoMd: FilterTableMd = {
+const narrativeLabels = {
+  netneutrality: 'Net Neutrality',
+  comcast: 'Comcast',
+  '5g': '5G'
+}
+
+const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => ({
   ...md.video,
   narrative: {
     ...md.video.narrative,
     singleSelect: true,
     hideAll: true,
-    values: [
-      {
-        value: 'netneutrality',
-        label: 'Net Neutrality',
-      },
-      {
-        value: 'comcast',
-        label: 'Comcast'
-      },
-      {
-        value: '5g',
-        label: '5G'
-      },
-      {
-        value: 'Jews Control Media',
-      }
-    ]
+    values: props.narratives.map(n => ({ value: n, label: narrativeLabels[n] ?? n }))
   },
   keywords: {
     ...md.video.keywords,
@@ -104,7 +94,7 @@ const videoMd: FilterTableMd = {
       }
     ]
   }
-}
+})
 
 export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   colorBy?: keyof NarrativeVideo
@@ -120,6 +110,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
   sizeFactor ??= 1
   colorBy ??= 'platform'
 
+  const videoMd = getVideoMd(props)
   const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
   const { videoRows, channels, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity

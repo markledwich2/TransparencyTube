@@ -56,7 +56,8 @@ export interface VideoRemoved extends VideoCommon {
 }
 
 
-export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon' | 'comcast' | 'Jews Control Media' | '5g' | 'netneutrality'
+export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon'
+  | 'comcast' | 'Jews Control Media' | '5g' | 'netneutrality' | 'Comcast Exec' | 'Brian Roberts'
 
 export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
 export type NarrativeKey = { narrative?: string, uploadDate?: string }
