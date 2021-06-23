@@ -6,12 +6,12 @@ import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../Narrat
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
 import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
-import { pick, take, uniqBy } from 'remeda'
+import { flatMap, pick, take, uniqBy } from 'remeda'
 import { TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
 import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
 import { dateFormat, numFormat, toJson } from '../../common/Utils'
-import { styles } from '../Style'
+import { loadingFilter, styles } from '../Style'
 import { filterIncludes, FilterTableMd, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
@@ -58,8 +58,8 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
     defaultFilter: { start: '2021-01-01', narrative: ['comcast'] },
     narrativeIndexPrefix: 'narrative2',
     videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['5g', 'verizon', 'comcast', 'net neutrality', 'roberts', ''], // we should have a unique in the index for this
-    maxVideos: 2000,
+    words: ['comcast', 'verizon'],
+    maxVideos: 4000,
     showCaptions: true,
     showLr: true,
     showPlatform: true,
@@ -69,11 +69,28 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
   }
 }
 
-const narrativeLabels = {
-  netneutrality: 'Net Neutrality',
-  comcast: 'Comcast',
-  '5g': '5G'
+const narrativeCfg: { [index: string]: { label?: string, highlight?: string[] } } = {
+  netneutrality: {
+    label: 'Net Neutrality',
+    highlight: ['net neutrality']
+  },
+  comcast:
+  {
+    label: 'Comcast'
+  },
+  'Jews Control Media': {
+    label: 'Anti-semitism: Media Control',
+    highlight: ['globalist', 'cabal', 'jewish', 'jew', 'jews', 'israel', 'zion', 'hebrew', 'zog']
+  },
+  '5g': { label: '5G' },
+  'Comcast Exec': {
+    highlight: ['ceo', 'executive', 'cfo', 'leadership', 'brian', 'roberts', 'robert', 'clo', 'cavanagh', 'reid', 'armstrong', 'cohen']
+  },
+  'Brian Roberts': {
+    highlight: ['brian', 'roberts', 'robert', 'robert\'s']
+  }
 }
+
 
 const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => ({
   ...md.video,
@@ -81,7 +98,7 @@ const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => ({
     ...md.video.narrative,
     singleSelect: true,
     hideAll: true,
-    values: props.narratives.map(n => ({ value: n, label: narrativeLabels[n] ?? n }))
+    values: props.narratives.map(n => ({ value: n, label: narrativeCfg[n]?.label ?? n }))
   },
   keywords: {
     ...md.video.keywords,
@@ -147,6 +164,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
 
   const tip = useTip<NarrativeVideo>()
   const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
+  const highlight = props.words.concat(flatMap(q.narrative, n => narrativeCfg[n]?.highlight ?? []))
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -190,7 +208,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
       <Num num={stats.views} label='views' />
     </TextSection>
 
-    <div>
+    <div style={{ filter: loading ? loadingFilter : null }}>
       <ContainerDimensions>
         {({ width }) => <BeeChart
           w={width - 5}
@@ -224,7 +242,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
       </div>}
     </Tip>
 
-    <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>
+    {videos && <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>}
 
     <Videos channels={channels} videos={videos}
       groupChannels showTags showChannels showThumb showPlatform={props.showPlatform}
@@ -240,7 +258,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
           })
         return res
       }}
-      highlightWords={props.words}
+      highlightWords={highlight}
     />
   </>
 }

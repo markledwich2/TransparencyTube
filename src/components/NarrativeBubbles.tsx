@@ -112,7 +112,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
   useEffect(() => {
     if (!idx) return
     setLoading(true)
-    idx?.channels.rows(...selectedNarratives.map(n => ({ narrative: n })))
+    idx.channels.rows(...selectedNarratives.map(n => ({ narrative: n })))
       .then(chans => {
         const newChans = indexBy(showLr ? chans : chans.map(c => ({ ...c, lr: null })), c => c.channelId)
         setChannels(newChans)
