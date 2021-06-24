@@ -17,13 +17,12 @@ import { LinkData, NodeData, Sankey } from '../components/Sankey'
 import { SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
 import { Tab, Tabs } from '../components/Tab'
-import { useNarrative } from '../components/NarrativeBubbles'
+import { NarrativeVideoComponent, narrativeProps } from '../components/pendulum/NarrativeVideo'
 
 
 const findings = {
   rec: `YouTube seems to be reducing the amount of recommendations to videos supporting election fraud. According to our estimates, "Supporting" videos receive about 26% of the impressions they send (100% would be neutral). "Disputing" videos are also disadvantaged - receiving about 64% of the impressions they send.`
 }
-
 
 const copySections: { title: string, md: string, open?: boolean }[] = [
   {
@@ -105,7 +104,6 @@ const PageStyle = styled(MinimalPage)`
 `
 
 const NarrativesPage = () => {
-  const narrative = useNarrative({})
   const [copyOpen, setCopyOpen] = useState<string[]>(copySections.filter(s => s.open).map(s => s.title))
   const [recs, setRecs] = useState<NarrativeRecSupport[]>(null)
 
@@ -136,7 +134,7 @@ const NarrativesPage = () => {
       <ContainerDimensions>
         {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
-            {/* <NarrativeBubbles {...narrative} />  TODO replace with new control */}
+            <NarrativeVideoComponent {...narrativeProps['2020 Election Fraud']} />
           </Tab>
           <Tab label='Recommendations'>
             <TextSection>
@@ -207,3 +205,9 @@ const getRecSupportGraph = (recs: NarrativeRecSupport[]): SankeyGraph<RecNodeDat
 }
 
 export default NarrativesPage
+
+
+// todo put this into new NarrativeVideo component
+const SupportTag = () => <Tag label={supportValues['support'].label} color={supportValues['support'].color} />
+const DisputeTag = () => <Tag label={supportValues['dispute'].label} color={supportValues['dispute'].color} />
+

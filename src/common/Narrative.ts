@@ -1,20 +1,19 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { groupBy, indexBy, pick, pipe, uniq, omit } from 'remeda'
-import { blobIndex, IndexCol } from '../common/BlobIndex'
-import { md } from '../common/Channel'
-import { useQuery } from '../common/QueryString'
-import { NarrativeVideo, NarrativeCaption, NarrativeIdx, NarrativeChannel, NarrativeKey, NarrativeName, Narrative2CaptionKey } from '../common/RecfluenceApi'
-import { assign, toJson } from '../common/Utils'
+import { blobIndex, IndexCol } from './BlobIndex'
+import { md } from './Channel'
+import { useQuery } from './QueryString'
+import { NarrativeVideo, NarrativeCaption, NarrativeIdx, NarrativeChannel, NarrativeKey, NarrativeName, Narrative2CaptionKey } from './RecfluenceApi'
+import { assign, toJson } from './Utils'
 import { filterIncludes } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, rangeFromQuery } from '../components/DateRange'
-import { entries, min, orderBy, sumBy } from '../common/Pipe'
+import { entries, min, orderBy, sumBy } from './Pipe'
 import { Tag } from '../components/Channel'
-import { BubblesSelectionState } from '../common/Bubble'
+import { BubblesSelectionState } from './Bubble'
 import styled from 'styled-components'
 import { parseISO } from 'date-fns'
 
 
-const bubbleKeyString = <T extends { channelId: string }>(r: T, groupBy: keyof T) => `${r.channelId}|${r[groupBy]}`
 const bubbleKeyObject = (key: string) => {
   if (!key) return { channelId: null, group: null }
   const [channelId, group] = key.split('|')
@@ -34,9 +33,8 @@ export type NarrativeFilterState = DateRangeQueryState<''> & DateRangeQueryState
     supplement?: string[]
     errorType?: string[]
     keywords?: string[]
+    groupBy?: string
   }
-
-const groupCol = 'support'
 
 export interface UseNarrativeProps {
   narratives?: NarrativeName[]
@@ -48,10 +46,7 @@ export interface UseNarrativeProps {
 }
 
 const defaultProps: UseNarrativeProps = {
-  narratives: ['2020 Election Fraud'],
-  defaultFilter: { start: '2020-11-03', end: '2021-01-31' },
-  narrativeIndexPrefix: 'narrative',
-  showLr: true
+  videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
 }
 
 const idxVersion = "v2.3"
@@ -76,21 +71,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
 
   const { selectedChannels, videoRows, bubbleRows } = useMemo(() => {
     const { videos, channels } = vidChans
-    // aggregate videos into channel/group-by granularity. Use these rows for bubbles
-    const bubbleRows = videos && entries(
-      groupBy(videos.filter(v => filterIncludes(bubbleFilter, v)), v => bubbleKeyString(v, groupCol))
-    )
-      .map(([g, vids]) => {
-        const { channelId, group } = bubbleKeyObject(g)
-        return ({
-          bubbleKey: g,
-          ...channels[channelId],
-          [groupCol]: group,
-          views: vids ? sumBy(vids, v => v.videoViews ?? 0) : 0,
-          viewsAdjusted: vids ? sumBy(vids, v => v.videoViewsAdjusted ?? 0) : 0,
-        }) as NarrativeChannel
-      })
-
     const videoRows = videos ? pipe(
       videos.filter(v => filterIncludes(videoFilter, v, false)),
       orderBy(v => v.videoViews, 'desc')
@@ -128,8 +108,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
               platform: c.platform,
               lr: showLr ? c.lr : null,
               channelTags: c.tags, // channelTags because there is a conflict
-              supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual',
-              bubbleKey: bubbleKeyString(r, groupCol) //2nd step so key can be derived from other calculated cols
+              supplement: (['heur_chan', 'heur_tag'].includes(v.supplement)) ? v.supplement : 'manual'
             }
             return r
           })
@@ -137,7 +116,6 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
           setLoading(false)
         })
       })
-
   }, [idx, JSON.stringify({ ...pick(q, ['narrative']), ...dateRange })])
 
   var res = { loading, videoFilter, setVideoFilter, channels: vidChans.channels, selectedChannels, videoRows, bubbleRows, dateRange, dateRangeIdx, q, setQuery, idx }
@@ -158,17 +136,6 @@ interface UseNarrative {
   setQuery: (values: Partial<NarrativeFilterState>) => void
   idx: NarrativeIdx
 }
-
-const supportValues = md.video.support.val
-const SupportTag = () => <Tag label={supportValues['support'].label} color={supportValues['support'].color} />
-const DisputeTag = () => <Tag label={supportValues['dispute'].label} color={supportValues['dispute'].color} />
-const PageStyle = styled.div`
-    mark {
-        background-color: unset;
-        font-weight: bold;
-        color:var(--fg);
-    }
-`
 
 
 

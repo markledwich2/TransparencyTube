@@ -1,10 +1,10 @@
 import {
-  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear, Simulation
+  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear, Simulation, ScaleLinear
 } from 'd3'
 import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
-import { compact, indexBy } from 'remeda'
+import { compact, flatMap, groupBy, indexBy, mapValues, take } from 'remeda'
 import styled from 'styled-components'
-import { groupMap, max, minMax, sumBy } from '../common/Pipe'
+import { groupMap, keys, mapEntries, max, minMax, sumBy, values } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
 import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, formatISO, parseISO, startOfMonth, startOfWeek } from 'date-fns'
@@ -14,17 +14,22 @@ import { circleToRect, getBounds, offsetTransform, Rect } from '../common/Draw'
 import { HScroll } from './HScroll'
 import { DateRangeValue } from './DateRange'
 
-export interface BeehiveNode<T> {
+
+interface DateVal { date: Date, value: number }
+export interface BeehiveNode<T> extends DateVal {
   id: string
   data: T
-  value: number
-  date: Date
   color?: string
   img?: string
   selected?: boolean
+  group?: string
 }
 
 type ForceNode = SimulationNodeDatum & { id: string, r: number, cx?: number, cy?: number }
+export type BarNode<T> = { data: T[], range?: DateRangeValue } & DateVal
+type LayoutBar<T> = Rect & BarNode<T> & { key: string }
+
+const nodeToRect = (n: ForceNode) => circleToRect({ cx: n.x, cy: n.y, r: n.r })
 
 export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   nodes: BeehiveNode<T>[]
@@ -36,29 +41,45 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   bubbleSize?: number
   ticks?: number
   selectedRange?: DateRangeValue
+  maxBubbles?: number
 }) => {
 
   ticks ??= 180
-  const nodesById = useMemo(() => nodes && indexBy(nodes, n => n.id), [nodes])
-  const nodeIdsString = toJson(nodes?.map(n => [n.id]))
+  const { gNodes, dNodes, gBars } = useMemo(() => {
+    const gNodes = nodes && mapValues(groupBy(nodes, n => n.group ?? '_'), g => take(g.filter(n => n.date), props.maxBubbles ?? 2000))
+    const dNodes = gNodes && indexBy(flatMap(values(gNodes), g => g), n => n.id)
+    const gBars = gNodes && mapValues(gNodes, g => groupMap(g,
+      v => formatISO(startOfWeek(v.date)),
+      (g, d) => ({ date: parseISO(d), value: sumBy(g, v => v.value), data: g } as BarNode<BeehiveNode<T>>)
+    ))
+    return { dNodes, gNodes, gBars }
+  }, [nodes])
+
+  const nodeIdsString = toJson(dNodes ? keys(dNodes) : '')
 
   const { w } = useMemo(() => {
-    if (!nodes) return { w: props.w }
-    const dayRange = minMax(nodes.map(v => v.date.valueOf()))
+    if (!dNodes) return { w: props.w }
+    const dayRange = minMax(values(dNodes).map(v => v.date.valueOf()))
     const days = differenceInDays(dayRange[1], dayRange[0])
     const w = max([props.w - 20, days * 5])
     return { w }
   }, [nodeIdsString, props.w])
 
-  const barHeight = 100
-  var { fNodes, axis, sim, bubbleBounds, bars }:
-    { fNodes?: ForceNode[], axis?: AxisLayout, sim?: Simulation<ForceNode, any>, bubbleBounds?: Rect, bars?: LayoutBar<BeehiveNode<T>>[] }
-    = useMemo(() => {
-      if (!nodes) return { fNodes: null, axis: null, sim: null }
-      const axis = dateAxisLayout(nodes, w)
-      const bars = barChartLayout(axis.scale, barHeight, nodes.map(n => n))
-      const maxValue = max(nodes.map(n => n.value))
-      const fNodes: ForceNode[] = nodes.map(n => ({
+  const sizes = {
+    title: { h: 100 },
+    bar: { h: 100 },
+    legend: { h: 25 }
+  }
+
+  var { bubbleGroups, axis } = useMemo(() => {
+    const axis = dNodes && dateAxisLayout(values(dNodes), w)
+    const barYScale = gBars && scaleLinear([0, max(flatMap(values(gBars), g => g).map(b => b.value))], [0, sizes.bar.h])
+    const maxValue = dNodes && max(values(dNodes).map(n => n.value))
+
+    const bubbleGroups = gNodes && mapEntries(gNodes, (dNodes, groupName) => {
+      const barsIn = gBars[groupName]
+      const bars = barChartLayout(axis.scale, barYScale, barsIn)
+      const fNodes: ForceNode[] = dNodes.map(n => ({
         id: n.id,
         y: Math.random(),
         x: axis.scale(n.date) + (Math.random() - 0.5) * 0.05, // place on x but randomize slightly to avoid overlapping
@@ -76,100 +97,116 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         var sw = performance.now()
         sim.tick(ticks)
         sim.stop()
-        console.log(`BeeChart - sim took ${performance.now() - sw}ms`, { w, nodes: nodes.length })
+        console.log(`BeeChart - sim took ${performance.now() - sw}ms`, { w, nodes: dNodes.length })
       }
+      const bounds = fNodes && getBounds(fNodes.map(nodeToRect))
+      return { axis, bounds, sim, bars, fNodes, groupName }
+    })
+    return { bubbleGroups, axis }
+  }, [nodeIdsString, w])
 
-      const bubbleBounds = getBounds(fNodes.map(n => circleToRect({ cx: n.x, cy: n.y, r: n.r })))
-      return { fNodes, axis, bubbleBounds, sim, bars }
-    }, [nodeIdsString, w])
-
-  const showImage = (n: BeehiveNode<T> & ForceNode) => n.img && n.r > 10
+  const showImage = (n: { img?: string, r?: number }) => n.img && n.r > 10
   const imgPad = 2
 
-  const [tick, setTick] = useState(0)
-  useEffect(() => {
-    if (!animate || !sim) return
-    var cancel = false;
-    (async () => {
-      for (var i = 0; i < ticks && !cancel; i++) {
-        sim.tick()
-        if (i % 40 == 0) {
-          setTick(i)
-          await delay(10)
-        }
-      }
-      if (!cancel) {
-        setTick(i)
-        sim.stop()
-      }
-    })()
-    return () => { cancel = true }
-  }, [sim])
+  // const [tick, setTick] = useState(0)
+  // useEffect(() => {
+  //   if (!animate || !sim) return
+  //   var cancel = false;
+  //   (async () => {
+  //     for (var i = 0; i < ticks && !cancel; i++) {
+  //       sim.tick()
+  //       if (i % 40 == 0) {
+  //         setTick(i)
+  //         await delay(10)
+  //       }
+  //     }
+  //     if (!cancel) {
+  //       setTick(i)
+  //       sim.stop()
+  //     }
+  //   })()
+  //   return () => { cancel = true }
+  // }, [sim])
 
   const chartRef = useRef<SVGSVGElement>()
 
   useEffect(() => {
-    if (!nodes) return
+    if (!dNodes) return
     const chart = chartRef.current
     chart.parentElement.scrollBy(chart.clientWidth, 0) // scroll all the way to right
-  }, [!nodes])
+  }, [!dNodes])
 
 
   var svgEl = useMemo(() => {
-    if (!fNodes || !axis) return <Spinner />
-    const bubbles = fNodes.map(n => assign(n, nodesById[n.id]))
-    const legendHeight = 25
-    const b = { ...bubbleBounds, h: bubbleBounds.h + legendHeight + barHeight }
+    if (!bubbleGroups || !axis) return <Spinner />
 
-    return <SVGStyle style={{ width: b.w, height: b.h }} ref={chartRef} >
+
+    const allBounds = getBounds(bubbleGroups.map(g => g.bounds))
+
+    let currentY = 0
+    const groupsLayout = bubbleGroups.map(g => {
+      const newG = {
+        ...g,
+        bubbles: g.fNodes.map(f => ({ ...f, ...dNodes[f.id] })),
+        dy: currentY, h: g.bounds.h + g.bars.bounds.h + sizes.legend.h + sizes.title.h
+      }
+      currentY += newG.h
+      return newG
+    })
+
+    return <SVGStyle style={{ width: allBounds.w, height: sumBy(groupsLayout, g => g.h) }} ref={chartRef} >
       <defs>
-        {bubbles.filter(showImage)
+        {flatMap(groupsLayout, g => g.bubbles).filter(b => showImage(b))
           .map(n => <clipPath key={n.id} id={`clip-${n.id}`}><circle r={n.r - imgPad} /></clipPath>)}
       </defs>
-      <g>
-        <g className='bubbles' transform={offsetTransform(b)}>
-          {bubbles.map(b => {
-            const { id, x, y, r, color, selected, img } = b
-            const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
-            const elProps = {
-              ...props.tip.eventProps(b.data),
-              onClick: (e) => {
-                e.stopPropagation()
-                onSelect({ data: b.data })
-              },
-              className: compact(['node', selectedClass]).join(' ')
+      {groupsLayout.map(g => <g key={g.groupName} transform={`translate(0, ${g.dy})`}>
+        <text className='title' style={{ textAnchor: 'middle' }} x={allBounds.w / 2} y={sizes.title.h}>{g.groupName}</text>
+        <g transform={`translate(${-allBounds.x}, 0)`} >
+          <g className='bubbles' transform={`translate(0, ${-g.bounds.y + sizes.title.h})`} >
+            {g.bubbles.map(b => {
+              const { id, x, y, r, color, selected, img, data } = b
+              const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
+              const elProps = {
+                ...props.tip.eventProps(data),
+                onClick: (e) => {
+                  e.stopPropagation()
+                  onSelect({ data })
+                },
+                className: compact(['node', selectedClass]).join(' ')
+              }
+              return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
+                <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
+                {showImage({ img, r }) &&
+                  <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
+                    href={img} clipPath={`url(#clip-${b.id})`} {...elProps} />}
+              </g>
             }
-            return <g key={id} id={id} transform={`translate(${x}, ${y})`}>
-              <circle r={r} fill={color ?? 'var(--bg3)'} {...elProps} onTouchStart={e => e.preventDefault()} />
-              {showImage(b) &&
-                <image x={-r + imgPad} y={-r + imgPad} width={(r - imgPad) * 2}
-                  href={img} clipPath={`url(#clip-${b.id})`} {...elProps} />}
-            </g>
-          }
-          )}
-        </g>
-        <g className='axis' transform={`translate(${-b.x}, 0)`}>
-          {/* only transform x. Append y raw */}
-          <DateAxis {...axis} top={bubbleBounds.h} />
-        </g>
-        <g className='bars' transform={`translate(${-b.x}, ${b.h - barHeight})`}>
-          {bars.map(r => {
-            const selectedStart = props.selectedRange?.start
-            const selected = selectedStart ? selectedStart.toISOString() == r.range.start.toISOString() : null
-            const selectedClass = selected ? 'selected' : (selected == false ? 'deselected' : null)
-            return <rect key={r.key}
-              onClick={e => {
-                e.stopPropagation()
-                onSelect({ dateRange: r.range })
-              }}
-              {...props.barTip?.eventProps(r)}
-              className={compact(['node', selectedClass]).join(' ')}
-              width={r.w} height={r.h} x={r.x} y={barHeight - r.h} />
-          })}
+            )}
+          </g>
+          <g className='axis'>
+            {/* only transform x. Append y raw */}
+            <DateAxis {...axis} top={g.bounds.h + sizes.title.h} />
+          </g>
+          <g className='bars' transform={`translate(0, ${g.bounds.h + sizes.legend.h + sizes.title.h})`}>
+            {g.bars.bars.map(r => {
+              const selectedStart = props.selectedRange?.start
+              const selected = selectedStart ? selectedStart.toISOString() == r.range.start.toISOString() : null
+              const selectedClass = selected ? 'selected' : (selected == false ? 'deselected' : null)
+              return <rect key={r.key}
+                onClick={e => {
+                  e.stopPropagation()
+                  onSelect({ dateRange: r.range })
+                }}
+                {...props.barTip?.eventProps(r)}
+                className={compact(['node', selectedClass]).join(' ')}
+                width={r.w} height={r.h} x={r.x} y={g.bars.bounds.h - r.h} />
+            })}
+          </g>
         </g>
       </g>
+      )}
     </SVGStyle>
-  }, [toJson(nodes?.map(n => [n.id, n.selected])), tick, w])
+  }, [toJson(dNodes && values(dNodes).map(n => [n.id, n.selected])), w])
 
   return <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
 }
@@ -213,41 +250,43 @@ const dateAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number): AxisLayout 
   }
 }
 
-interface DateVal { date: Date, value: number }
-export type BarNode<T> = { data: T[], date: Date, range: DateRangeValue, value: number }
-type LayoutBar<T> = Rect & BarNode<T> & { key: string }
+
 
 const barPadding = 1
 
-const barChartLayout = <T extends DateVal>(xScale: ScaleTime<number, number>, height: number, data: T[]): LayoutBar<T>[] => {
-  const barData = groupMap(data,
-    v => formatISO(startOfWeek(v.date)),
-    (g, d) => ({ date: parseISO(d), value: sumBy(g, v => v.value), data: g }))
-
+const barChartLayout = <T,>(xScale: ScaleTime<number, number>, yScale: ScaleLinear<number, number>, barData: BarNode<BeehiveNode<T>>[]): { bars: LayoutBar<BeehiveNode<T>>[], bounds: Rect } => {
   const w = xScale(new Date()) - xScale(addDays(new Date(), -7)) - barPadding * 2
-  const yScale = scaleLinear([0, max(barData.map(b => b.value))], [0, height])
   // center on given date group, fit space between
-  return barData.map(b => ({
+  const bars = barData.map(b => ({
+    ...b,
     key: formatISO(b.date),
     x: xScale(b.date) + barPadding,
     w,
     y: 0,
     h: yScale(b.value),
     range: { start: b.date, end: addDays(b.date, 7) },
-    ...b
   }))
+  const bounds = getBounds(bars)
+  return { bars, bounds }
 }
 
 const SVGStyle = styled.svg`
   font-size: 1em;
   pointer-events: visible;
 
+  text {
+      fill: var(--fg1);
+  }
+
+  text.title {
+    font-size: 1.5em;
+    font-weight: bolder;
+    fill: var(--fg2);
+  }
+
   .axis .tick {
     line {
       stroke: var(--fg3);
-    }
-    text {
-      fill: var(--fg1);
     }
   }
 
@@ -265,6 +304,6 @@ const SVGStyle = styled.svg`
   }
 
   .bars rect {
-    fill: var(--fg3);
+    fill: var(--bg3);
   }
 `

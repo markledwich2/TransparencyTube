@@ -2,7 +2,7 @@ import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import { Narrative2CaptionKey, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
-import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../NarrativeBubbles'
+import { useNarrative, UseNarrativeProps, NarrativeFilterState } from '../../common/Narrative'
 import { Tip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
 import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
@@ -26,25 +26,26 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
   vaccinePersonal: {
     narratives: ['Vaccine Personal'],
     defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven'],
     showCaptions: true
   },
   vaccineDna: {
     narratives: ['Vaccine DNA'],
     defaultFilter: { start: '2020-01-01', end: '2021-05-31' },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['dna'],
     showCaptions: true
   },
-  '2020 Election Fraud': {},
+  '2020 Election Fraud': {
+    narratives: ['2020 Election Fraud'],
+    defaultFilter: { start: '2020-11-03', end: '2021-01-31' },
+    showLr: true,
+    maxVideos: 2000,
+    groupBy: 'tags',
+    colorBy: 'channelTags'
+  },
   qanon: {
     narratives: ['QAnon'],
     defaultFilter: { start: '2020-05-01', end: '2021-06-1' },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['qanon', 'trump', 'august', 'reinstate', 'jfk'],
     maxVideos: 3000,
     showCaptions: true,
@@ -56,8 +57,6 @@ export const narrativeProps: { [index: string]: NarrativeVideoComponentProps } =
   comcast: {
     narratives: ['comcast', '5g', 'netneutrality', 'Jews Control Media', 'Comcast Exec', 'Brian Roberts'],
     defaultFilter: { start: '2021-01-01', narrative: ['comcast'] },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
     words: ['comcast', 'verizon'],
     maxVideos: 2000,
     showCaptions: true,
@@ -115,6 +114,7 @@ const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => ({
 
 export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   colorBy?: keyof NarrativeVideo
+  groupBy?: Extract<keyof NarrativeVideo, string>
   showLr?: boolean
   showCaptions?: boolean
   showPlatform?: boolean
@@ -127,6 +127,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
   sizeFactor ??= 1
   colorBy ??= 'platform'
 
+  props = { words: [], narrativeIndexPrefix: 'narrative2', maxVideos: 3000, ...props }
+
   const videoMd = getVideoMd(props)
   const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
@@ -134,25 +136,22 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
   const windowDim = useWindowDim()
   const selectRange = rangeFromQuery(q, null, 'selected-')
   const inSelectRange = (v: NarrativeVideo) => {
-    const upload = parseISO(v.uploadDate)
-    if (!selectRange.start) return null
+    const upload = v.uploadDate ? parseISO(v.uploadDate) : null
+    if (!selectRange.start || !upload) return null
     return selectRange.start <= upload && selectRange.end > upload
   }
 
   const { bubbles, videos, stats } = useMemo(() => {
-    const bubbles = videoRows ? take(videoRows, props.maxVideos ?? 5000)
-      .map(v => {
-        return {
-          id: v.videoId,
-          groupId: v.channelId,
-          data: v,
-          value: v.videoViews,
-          color: getColor(v),
-          date: parseISO(v.uploadDate),
-          img: channels[v.channelId]?.logoUrl,
-          selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
-        }
-      }) : null
+    const bubbles = videoRows?.map(v => ({
+      id: v.videoId,
+      group: props.groupBy ? v[props.groupBy] as string : null,
+      data: v,
+      value: v.videoViews,
+      color: getColor(v),
+      date: v.uploadDate ? parseISO(v.uploadDate) : null,
+      img: channels[v.channelId]?.logoUrl,
+      selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
+    }))
     const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
     const stats = {
       views: videos ? sumBy(videos, v => v.videoViews) : null,
@@ -164,7 +163,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
 
   const tip = useTip<NarrativeVideo>()
   const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
-  const highlight = props.words.concat(flatMap(q.narrative, n => narrativeCfg[n]?.highlight ?? []))
+  const highlight = props.words.concat(flatMap(q.narrative ?? [], n => narrativeCfg[n]?.highlight ?? []))
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -222,6 +221,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
           barTip={barTip}
           bubbleSize={windowDim.h / 1200 * sizeFactor}
           ticks={props.ticks}
+          maxBubbles={props.maxVideos}
         />}
       </ContainerDimensions>
     </div>
@@ -252,9 +252,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ size
         if (!idx?.captions || !props.showCaptions) return []
         const capsFilter = (s: VideoCaption) => videoFilter.keywords ? (videoFilter.keywords?.some(k => s.tags?.some(t => t == k)) ?? false) : true
         const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'uploadDate']) as Narrative2CaptionKey), { andOr: 'or' })
-          .then(caps => {
-            return caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) }))
-          })
+          .then(caps => caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) })))
         return res
       }}
       highlightWords={highlight}
