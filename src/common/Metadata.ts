@@ -8,7 +8,7 @@ export type TablesMetadata = Record<string, ColumnMd[]>
 export interface ColumnMd {
   label?: string
   desc?: string
-  values: ColumnMdVal<string>[]
+  values?: ColumnMdVal<string>[]
 }
 
 export interface ColumnMdRun extends ColumnMd {

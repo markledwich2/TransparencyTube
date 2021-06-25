@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react"
+import React, { ReactNode, useEffect, useState } from "react"
 import { uniq } from 'remeda'
 import { noCacheReq } from '../common/BlobIndex'
 import { md } from '../common/Channel'
 import Layout from '../components/Layout'
-
 import { MinimalPage } from "../components/Style"
 import { getJsonl, numFormat } from '../common/Utils'
 import PurposeBanner from '../components/PurposeBanner'
@@ -17,9 +16,9 @@ import { LinkData, NodeData, Sankey } from '../components/Sankey'
 import { SankeyGraph } from 'd3-sankey'
 import styled from 'styled-components'
 import { Tab, Tabs } from '../components/Tab'
-import { NarrativeVideoComponent, narrativeProps } from '../components/pendulum/NarrativeVideo'
-
-
+import { NarrativeVideoComponent } from '../components/pendulum/NarrativeVideo'
+import { useTip } from '../components/Tip'
+import { narrativeProps } from '../common/Narrative'
 const findings = {
   rec: `YouTube seems to be reducing the amount of recommendations to videos supporting election fraud. According to our estimates, "Supporting" videos receive about 26% of the impressions they send (100% would be neutral). "Disputing" videos are also disadvantaged - receiving about 64% of the impressions they send.`
 }
@@ -113,6 +112,9 @@ const NarrativesPage = () => {
       .then(r => setRecs(r))
   }, [])
 
+  const helpTip = useTip<ReactNode>()
+
+
   return <Layout>
     <PurposeBanner>
       <p>Post election news has been dominated by President Trump’s claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions are <Tag label={supportValues.support.label} color={supportValues.support.color} /> or <Tag label={supportValues.dispute.label} color={supportValues.dispute.color} /> the president’s claim. These experiments use videos uploaded between the 3rd and 10th November 2020, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 27th October and 15th November 2020. As of 16th November these videos have generated 680M views combined. Data and more detailed documentation can be found <a href="https://github.com/markledwich2/TransparencyTube/tree/master/research/us_2020_election_fraud_narrative">here</a>.</p>
@@ -134,7 +136,25 @@ const NarrativesPage = () => {
       <ContainerDimensions>
         {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
-            <NarrativeVideoComponent {...narrativeProps['2020 Election Fraud']} />
+            <NarrativeVideoComponent {...narrativeProps['2020 Election Fraud']}
+            // groupRender={(g, rows) => <div style={{ maxWidth: '40em' }}><Markdown>{supportValues[g]?.desc}</Markdown></div>}
+            // titleSuffixRender={(g, rows) => {
+            //   const fAdjusted = numFormat(sumBy(rows, r => r.viewsAdjusted))
+            //   const fViews = numFormat(sumBy(rows, r => r.views))
+            //   if (fViews == fAdjusted) return null
+            //   return <span> (<b style={{ fontSize: '1.3em' }}>{fAdjusted}</b> bias-adjusted views <HelpTip useTip={helpTip}>
+            //     <p><b>Bias-adjusted views</b> is an estimate of views adjusted for false positive &amp; false negative rates of the our model.</p>
+            //     <ul style={{ marginTop: '1em', marginLeft: '2em', lineHeight: '2em' }}>
+            //       <li><Tag label="manual" /> = 1</li>
+            //       <li><SupportTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.96 recall</li>
+            //       <li><SupportTag /> and uploaded after 2020-12-09 = 0.68 precision / 0.97 recall</li>
+            //       <li><DisputeTag /> and uploaded before 2020-12-09 = 0.84 precision / 0.94 recall</li>
+            //       <li><DisputeTag /> and uploaded after 2020-12-09 = 0.80 precision / 0.97 recall</li>
+            //     </ul>
+            //   </HelpTip>)
+            //   </span>
+            // }}
+            />
           </Tab>
           <Tab label='Recommendations'>
             <TextSection>

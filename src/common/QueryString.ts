@@ -1,9 +1,10 @@
 import { ParseOptions, StringifyOptions, parse, stringify } from 'query-string'
-import { useState } from 'react'
+import { createContext, useState, useContext } from 'react'
 import { mapToObj } from 'remeda'
 import { entries } from './Pipe'
-import { assign } from './Utils'
+import { assign, safeLocation } from './Utils'
 import { useLocation } from '@gatsbyjs/reach-router'
+import { LocationContext } from '../components/LocationContext'
 
 export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
 
@@ -23,13 +24,16 @@ interface QueryOptions<T> {
 }
 
 export const useQuery = <T>(options?: QueryOptions<T>): QsResult<T> => {
-  const { location, navigate, parseOptions, stringifyOptions, defaultState } = {
+  const { navigate, parseOptions, stringifyOptions, defaultState, ...otherOptions } = {
     ...{
-      location: useLocation(),
       navigate: navigateNoHistory
     },
     ...options
   }
+
+  const { locationMode } = useContext(LocationContext)
+
+  const location = otherOptions.location ?? locationMode == 'reach' ? useLocation() : safeLocation()
   const stringifyOps: StringifyOptions = { arrayFormat: 'bracket' }
   const initState = assign(defaultState, parse(location.search, { ...stringifyOps, ...parseOptions }) as any as Partial<T>)
   const [state, setState] = useState<Partial<T>>(initState)

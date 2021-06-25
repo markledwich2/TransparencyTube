@@ -32,7 +32,7 @@ module.exports = (env, options) => {
         plugins: [
             new webpack.DefinePlugin({
                 'process.env': {
-                    GATSBY_BRANCH_ENV: JSON.stringify('ml')
+                    GATSBY_BRANCH_ENV: JSON.stringify('')
                 },
             }),
             new HtmlWebPackPlugin({

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { GlobalStyle, MinimalPage } from '../../components/Style'
-import { narrativeProps, NarrativeVideoComponent } from '../../components/pendulum/NarrativeVideo'
+import { NarrativeVideoComponent } from '../../components/pendulum/NarrativeVideo'
 import { NarrativeHighlightComponent } from '../../components/pendulum/NarrativeHighlight'
+import { narrativeProps } from '../../common/Narrative'
 
 const ReportPage = () => <>
   <GlobalStyle />
