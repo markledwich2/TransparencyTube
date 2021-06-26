@@ -1,3 +1,4 @@
+import { tableMd } from './Metadata'
 import React, { useEffect, useState, useMemo } from "react"
 import { groupBy, indexBy, pick, pipe, uniq, omit } from 'remeda'
 import { blobIndex, IndexCol } from './BlobIndex'
@@ -50,7 +51,7 @@ const defaultProps: UseNarrativeProps = {
   videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
 }
 
-export const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => ({
+export const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => tableMd({
   ...md.video,
   narrative: {
     ...md.video.narrative,

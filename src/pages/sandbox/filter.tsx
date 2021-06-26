@@ -28,8 +28,6 @@ const FilterTest: FC<{}> = () => {
     }
   }
 
-  console.log('md', videoMd)
-
   return <Layout>
     <InlineValueFilter metadata={videoMd} filter={pickFull(filter, ['keywords', 'tags'])}
       onFilter={f => setFilter(f)}

@@ -13,11 +13,11 @@ import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
 import { dateFormat, numFormat } from '../../common/Utils'
 import { loadingFilter, styles } from '../Style'
 import { filterIncludes, InlineValueFilter } from '../ValueFilter'
-import { ChannelLogo, ChannelSearch } from '../Channel'
+import { ChannelLogo, ChannelSearch, Tag } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
 import { sumBy, values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
-import { colMd, ColumnMdRun, TableMd } from '../../common/Metadata'
+import { colMd, ColumnMd, ColumnMdRun, TableMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
 import { pickFull } from '../../common/Pipe'
 import styled from 'styled-components'
@@ -34,6 +34,7 @@ export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   ticks?: number
   words?: string[]
   md?: TableMd
+  groupTitleSuffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
 }
 
 export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, ...props }) => {
@@ -49,8 +50,8 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
   }
   const { colorBy, groupBy } = props
   const videoMd = getVideoMd(props)
-  const colorMd = colMd(videoMd[colorBy] ?? md.channel[colorBy])
-  const groupMd = colMd(videoMd[groupBy] ?? md.channel[groupBy])
+  const colorMd = colorBy && colMd(videoMd[colorBy] ?? md.channel[colorBy])
+  const groupMd = groupBy && colMd(videoMd[groupBy] ?? md.channel[groupBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
   const { channels, videoRows, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
@@ -61,7 +62,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
     return selectRange.start <= upload && selectRange.end > upload
   }
 
-  const { bubbles, videos, stats } = useMemo(() => {
+  const { bubbles, videos } = useMemo(() => {
     const bubbles = videoRows?.map(v => ({
       id: v.videoId,
       group: props.groupBy ? v[props.groupBy] as string : null,
@@ -73,7 +74,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
     }))
     const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
-    return { bubbles, videos, stats }
+    return { bubbles, videos }
   }, [videoRows, channels]) // videRows will update with new data form indexes, so ignore those on q to keep showing existing data until it's ready 
 
   const tip = useTip<NarrativeVideo>()
@@ -132,7 +133,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           bubbleSize={windowDim.h / 1200 * props.sizeFactor}
           ticks={props.ticks}
           maxBubbles={props.maxVideos}
-          groupRender={(g, videos) => <GroupTitle group={g} videos={videos} keywords={q.keywords} md={groupMd} />}
+          groupRender={(g, videos) => <GroupTitle group={g} videos={videos} keywords={q.keywords} md={groupMd} suffix={props.groupTitleSuffix} />}
         />}
       </ContainerDimensions>
     </div>
@@ -167,8 +168,15 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
         return res
       }}
       highlightWords={highlight}
+      contentSubTitle={v => v[groupBy] && <ColTag data={v} md={groupMd} />}
     />
   </>
+}
+
+const ColTag: FC<{ data: Record<any, any> | string, md: ColumnMdRun }> = ({ data, md }) => {
+  const v = typeof data == "string" ? data : data[md.name] as string
+  const vMd = v && md && md.val[v]
+  return v && vMd ? <Tag key={v} color={vMd?.color}>{vMd?.label}</Tag> : <></>
 }
 
 const NumStyle = styled.span`
@@ -188,14 +196,13 @@ const Num: FC<{ num: number, label: string }> = ({ num, label }) => <>
 </>
 
 
-interface GroupData<T> {
+const GroupTitle = ({ group, md, videos, keywords, suffix }: {
   group: string
   md?: ColumnMdRun
   videos: NarrativeVideo[]
   keywords?: string[]
-}
-
-const GroupTitle = <T,>({ group, md, videos, keywords }: GroupData<T>) => {
+  suffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
+}) => {
   const groupTip = useTip<{}>()
 
   const stats = {
@@ -206,13 +213,14 @@ const GroupTitle = <T,>({ group, md, videos, keywords }: GroupData<T>) => {
 
   const groupMd = md?.val[group]
 
-  return <div style={{ padding: '2px' }}>
-    <TextSection style={{ margin: '1em' }}>
-      <span style={{ paddingRight: '0.5em', fontWeight: 'bold' }}>{groupMd?.label ?? group}</span>
+  return <div style={{}}>
+    <TextSection style={{ margin: '0.2em' }}>
+      <span style={{ paddingRight: '0.5em', fontWeight: 'bold' }}><ColTag data={group} md={md} /></span>
       {groupMd?.desc && <span style={{ paddingRight: '1em' }}><HelpTip useTip={groupTip}><Markdown>{groupMd?.desc}</Markdown></HelpTip></span>}
       <Num num={stats.videos} label='videos' />
       <Num num={stats.mentions} label='mentions' />
       <Num num={stats.views} label='views' />
+      {suffix && suffix(group, videos)}
     </TextSection>
   </div>
 }

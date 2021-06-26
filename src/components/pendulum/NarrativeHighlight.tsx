@@ -30,8 +30,6 @@ export const highlightData: { [index: string]: () => Promise<HighlightData[]> } 
       offsetSeconds: number
     }>('narrative_vaccine_personal_highlight')
 
-    console.log('highlightData - Vaccine Personal - loaded rows', rows)
-
     return orderBy(rows, r => r.subs, 'desc')
       .map((r, i) => ({
         v: {

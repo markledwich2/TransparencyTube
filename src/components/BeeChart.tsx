@@ -56,7 +56,6 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
       v => formatISO(startOfWeek(v.date)),
       (g, d) => ({ date: parseISO(d), value: sumBy(g, v => v.value), data: g } as BarNode<BeehiveNode<T>>)
     ))
-    console.log('gNodes')
     return { dNodes, gNodes, gBars }
   }, [nodes])
 
@@ -65,7 +64,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
 
   const { w } = useMemo(() => {
     if (!dNodes) return { w: props.w }
-    const w = max([props.w - 20, max(values(gNodes).map(g => visibleOnly(g).length)) * 0.9])
+    const w = max([props.w - 20, max(values(gNodes).map(g => visibleOnly(g).length)) * 1.3])
     return { w }
   }, [nodeIdsString, props.w])
 
@@ -94,7 +93,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         var sw = performance.now()
         sim.tick(ticks)
         sim.stop()
-        console.log(`BeeChart - sim took ${performance.now() - sw}ms`, { w, nodes: dNodes.length })
+        //console.log(`BeeChart - sim took ${performance.now() - sw}ms`, { w, nodes: dNodes.length })
       }
       const bounds = fNodes && getBounds(fNodes.map(nodeToRect))
       return { axis, bounds, sim, bars, fNodes, groupName }
@@ -117,8 +116,8 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
     if (!bubbleGroups || !axis) return { groupsLayout: null, svgEl: <Spinner /> }
 
     const allBounds = getBounds(bubbleGroups.map(g => g.bounds))
-    const showTitle = keys(bubbleGroups).length > 1
-    const titleH = showTitle ? sizes.title.h : 0
+    const showGroups = keys(bubbleGroups).length > 1
+    const groupMargin = showGroups ? sizes.groupMargin : 0
     let currentY = 0
 
     const byId = indexBy(visibleOnly(dNodes), n => n.id)
@@ -127,13 +126,11 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         ...g,
         dNodes: gNodes[g.groupName],
         bubbles: g.fNodes.map(f => ({ ...f, ...byId[f.id] })),
-        dy: currentY, h: g.bounds.h + g.bars.bounds.h + sizes.legend.h + titleH
+        dy: currentY, h: g.bounds.h + g.bars.bounds.h + sizes.legend.h + groupMargin + sizes.title.h
       }
       currentY += newG.h
       return newG
     })
-
-    console.log('svg')
 
     return {
       groupsLayout,
@@ -144,7 +141,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
         </defs>
         {groupsLayout.map(g => <g key={g.groupName} transform={`translate(0, ${g.dy})`}>
           <g transform={`translate(${-allBounds.x}, 0)`} >
-            <g className='bubbles' transform={`translate(0, ${-g.bounds.y + titleH})`} >
+            <g className='bubbles' transform={`translate(0, ${-g.bounds.y + sizes.title.h})`} >
               {g.bubbles.map(b => {
                 const { id, x, y, r, color, selected, img, data } = b
                 const selectedClass = selected == true ? 'selected' : (selected == false ? 'deselected' : null)
@@ -167,9 +164,9 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
             </g>
             <g className='axis'>
               {/* only transform x. Append y raw */}
-              <DateAxis {...axis} top={g.bounds.h + titleH} />
+              <DateAxis {...axis} top={g.bounds.h + sizes.title.h} />
             </g>
-            <g className='bars' transform={`translate(0, ${g.bounds.h + sizes.legend.h + titleH})`}>
+            <g className='bars' transform={`translate(0, ${g.bounds.h + sizes.legend.h + sizes.title.h})`}>
               {g.bars.bars.map(r => {
                 const selectedStart = props.selectedRange?.start
                 const selected = selectedStart ? selectedStart.toISOString() == r.range.start.toISOString() : null
@@ -193,14 +190,15 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
 
   return <div style={{ position: 'relative' }}>
     <HScroll className='bee-chart' onClick={() => onSelect(null)}>{svgEl}</HScroll>
-    {groupsLayout?.map(g => <div style={{ position: 'absolute', top: g.dy, padding: '1em' }}>
+    {groupsLayout?.map(g => <div style={{ position: 'absolute', top: g.dy, padding: '0px 0.5em', backgroundColor: 'rgb(var(--bgRgb), 0.7)' }}>
       {props.groupRender ? props.groupRender(g.groupName, g.dNodes.filter(b => b.selected !== false).map(b => b.data)) : <h3>{g.groupName}</h3>}
     </div>)}
   </div>
 }
 
 const sizes = {
-  title: { h: 100 },
+  groupMargin: 50,
+  title: { h: 50 },
   bar: { h: 100, padding: 1 },
   legend: { h: 25 }
 }
