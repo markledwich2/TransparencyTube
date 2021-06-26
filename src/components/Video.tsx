@@ -48,7 +48,7 @@ interface VideoGroup<T extends VideoCommon, TExtra extends VideoId> {
   showChannel: boolean
 }
 
-const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 16
+const chanVidChunk = 3, multiColumnVideoWidth = 400, videoPadding = 14
 
 export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenChannel, videos, showChannels, channels, loading, showThumb,
   groupChannels, showTags, showPlatform, defaultLimit, highlightWords,
@@ -118,12 +118,12 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       flexWrap: 'wrap',
       width: '100%'
     }}>
-      {videos?.length == 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
+      {videos?.length === 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
       {groupedVids &&
         <ContainerDimensions>
           {({ width }) => {
             const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
-            const videoWidth = width / numCols - videoPadding
+            const videoWidth = width / numCols - videoPadding * numCols
             // flex doesn't do a column wrap. Se we do this ourselves
             var colGroups: VideoGroup<T, TExtra>[][] = [...Array(numCols)].map(_ => [...new Array(0)])
 
@@ -178,7 +178,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         children={contentBottom?.(v as T & Partial<TExtra>)} />)}
     </div>
       {showMore && <div style={{ textAlign: 'center', padding: '1em', fontWeight: 'bold', visibility: videos?.length > limit ? null : 'hidden' }}>
-        <a onClick={_ => setLimit(limit + 200)}>show more</a>
+        <a onClick={_ => setLimit(limit + 100)}>show more</a>
       </div>}
     </>
   }, [videos, groupedVids, loading, limit])}
@@ -288,7 +288,6 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
           {contentSubTitle && contentSubTitle(v)}
           {isVideoError(v) && <>
             <Tag label={v.copyrightHolder ? `Copyright: ${v.copyrightHolder}` : errorTypeOpt?.label ?? v.errorType} color={errorTypeOpt?.color} />
-            {/* <span><b>{numFormat(v.videoViews)} views</b></span> */}
             {v.lastSeen && <span>Last seen {dateFormat(v.lastSeen, 'UTC')}</span>}
           </>}
         </FlexRow>
@@ -296,7 +295,8 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
         {(captions || showLoadCaptions) &&
           <div style={{ ...(scrollCaptions ? { overflowY: 'auto', maxHeight: loadCaptions ? '60vh' : '15em' } : {}), ...props.captionsStyle }}>
             {captions?.map((s, i) => <div key={i} style={{ marginBottom: '0.3em' }}>
-              <VideoA id={v.videoId} platform={v.platform} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>
+              {s.offsetSeconds && <VideoA id={v.videoId} platform={v.platform} style={{ paddingRight: '0.5em' }} offset={s.offsetSeconds}>{secondsFormat(s.offsetSeconds, 2)}</VideoA>}
+              {s.part && ['keyword', 'description'].includes(s.part) && <span style={{ color: "var(--fg3)" }}>{s.part}: </span>}
               {highlightWords ? <Highlighter searchWords={highlightWords} autoEscape caseSensitive={false}
                 textToHighlight={s.caption ?? ""}
               /> : s.caption}

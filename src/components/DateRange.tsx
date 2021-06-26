@@ -1,30 +1,42 @@
 
-import { parseISO, addDays, startOfToday, endOfToday, isSameDay, startOfDay, startOfWeek, endOfWeek, endOfDay, startOfMonth, endOfMonth, addMonths, startOfYear, endOfYear, addYears } from 'date-fns'
+import { parseISO, addDays, startOfToday, endOfToday, isSameDay, startOfDay, startOfWeek, endOfWeek, endOfDay, startOfMonth, endOfMonth, addMonths, startOfYear, endOfYear, addYears, format } from 'date-fns'
 import React, { useEffect, useState } from 'react'
 import { DateRangePicker, DateRangeProps, defaultStaticRanges } from 'react-date-range'
 import 'react-date-range/dist/styles.css'
 import 'react-date-range/dist/theme/default.css'
+import { concat, pipe } from 'remeda'
 import styled from 'styled-components'
 import { dateFormat, useDebounce } from '../common/Utils'
 import { InlineForm } from '../components/InlineForm'
 import { StyleProps } from './Style'
 
 export interface DateRangeValue {
-  startDate: Date
-  endDate: Date
+  start: Date
+  end: Date
 }
 
-export interface DateRangeQueryState {
-  start?: string
-  end?: string
+export type DateRangeQueryState<Prefix extends string> = {
+  [Property in keyof DateRangeValue as `${Prefix}${Property}`]?: string
 }
 
-export const rangeFromQuery = (q: DateRangeQueryState, defaultStart: Date = null, defaultEnd: Date = null): DateRangeValue => ({
-  startDate: q.start ? parseISO(q.start) : (defaultStart ?? addDays(startOfToday(), -7)),
-  endDate: q.end ? parseISO(q.end) : defaultEnd ?? endOfToday()
-})
+export const rangeFromQuery = (q: DateRangeQueryState<typeof prefix>, defaultRange: DateRangeValue = null, prefix?: string): DateRangeValue => {
+  prefix ??= ''
+  const r = {
+    start: q[`${prefix}start`] as string,
+    end: q[`${prefix}end`] as string
+  }
 
-export const rangeToQuery = (r: DateRangeValue): DateRangeQueryState => ({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })
+  return {
+    start: r.start ? parseISO(r.start) : defaultRange?.start,
+    end: r.end ? parseISO(r.end) : defaultRange?.end,
+  }
+}
+
+export const rangeToQuery = (r: DateRangeValue, prefix?: string): DateRangeQueryState<typeof prefix> => {
+  prefix ??= ''
+  const res = ({ [`${prefix}start`]: r?.start?.toISOString(), [`${prefix}end`]: r?.end?.toISOString() })
+  return res
+}
 
 const DateRangeStyle = styled.div`
   .rdrDateRangePickerWrapper, .rdrDateDisplayWrapper, .rdrDefinedRangesWrapper, .rdrStaticRange, .rdrMonths, .rdrMonthAndYearWrapper, .rdrCalendarWrapper  {
@@ -116,7 +128,7 @@ const DateRangeStyle = styled.div`
   }
 `
 
-interface InlineDateRangeProps extends StyleProps, DateRangeProps {
+interface InlineDateRangeProps extends StyleProps {
   range: DateRangeValue,
   inputRange?: DateRangeValue,
   onClose?: () => void
@@ -134,11 +146,10 @@ const staticRangeHandler = {
   },
 }
 
-export function createStaticRanges(ranges) {
-  return ranges.map(range => ({ ...staticRangeHandler, ...range }))
-}
+export const createStaticRanges = (ranges: { label: string, range: PickerRange }[]) => ranges.filter(r => r.range).map(r => ({ ...staticRangeHandler, range: () => r.range, label: r.label }))
 
 const dates = {
+  //yearStart: { 0:startOfYear(new Date()), 1:startOfYear(addYears(new Date(), -1)), 2:startOfYear(addYears(new Date(), -2))},
   startOfWeek: startOfWeek(new Date()),
   endOfWeek: endOfWeek(new Date()),
   startOfLastWeek: startOfWeek(addDays(new Date(), -7)),
@@ -153,29 +164,31 @@ const dates = {
   endOfLastMonth: endOfMonth(addMonths(new Date(), -1)),
 }
 
-const ranges = defaultStaticRanges.concat(createStaticRanges(
-  [30, 60, 90, 120].map(d => ({
+export const inRange = <T,>(v: T, range: { start: T, end: T }) => range && v && v >= range.start && v <= range.end
+
+const ranges = (inputRange: DateRangeValue) => createStaticRanges(pipe(
+  [{
+    label: 'All',
+    range: (inputRange?.start && inputRange?.end) ? toPickerRange(inputRange) : null
+  }],
+  concat([...Array(4).keys()].map(y => {
+    const d = startOfYear(addYears(new Date(), -y))
+    return ({
+      label: format(d, 'yyyy'),
+      range: {
+        startDate: d,
+        endDate: endOfYear(d),
+      }
+    })
+  })),
+  concat([30, 60, 90, 120].map(d => ({
     label: `Last ${d} days`,
-    range: () => ({
+    range: {
       startDate: addDays(dates.endOfToday, -d),
       endDate: dates.endOfToday,
-    })
-  })).concat([
-    {
-      label: 'This Year',
-      range: () => ({
-        startDate: startOfYear(new Date()),
-        endDate: endOfYear(new Date()),
-      })
-    },
-    {
-      label: 'Last Year',
-      range: () => ({
-        startDate: startOfYear(addYears(new Date(), -1)),
-        endDate: endOfYear(addYears(new Date(), -1)),
-      })
     }
-  ])))
+  })))
+).filter(r => r.range && (inRange(r.range.startDate, inputRange) || inRange(r.range.endDate, inputRange))))
 
 export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, className, ...dateRageProps }: InlineDateRangeProps) => {
   const [openValue, setOpenValue] = useState<DateRangeValue>(null)
@@ -191,7 +204,7 @@ export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, c
 
   return <InlineForm
     style={style}
-    value={currentRange}
+    value={toPickerRange(currentRange)}
     inlineRender={r => r ? <span>{dateFormat(r.startDate)} - {dateFormat(r.endDate)}</span> : <></>}
     keepOpenOnChange={true}
     onClose={() => onClose?.()}
@@ -199,19 +212,23 @@ export const InlineDateRange = ({ onClose, onChange, range, inputRange, style, c
     <DateRangeStyle>
       <DateRangePicker
         {...dateRageProps}
-        ranges={[currentRange]}
-        minDate={inputRange?.startDate}
-        maxDate={inputRange?.endDate}
+        ranges={[toPickerRange(currentRange)]}
+        minDate={inputRange?.start}
+        maxDate={inputRange?.end}
         direction='vertical'
         scroll={{ enabled: true }}
         showMonthAndYearPickers
-        staticRanges={ranges}
+        staticRanges={ranges(inputRange)}
         months={3}
         onChange={v => {
-          const r = (v as { range1: DateRangeValue }).range1
-          setOpenValue(r)
+          const r = (v as { range1: PickerRange }).range1
+          setOpenValue(fromPickerRange(r))
           onChange?.(currentRange)
         }}  // date-range control has poor typings 💢
       /></DateRangeStyle>
   </InlineForm>
 }
+
+interface PickerRange { startDate: Date, endDate: Date }
+const toPickerRange = (d: DateRangeValue): PickerRange => ({ startDate: d?.start, endDate: d?.end })
+const fromPickerRange = (d: PickerRange): DateRangeValue => ({ start: d?.startDate, end: d?.endDate })

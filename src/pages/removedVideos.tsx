@@ -8,8 +8,6 @@ import { FilterHeader, FilterPart } from '../components/FilterCommon'
 import Layout from '../components/Layout'
 import { FlexRow, MinimalPage, StyleProps } from "../components/Style"
 import { VideoId, Videos } from '../components/Video'
-import { useLocation } from '@reach/router'
-import { navigateNoHistory } from '../common/Utils'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
 import { orderBy } from '../common/Pipe'
@@ -24,10 +22,8 @@ import ReactMarkdown from 'react-markdown'
 import { odyseeVideoUrl, OdyseeYtVideo, odyseeYtVideos } from '../common/Odysee'
 
 
-interface QueryState extends DateRangeQueryState {
+type QueryState = DateRangeQueryState<''> & {
   openChannelId?: string
-  start?: string
-  end?: string
   search?: string
   tags?: string,
   lr?: string,
@@ -55,7 +51,7 @@ const RemovedVideosPage = () => {
   const [removedIdx, setRemovedIdx] = useState<BlobIndex<VideoRemoved, { lastSeen?: string }>>(null)
   const [captionIdx, setCaptionIdx] = useState<BlobIndex<CaptionData, { videoId?: string }>>(null)
   const [channelIndexes, setChannelIndexes] = useState<ChannelViewIndexes>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
   const [videos, setVideos] = useState<VideoRemoved[]>(null)
   const [loading, setLoading] = useState(false)
   const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
@@ -82,8 +78,8 @@ const RemovedVideosPage = () => {
     setLoading(true)
     removedIdx.rows(
       {
-        from: { lastSeen: dateRange.startDate.toISOString() },
-        to: { lastSeen: dateRange.endDate.toISOString() }
+        from: { lastSeen: dateRange.start.toISOString() },
+        to: { lastSeen: dateRange.end.toISOString() }
       }).then(async vids => {
         setVideos(vids)
         setLoading(false)
@@ -113,7 +109,7 @@ const RemovedVideosPage = () => {
           Removed videos last seen
           <InlineDateRange
             range={dateRange}
-            onChange={r => setQuery({ start: r.startDate?.toISOString(), end: r.endDate?.toISOString() })}
+            onChange={r => setQuery({ start: r.start?.toISOString(), end: r.end?.toISOString() })}
           />
         </FilterPart>
         <FilterPart>

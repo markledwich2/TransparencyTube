@@ -1,95 +1,86 @@
 import { parseISO } from 'date-fns'
-import React, { Fragment, useMemo, FunctionComponent as FC, useState } from 'react'
+import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
-import { NarrativeCaption, NarrativeName, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
-import { useNarrative, UseNarrativeProps } from '../NarrativeBubbles'
-import { Tip, useTip } from '../Tip'
+import { Narrative2CaptionKey, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
+import { useNarrative, UseNarrativeProps, narrativeCfg, narrativeProps, getVideoMd } from '../../common/Narrative'
+import { Tip, UseTip, useTip } from '../Tip'
 import { Video, Videos } from '../Video'
-import { BeeChart } from '../BeeChart'
-import { pick } from 'remeda'
-import { TextSection } from '../Markdown'
+import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
+import { flatMap, pick, uniqBy } from 'remeda'
+import { Markdown, TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
-import { InlineDateRange, rangeToQuery } from '../DateRange'
-import { assign, toJson } from '../../common/Utils'
-import { styles } from '../Style'
+import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
+import { dateFormat, numFormat } from '../../common/Utils'
+import { loadingFilter, styles } from '../Style'
 import { filterIncludes, InlineValueFilter } from '../ValueFilter'
-import { ChannelLogo, ChannelSearch } from '../Channel'
+import { ChannelLogo, ChannelSearch, Tag } from '../Channel'
 import { CloseOutline } from '@styled-icons/evaicons-outline'
-import { values } from '../../common/Pipe'
+import { sumBy, values } from '../../common/Pipe'
 import { md } from '../../common/Channel'
-import { colMd } from '../../common/Metadata'
+import { colMd, ColumnMd, ColumnMdRun, TableMd } from '../../common/Metadata'
 import { useWindowDim } from '../../common/Window'
+import { pickFull } from '../../common/Pipe'
+import styled from 'styled-components'
+import { HelpTip } from '../HelpTip'
 
+export interface NarrativeVideoComponentProps extends UseNarrativeProps {
+  narrative?: Extract<keyof typeof narrativeCfg, string>,
+  colorBy?: Extract<keyof NarrativeVideo, string>
+  groupBy?: Extract<keyof NarrativeVideo, string>
+  showLr?: boolean
+  showCaptions?: boolean
+  showPlatform?: boolean
+  sizeFactor?: number
+  ticks?: number
+  words?: string[]
+  md?: TableMd
+  groupTitleSuffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
+}
 
-const narrativeProps: { [index in NarrativeName]: UseNarrativeProps & {
-  words?: string[],
-  showLr?: boolean, showCaptions?: boolean, showPlatform?: boolean, sizeFactor?: number, ticks?: number
-} } = {
-  'Vaccine Personal': {
-    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
+export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, ...props }) => {
+  props = {
+    colorBy: 'platform',
+    sizeFactor: 1,
+    words: [],
     narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['vaccine', 'covid', 'coronavirus', 'SARS-CoV-2', 'vaccine', 'Wuhan flu', 'China virus', 'vaccinated', 'Pfizer', 'Moderna', 'BioNTech', 'AstraZeneca', 'Johnson \& Johnson', 'CDC', 'world health organization', 'Herd immunity', 'corona virus', 'kovid', 'covet', 'coven'],
-    showCaptions: true
-  },
-  'Vaccine DNA': {
-    defaultRange: { startDate: new Date(2020, 1 - 1, 1), endDate: new Date(2021, 5 - 1, 31) },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['dna'],
-    showCaptions: true
-  },
-  '2020 Election Fraud': {},
-  'QAnon': {
-    defaultRange: { startDate: new Date(2021, 5 - 1, 1), endDate: new Date(2021, 6 - 1, 6) },
-    narrativeIndexPrefix: 'narrative2',
-    videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
-    words: ['qanon', 'trump', 'august', 'reinstate', 'jfk'],
     maxVideos: 3000,
     showCaptions: true,
-    showLr: false,
-    showPlatform: true,
-    sizeFactor: 1,
-    ticks: 400
+    ... (narrative ? narrativeProps[narrative] : {}),
+    ...props
   }
-}
-
-export interface NarrativeVideoComponentProps {
-  narrative?: NarrativeName
-  sizeFactor?: number
-  colorBy?: keyof NarrativeVideo
-  showFlipX?: boolean
-}
-
-export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, sizeFactor, colorBy, showFlipX }) => {
-  const nProps = { ...narrativeProps[narrative], narrative }
-  sizeFactor ??= nProps.sizeFactor ?? 1
-  narrative ??= 'Vaccine Personal'
-  colorBy ??= 'errorType'
-
-  const colorMd = colMd(md.video[colorBy] ?? md.channel[colorBy])
+  const { colorBy, groupBy } = props
+  const videoMd = getVideoMd(props)
+  const colorMd = colorBy && colMd(videoMd[colorBy] ?? md.channel[colorBy])
+  const groupMd = groupBy && colMd(videoMd[groupBy] ?? md.channel[groupBy])
   const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
-  const { videoRows, channels, loading, idx, dateRange, setQuery, q, videoFilter, setVideoFilter } = useNarrative(nProps) // ignore bubbles and go directly to video granularity
+  const { channels, videoRows, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
+  const selectRange = rangeFromQuery(q, null, 'selected-')
+  const inSelectRange = (v: NarrativeVideo) => {
+    const upload = v.uploadDate ? parseISO(v.uploadDate) : null
+    if (!selectRange.start || !upload) return null
+    return selectRange.start <= upload && selectRange.end > upload
+  }
 
   const { bubbles, videos } = useMemo(() => {
     const bubbles = videoRows?.map(v => ({
       id: v.videoId,
-      groupId: v.channelId,
+      group: props.groupBy ? v[props.groupBy] as string : null,
       data: v,
       value: v.videoViews,
       color: getColor(v),
-      date: parseISO(v.uploadDate),
+      date: v.uploadDate ? parseISO(v.uploadDate) : null,
       img: channels[v.channelId]?.logoUrl,
-      selected: q.channelId?.includes(v.channelId)
+      selected: q.channelId?.includes(v.channelId) ?? inSelectRange(v)
     }))
-    const videos = videoRows?.filter(v => filterIncludes(pick(q, ['channelId']), v)) // already filtered except for channelId because we want videoRows without that filter
+    const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
     return { bubbles, videos }
-  }, [videoRows, toJson(q)])
+  }, [videoRows, channels]) // videRows will update with new data form indexes, so ignore those on q to keep showing existing data until it's ready 
 
-  var tip = useTip<NarrativeVideo>()
+  const tip = useTip<NarrativeVideo>()
+  const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
+  const highlight = props.words.concat(flatMap(q.narrative ?? [], n => narrativeCfg[n]?.highlight ?? []))
 
-  const [flipX, setFlipX] = useState(false)
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -98,15 +89,18 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
 
     <FilterHeader style={{ marginBottom: '2em', marginLeft: '1em' }}>
       <FilterPart>
-        Uploaded <InlineDateRange range={dateRange} inputRange={nProps.defaultRange} onChange={r => setQuery(rangeToQuery(r))} />
+        Uploaded <InlineDateRange
+          range={dateRange}
+          inputRange={dateRangeIdx}
+          onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
-        video
-          <InlineValueFilter metadata={md.video} filter={pick(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videos} showCount />
+        {q.narrative?.length > 1 && <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />}
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>
         channel
-        <InlineValueFilter metadata={md.channel} filter={pick(videoFilter, ['tags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videos} showCount />
+        <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['channelTags', 'lr', 'platform'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>
         {channels && q.channelId && q.channelId.map(c => <Fragment key={c}>
@@ -122,20 +116,24 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onSelect={c => setQuery({ channelId: [c.channelId] })}
           channels={values(channels)} sortBy='views' placeholder='channel search' />}
       </FilterPart>
-
-      {showFlipX && <><input type='checkbox' checked={flipX} onChange={e => setFlipX(e.target.checked)} /><b>flip X</b></>}
     </FilterHeader>
 
-    <div>
+    <div style={{ filter: loading ? loadingFilter : null }}>
       <ContainerDimensions>
         {({ width }) => <BeeChart
           w={width - 5}
           nodes={bubbles}
-          onSelect={(n) => { setQuery({ channelId: n ? [n.channelId] : null }) }}
+          onSelect={(n) => setQuery({
+            channelId: n?.data?.channelId ? [n?.data?.channelId] : null,
+            ...rangeToQuery(n?.dateRange, 'selected-')
+          })}
+          selectedRange={rangeFromQuery(q, null, 'selected-')}
           tip={tip}
-          bubbleSize={windowDim.h / 1200 * sizeFactor}
-          ticks={nProps.ticks}
-          flipX={flipX}
+          barTip={barTip}
+          bubbleSize={windowDim.h / 1200 * props.sizeFactor}
+          ticks={props.ticks}
+          maxBubbles={props.maxVideos}
+          groupRender={(g, videos) => <GroupTitle group={g} videos={videos} keywords={q.keywords} md={groupMd} suffix={props.groupTitleSuffix} />}
         />}
       </ContainerDimensions>
     </div>
@@ -144,23 +142,85 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
       {tip.data && <Video v={tip.data} c={channels[tip.data.channelId]} showChannel showThumb />}
     </Tip>
 
-    <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>
+    <Tip {...barTip.tipProps}>
+      {barTip.data && <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ marginBottom: '0.5em' }}>
+          <Subtle style={{ marginRight: '0.5em' }}>Week of</Subtle>
+          <NumStyle style={{ fontSize: '1.5em' }}>{dateFormat(barTip.data.date)}</NumStyle>
+        </span>
+        <Num num={barTip.data.data.length} label='videos' />
+        <Num num={barTip.data.value} label='views' />
+        <Num num={uniqBy(barTip.data.data, d => d.data.channelId).length} label='channels' />
+      </div>}
+    </Tip>
+
+    {videos && <TextSection style={{ margin: '1em' }}><p>Top viewed videos in context</p></TextSection>}
 
     <Videos channels={channels} videos={videos}
-      groupChannels showTags showChannels showThumb showPlatform={nProps.showPlatform}
+      groupChannels showTags showChannels showThumb showPlatform={props.showPlatform}
       loading={loading}
-      defaultLimit={Math.floor(windowDim.w / 300)}
+      defaultLimit={Math.floor(windowDim.w / 100)}
       loadExtraOnVisible={async (vids) => {
-        if (!idx?.captions || !nProps.showCaptions) return []
-        const capsFilter = (c: VideoCaption) => videoFilter.keywords ? videoFilter.keywords?.some(k => c.tags?.some(t => t == k)) ?? false : true
-        const res = await idx.captions.rowsWith(vids.map(v => pick(v, ['narrative', 'channelId', 'videoId'])), { andOr: 'or' })
-          .then(caps => {
-            console.log('caps filtering', { videoFilter, caps })
-            return caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) }))
-          })
+        if (!idx?.captions || !props.showCaptions) return []
+        const capsFilter = (s: VideoCaption) => videoFilter.keywords ? (videoFilter.keywords?.some(k => s.tags?.some(t => t == k)) ?? false) : true
+        const res = await idx.captions.rowsWith(vids.map(v => pick(v as NarrativeVideo, ['narrative', 'uploadDate']) as Narrative2CaptionKey), { andOr: 'or' })
+          .then(caps => caps.map(v => ({ ...v, captions: v.captions?.filter(capsFilter) })))
         return res
       }}
-      highlightWords={nProps.words}
+      highlightWords={highlight}
+      contentSubTitle={v => v[groupBy] && <ColTag data={v} md={groupMd} />}
     />
   </>
+}
+
+const ColTag: FC<{ data: Record<any, any> | string, md: ColumnMdRun }> = ({ data, md }) => {
+  const v = typeof data == "string" ? data : data[md.name] as string
+  const vMd = v && md && md.val[v]
+  return v && vMd ? <Tag key={v} color={vMd?.color}>{vMd?.label}</Tag> : <></>
+}
+
+const NumStyle = styled.span`
+  font-size:2em;
+  font-weight:bold;
+`
+
+const Subtle = styled.span`
+  color:var(--fg2);
+`
+
+const Num: FC<{ num: number, label: string }> = ({ num, label }) => <>
+  {!num ? <></> : <span style={{ paddingRight: '1em' }}>
+    <span style={{ fontSize: '1.2em', fontWeight: 'bolder' }}>{numFormat(num)}</span>
+    <Subtle> {label}</Subtle>
+  </span>}
+</>
+
+
+const GroupTitle = ({ group, md, videos, keywords, suffix }: {
+  group: string
+  md?: ColumnMdRun
+  videos: NarrativeVideo[]
+  keywords?: string[]
+  suffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
+}) => {
+  const groupTip = useTip<{}>()
+
+  const stats = {
+    views: videos ? sumBy(videos, v => v?.videoViews ?? 0) : null,
+    mentions: videos ? sumBy(videos, v => sumBy(v.mentions?.filter(m => m.keywords.some(k => !keywords || keywords.includes(k))) ?? [], m => m.mentions)) : null,
+    videos: videos?.length
+  }
+
+  const groupMd = md?.val[group]
+
+  return <div style={{}}>
+    <TextSection style={{ margin: '0.2em' }}>
+      <span style={{ paddingRight: '0.5em', fontWeight: 'bold' }}><ColTag data={group} md={md} /></span>
+      {groupMd?.desc && <span style={{ paddingRight: '1em' }}><HelpTip useTip={groupTip}><Markdown>{groupMd?.desc}</Markdown></HelpTip></span>}
+      <Num num={stats.videos} label='videos' />
+      <Num num={stats.mentions} label='mentions' />
+      <Num num={stats.views} label='views' />
+      {suffix && suffix(group, videos)}
+    </TextSection>
+  </div>
 }

@@ -12,7 +12,6 @@ import ContainerDimensions from 'react-container-dimensions'
 import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews, indexPeriods } from '../common/RecfluenceApi'
 import { NormalFont } from './Style'
 import { useQuery } from '../common/QueryString'
-import { useLocation } from '@reach/router'
 import { Spinner } from './Spinner'
 import { parsePeriod, PeriodSelect, periodString, Period } from './Period'
 import { TagInfo } from './TagInfo'
@@ -31,7 +30,7 @@ export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [indexes, setIndexes] = useState<ChannelViewIndexes>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
-  const [q, setQuery] = useQuery<QueryState>(useLocation(), navigateNoHistory)
+  const [q, setQuery] = useQuery<QueryState>()
 
   useEffect(() => {
     getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))

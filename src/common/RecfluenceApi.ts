@@ -57,23 +57,27 @@ export interface VideoRemoved extends VideoCommon {
 
 
 export type NarrativeName = 'Vaccine Personal' | 'Vaccine DNA' | '2020 Election Fraud' | 'QAnon'
+  | 'comcast' | 'Jews Control Media' | '5g' | 'netneutrality' | 'Comcast Exec' | 'Brian Roberts'
 
 export type NarrativeChannel = Channel & ChannelStats & NarrativeKey & { bubbleKey: string, support: string, viewsAdjusted: number }
 export type NarrativeKey = { narrative?: string, uploadDate?: string }
 export type NarrativeIdx = {
   videos: BlobIndex<NarrativeVideo, NarrativeKey>,
   channels: BlobIndex<NarrativeChannel, NarrativeKey>,
-  captions: BlobIndex<NarrativeCaption, NarrativeCaptionKey>,
+  captions: BlobIndex<NarrativeCaption, Narrative2CaptionKey>,
 }
 
 export const isVideoNarrative = (c: VideoCommon): c is NarrativeVideo => (c as NarrativeVideo).narrative != undefined
-export interface NarrativeVideo extends VideoCommon, VideoChannelExtra {
+export interface NarrativeVideo extends VideoCommon, Partial<VideoChannelExtra> {
   narrative: string
   support: string
   supplement: string
   bubbleKey: string
   errorType: string
+  mentions?: [{ keywords: string[], mentions: number }]
   keywords?: string[]
+  tags?: string[]
+  channelTags?: string[]
   /**
    * views adjusted for precision/recall ratios
    */
@@ -86,7 +90,14 @@ export interface NarrativeCaptionKey {
   videoId: string
 }
 
+export interface Narrative2CaptionKey {
+  narrative: string,
+  uploadDate: string
+}
+
 export interface NarrativeCaption extends NarrativeCaptionKey {
+  videoId: string,
+  channelId: string
   captions?: VideoCaption[]
 }
 

@@ -1,6 +1,7 @@
 import { Router } from '@reach/router'
 import React, { FunctionComponent as FC } from 'react'
 import styled, { css } from 'styled-components'
+import { LocationProvider } from '../../../src/components/LocationContext'
 import { GlobalStyle } from '../../../src/components/Style'
 
 
@@ -54,5 +55,7 @@ const colorCss = css`
 
 export const Root: FC = ({ children }) => <StyledRoot>
   <GlobalStyle noDark={true} colorCss={colorCss} />
-  {children}
+  <LocationProvider locationMode='window' >
+    {children}
+  </LocationProvider>
 </StyledRoot>

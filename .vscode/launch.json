@@ -8,8 +8,8 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost:8001/sandbox/report",
-            "webRoot": "${workspaceFolder}"
+            "url": "http://localhost:8001/narratives",
+            "webRoot": "${workspaceFolder}/sandbox/report"
         }
     ]
 }

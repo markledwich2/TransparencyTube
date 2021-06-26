@@ -52,7 +52,7 @@ export const keepInView = (e: HTMLElement) => {
   }
 }
 
-interface InlineFormOptions<T> {
+export interface InlineFormOptions<T> extends StyleProps {
   value: T
   onChange?: (v: T) => void
   inlineRender?: (v: T) => JSX.Element
@@ -61,7 +61,7 @@ interface InlineFormOptions<T> {
   onClose?: () => void
 }
 
-export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose, style }: PropsWithChildren<InlineFormOptions<T>> & StyleProps) => {
+export const InlineForm = <T,>({ value, inlineRender, children, popupStyle, keepOpenOnChange, onClose, style }: PropsWithChildren<InlineFormOptions<T>>) => {
   const [open, setOpen] = useState<{ value: T, open: boolean }>({ value: null, open: false })
   const popupRef = useRef<HTMLDivElement>()
 

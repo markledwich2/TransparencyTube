@@ -20,7 +20,7 @@ interface HighlightData {
   }
 }
 
-export const highlightData: { [index in NarrativeName]: () => Promise<HighlightData[]> } = {
+export const highlightData: { [index: string]: () => Promise<HighlightData[]> } = {
   'Vaccine Personal': async () => {
     const rows = await getJsonlResult<VideoChannelExtra & VideoCommon & {
       subs: number
@@ -29,8 +29,6 @@ export const highlightData: { [index in NarrativeName]: () => Promise<HighlightD
       mentionVideoViews: number
       offsetSeconds: number
     }>('narrative_vaccine_personal_highlight')
-
-    console.log('highlightData - Vaccine Personal - loaded rows', rows)
 
     return orderBy(rows, r => r.subs, 'desc')
       .map((r, i) => ({
@@ -63,7 +61,8 @@ export const highlightData: { [index in NarrativeName]: () => Promise<HighlightD
   },
 
   '2020 Election Fraud': () => { throw 'not implemented' },
-  'QAnon': () => { throw 'not implemented' }
+  'QAnon': () => { throw 'not implemented' },
+  'comcast': () => { throw 'not implemented' },
 }
 
 export const useHighlight = (highlightName: NarrativeName) => {
