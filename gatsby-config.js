@@ -18,8 +18,6 @@ module.exports = {
         {
             resolve: `gatsby-plugin-manifest`,
             options: {
-                name: `transparency.tube`,
-                short_name: `transparency.tube`,
                 start_url: `/`,
                 background_color: `#000`,
                 theme_color: `#125C6E`,
@@ -34,7 +32,7 @@ module.exports = {
                     "G-RNECEYKXK5"
                 ]
             },
-        },
+        }
     ],
     flags: {
         PRESERVE_WEBPACK_CACHE: true,

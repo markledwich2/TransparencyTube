@@ -46,7 +46,7 @@ export interface VideoViews extends HasPeriod, VideoCommon {
   watchHours: number
 }
 
-export const isVideoError = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined
+export const isVideoError = (c: VideoCommon): c is VideoRemoved => (c as VideoRemoved).errorType != undefined && (c as VideoRemoved).lastSeen != undefined
 export interface VideoRemoved extends VideoCommon {
   errorType: string
   copyrightHolder?: string

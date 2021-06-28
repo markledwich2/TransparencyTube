@@ -6,6 +6,8 @@ import { getJson, getJsonl, PartialRecord } from './Utils'
 import { flatMap, indexBy, splitAt, mapToObj } from 'remeda'
 import { entries } from './Pipe'
 import { isNamedExportBindings } from 'typescript'
+import { DateRangeValue } from '../components/DateRange'
+import { parseISO } from 'date-fns'
 
 export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   keyFiles: IndexFile<TKey>[]
@@ -148,5 +150,8 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
     rowsWith: getRows
   }
 }
+
+export const idxColDateRange = (col: IndexCol<any>): DateRangeValue => ({ start: col?.min && parseISO(col.min), end: col?.max && parseISO(col.max) })
+
 
 

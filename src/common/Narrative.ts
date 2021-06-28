@@ -1,18 +1,15 @@
 import { tableMd } from './Metadata'
-import React, { useEffect, useState, useMemo } from "react"
-import { groupBy, indexBy, pick, pipe, uniq, omit } from 'remeda'
-import { blobIndex, IndexCol } from './BlobIndex'
+import { useEffect, useState, useMemo } from "react"
+import { indexBy, pick, pipe, uniq, omit } from 'remeda'
+import { blobIndex, idxColDateRange } from './BlobIndex'
 import { md } from './Channel'
 import { useQuery } from './QueryString'
 import { NarrativeVideo, NarrativeCaption, NarrativeIdx, NarrativeChannel, NarrativeKey, NarrativeName, Narrative2CaptionKey } from './RecfluenceApi'
 import { assign, toJson } from './Utils'
 import { filterIncludes, FilterTableMd } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, rangeFromQuery } from '../components/DateRange'
-import { entries, min, orderBy, sumBy } from './Pipe'
-import { Tag } from '../components/Channel'
+import { orderBy } from './Pipe'
 import { BubblesSelectionState } from './Bubble'
-import styled from 'styled-components'
-import { parseISO } from 'date-fns'
 import { NarrativeVideoComponentProps } from '../components/pendulum/NarrativeVideo'
 
 
@@ -67,8 +64,6 @@ export const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd =
 })
 
 const idxVersion = "v2.3"
-
-export const idxColDateRange = (col: IndexCol<any>): DateRangeValue => ({ start: col?.min && parseISO(col.min), end: col?.max && parseISO(col.max) })
 
 export const narrativeProps = {
   'Vaccine Personal': {

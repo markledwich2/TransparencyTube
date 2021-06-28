@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { filter, indexBy, map, pipe, pick } from 'remeda'
-import { blobIndex, BlobIndex } from '../common/BlobIndex'
+import { blobIndex, BlobIndex, idxColDateRange } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
 import { ChannelViewIndexes, indexChannelViews, indexPeriods, indexRemovedVideos, VideoChannelExtra, VideoRemoved } from '../common/RecfluenceApi'
@@ -20,6 +20,7 @@ import PurposeBanner from '../components/PurposeBanner'
 import { ColumnMdVal } from '../common/Metadata'
 import ReactMarkdown from 'react-markdown'
 import { odyseeVideoUrl, OdyseeYtVideo, odyseeYtVideos } from '../common/Odysee'
+import { lastDayOfWeek, addDays, startOfDay, endOfDay } from 'date-fns'
 
 
 type QueryState = DateRangeQueryState<''> & {
@@ -59,7 +60,8 @@ const RemovedVideosPage = () => {
   const videoFilter: FilterState<VideoRow> = filterFromQuery(q, ['errorType', 'copyrightHolder', 'tags', 'lr'])
   const setVideoFilter = (f: FilterState<VideoRow>) => setQuery(filterToQuery(f))
 
-  const dateRange = rangeFromQuery(q)
+  const dateRange = rangeFromQuery(q, { start: addDays(new Date(), -7), end: new Date() })
+  const idxRange = removedIdx && idxColDateRange(removedIdx.cols.lastSeen)
 
   useEffect(() => {
     getChannels().then(channels => setChannels(indexBy(channels, c => c.channelId)))
@@ -78,10 +80,11 @@ const RemovedVideosPage = () => {
     setLoading(true)
     removedIdx.rows(
       {
-        from: { lastSeen: dateRange.start.toISOString() },
-        to: { lastSeen: dateRange.end.toISOString() }
+        from: { lastSeen: dateRange.start && startOfDay(dateRange.start).toISOString() },
+        to: { lastSeen: dateRange.end && endOfDay(dateRange.end).toISOString() }
       }).then(async vids => {
         setVideos(vids)
+        console.log('setVideos - with captions', vids.filter(v => v.hasCaptions))
         setLoading(false)
       })
   }, [removedIdx, channels, q.start, q.end])
@@ -109,6 +112,7 @@ const RemovedVideosPage = () => {
           Removed videos last seen
           <InlineDateRange
             range={dateRange}
+            inputRange={idxRange}
             onChange={r => setQuery({ start: r.start?.toISOString(), end: r.end?.toISOString() })}
           />
         </FilterPart>
@@ -140,7 +144,10 @@ const RemovedVideosPage = () => {
       <Videos<VideoRemoved, OdyseeYtVideo>
         channels={channels}
         onOpenChannel={onOpenChannel}
-        loadCaptions={videoId => captionIdx?.rows({ videoId })}
+        loadCaptions={videoId => {
+          console.log('loading captions', videoId)
+          return captionIdx?.rows({ videoId })
+        }}
         videos={vidsFiltered}
         showChannels
         groupChannels
