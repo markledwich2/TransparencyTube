@@ -133,7 +133,7 @@ export const narrativeProps = {
   maccas: {
     narratives: [`McDonald's`],
     words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
-  }
+  } as NarrativeVideoComponentProps
 }
 
 

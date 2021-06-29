@@ -1,3 +1,7 @@
+require("dotenv").config({
+    path: `.env.${process.env.NODE_ENV}`,
+})
+
 module.exports = {
     siteMetadata: {
         title: `transparency.tube`,
@@ -36,6 +40,13 @@ module.exports = {
         {
             resolve: `gatsby-plugin-create-client-paths`,
             options: { prefixes: [`/sandbox/narrative/*`] },
+        },
+        {
+            resolve: 'gatsby-plugin-page-creator',
+            options: {
+                path: `${__dirname}/src/pages`,
+                ignore: process.env.NODE_ENV === 'development' ? null : ['sandbox/*.tsx'],
+            }
         }
     ],
     flags: {

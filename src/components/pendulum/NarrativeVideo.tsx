@@ -25,7 +25,7 @@ import { HelpTip } from '../HelpTip'
 import { RouteComponentProps } from '@reach/router'
 
 export interface NarrativeVideoComponentProps extends UseNarrativeProps {
-  narrative?: Extract<keyof typeof narrativeCfg, string>,
+  narrative?: Extract<keyof typeof narrativeProps, string>,
   colorBy?: Extract<keyof NarrativeVideo, string>
   groupBy?: Extract<keyof NarrativeVideo, string>
   showLr?: boolean
