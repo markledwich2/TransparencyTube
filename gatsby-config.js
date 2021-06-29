@@ -32,6 +32,10 @@ module.exports = {
                     "G-RNECEYKXK5"
                 ]
             },
+        },
+        {
+            resolve: `gatsby-plugin-create-client-paths`,
+            options: { prefixes: [`/sandbox/narrative/*`] },
         }
     ],
     flags: {

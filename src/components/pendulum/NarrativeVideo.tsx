@@ -22,6 +22,7 @@ import { useWindowDim } from '../../common/Window'
 import { pickFull } from '../../common/Pipe'
 import styled from 'styled-components'
 import { HelpTip } from '../HelpTip'
+import { RouteComponentProps } from '@reach/router'
 
 export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   narrative?: Extract<keyof typeof narrativeCfg, string>,
@@ -37,7 +38,7 @@ export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   groupTitleSuffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
 }
 
-export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narrative, ...props }) => {
+export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoComponentProps>> = ({ narrative, ...props }) => {
   props = {
     colorBy: 'platform',
     sizeFactor: 1,
@@ -95,7 +96,7 @@ export const NarrativeVideoComponent: FC<NarrativeVideoComponentProps> = ({ narr
           onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
-        {q.narrative?.length > 1 && <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />}
+        {props.narratives?.length > 1 && <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />}
         <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>

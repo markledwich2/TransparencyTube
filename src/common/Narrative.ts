@@ -54,7 +54,7 @@ export const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd =
     ...md.video.narrative,
     singleSelect: true,
     hideAll: true,
-    values: props.narratives.map(n => ({ value: n, label: narrativeCfg[n]?.label ?? n }))
+    values: props.narratives?.map(n => ({ value: n, label: narrativeCfg[n]?.label ?? n }))
   },
   keywords: {
     ...md.video.keywords,
@@ -129,7 +129,11 @@ export const narrativeProps = {
         ]
       }
     }
-  } as NarrativeVideoComponentProps
+  } as NarrativeVideoComponentProps,
+  maccas: {
+    narratives: [`McDonald's`],
+    words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
+  }
 }
 
 
