@@ -132,7 +132,7 @@ export const narrativeProps = {
   } as NarrativeVideoComponentProps,
   maccas: {
     defaultFilter: { start: '2020-01-01', narrative: ['maccas'] },
-    narratives: [`maccas`, 'maccas-ceo', 'maccas-veg', 'maccas-union', 'maccas-unhealthy'],
+    narratives: [`maccas`, 'maccas-ceo', 'maccas-veg', 'maccas-union', 'maccas-unhealthy', 'maccas-fired'],
     words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
   } as NarrativeVideoComponentProps
 }
@@ -177,6 +177,9 @@ export const narrativeCfg: { [index: string]: { label?: string, highlight?: stri
   'maccas-unhealthy': {
     label: 'Unhealthy'
   },
+  'maccas-fired': {
+    label: 'CEO fired'
+  }
 }
 
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
