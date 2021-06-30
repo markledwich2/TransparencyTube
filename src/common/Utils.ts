@@ -88,10 +88,7 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
 
 /** like Object.assign, but is immutable and removes undefined from a first */
-export const merge = <T, U>(a: T, b: U): T & U => {
-  console.log('merge', removeUndefined(a), removeUndefined(b))
-  return assign(removeUndefined(a), removeUndefined(b))
-}
+export const merge = <T, U>(a: T, b: U): T & U => assign(removeUndefined(a), removeUndefined(b))
 
 export const removeUndefined = <T>(a: T): T => mapToObj(entries(a).filter(([_, v]) => v !== undefined), kv => kv) as T
 

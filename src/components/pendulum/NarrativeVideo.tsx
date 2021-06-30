@@ -84,7 +84,6 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
   const highlight = props.words.concat(flatMap(q.narrative ?? [], n => narrativeCfg[n]?.highlight ?? []))
 
   const filterRange = merge(dateRangeIdx, props.filterRange ? rangeFromQuery(props.filterRange) : {})
-  console.log('filterRange', { filterRange, explicit: props.filterRange, fromQ: rangeFromQuery(props.filterRange) })
 
   return <>
     <TextSection style={{ margin: '1em' }}>
