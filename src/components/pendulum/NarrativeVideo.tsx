@@ -9,8 +9,8 @@ import { BarNode, BeeChart, BeehiveNode } from '../BeeChart'
 import { flatMap, pick, uniqBy } from 'remeda'
 import { Markdown, TextSection } from '../Markdown'
 import { FilterHeader, FilterPart } from '../FilterCommon'
-import { InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
-import { dateFormat, numFormat } from '../../common/Utils'
+import { DateRangeQueryState, DateRangeValue, InlineDateRange, rangeFromQuery, rangeToQuery } from '../DateRange'
+import { dateFormat, merge, numFormat } from '../../common/Utils'
 import { loadingFilter, styles } from '../Style'
 import { filterIncludes, InlineValueFilter } from '../ValueFilter'
 import { ChannelLogo, ChannelSearch, Tag } from '../Channel'
@@ -35,6 +35,7 @@ export interface NarrativeVideoComponentProps extends UseNarrativeProps {
   ticks?: number
   words?: string[]
   md?: TableMd
+  filterRange?: Partial<DateRangeQueryState<''>>
   groupTitleSuffix?: (group: string, rows: NarrativeVideo[]) => JSX.Element
 }
 
@@ -82,6 +83,8 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
   const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
   const highlight = props.words.concat(flatMap(q.narrative ?? [], n => narrativeCfg[n]?.highlight ?? []))
 
+  const filterRange = merge(dateRangeIdx, props.filterRange ? rangeFromQuery(props.filterRange) : {})
+  console.log('filterRange', { filterRange, explicit: props.filterRange, fromQ: rangeFromQuery(props.filterRange) })
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -92,7 +95,7 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
       <FilterPart>
         Uploaded <InlineDateRange
           range={dateRange}
-          inputRange={dateRangeIdx}
+          inputRange={filterRange}
           onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>

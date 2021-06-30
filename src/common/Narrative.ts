@@ -114,6 +114,7 @@ export const narrativeProps = {
   comcast: {
     narratives: ['comcast', '5g', 'netneutrality', 'Jews Control Media', 'Comcast Exec', 'Brian Roberts'],
     defaultFilter: { start: '2021-01-01', narrative: ['comcast'] },
+    filterRange: { start: '2019-01-01' },
     words: ['comcast', 'verizon'],
     maxVideos: 2000,
     showLr: true,
@@ -132,6 +133,7 @@ export const narrativeProps = {
   } as NarrativeVideoComponentProps,
   maccas: {
     defaultFilter: { start: '2020-01-01', narrative: ['maccas'] },
+    filterRange: { start: '2019-01-01' },
     narratives: [`maccas`, 'maccas-ceo', 'maccas-veg', 'maccas-union', 'maccas-unhealthy', 'maccas-fired'],
     words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
   } as NarrativeVideoComponentProps

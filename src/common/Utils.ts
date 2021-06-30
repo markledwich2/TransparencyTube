@@ -3,9 +3,9 @@ import { format, utcToZonedTime } from "date-fns-tz"
 import { resetWarningCache } from 'prop-types'
 import numeral from 'numeral'
 import humanizeDuration from 'humanize-duration'
-import { compact, reverse } from 'remeda'
+import { compact, reverse, mapToObj } from 'remeda'
 import '@stardazed/streams-polyfill'
-import { keys } from './Pipe'
+import { entries, keys } from './Pipe'
 import { useEffect, useState } from 'react'
 
 
@@ -86,6 +86,14 @@ export const preloadImages = (urls: string[]): Promise<void> => new Promise((res
 
 /** like Object.assign, but doesn't mutate a */
 export const assign = <T, U>(a: T, b: U, c?: any): T & U => Object.assign({}, a, b, c)
+
+/** like Object.assign, but is immutable and removes undefined from a first */
+export const merge = <T, U>(a: T, b: U): T & U => {
+  console.log('merge', removeUndefined(a), removeUndefined(b))
+  return assign(removeUndefined(a), removeUndefined(b))
+}
+
+export const removeUndefined = <T>(a: T): T => mapToObj(entries(a).filter(([_, v]) => v !== undefined), kv => kv) as T
 
 /** formats the given date or string. If tz is not specified it will be displayed in the local time */
 export const dateFormat = (date: Date | string, tz?: string | 'UTC', fmt: string = 'do MMM yyyy') => {
