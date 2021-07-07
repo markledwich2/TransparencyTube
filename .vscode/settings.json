@@ -57,4 +57,5 @@
       "activityBar.background": "#223f3f",
     }
   },
+  "aws.sam.enableCodeLenses": false,
 }

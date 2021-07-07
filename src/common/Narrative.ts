@@ -136,6 +136,10 @@ export const narrativeProps = {
     filterRange: { start: '2019-01-01' },
     narratives: [`maccas`, 'maccas-ceo', 'maccas-veg', 'maccas-union', 'maccas-unhealthy', 'maccas-fired'],
     words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
+  } as NarrativeVideoComponentProps,
+  qMilitary: {
+    defaultFilter: { narrative: ['QAnon - Military in Control'] },
+    filterRange: { start: '2020-09-03' }
   } as NarrativeVideoComponentProps
 }
 
