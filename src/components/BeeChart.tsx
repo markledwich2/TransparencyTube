@@ -2,9 +2,9 @@ import {
   SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear, Simulation, ScaleLinear
 } from 'd3'
 import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
-import { compact, flatMap, groupBy, indexBy, mapValues, take } from 'remeda'
+import { compact, groupBy, indexBy, mapValues, take } from 'remeda'
 import styled from 'styled-components'
-import { groupMap, keys, mapEntries, max, minMax, sumBy, values, maxBy, orderBy } from '../common/Pipe'
+import { groupMap, keys, mapEntries, max, minMax, sumBy, values, maxBy, orderBy, flatMap } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
 import { scaleUtc } from '@visx/visx'
 import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, formatISO, parseISO, startOfMonth, startOfWeek } from 'date-fns'

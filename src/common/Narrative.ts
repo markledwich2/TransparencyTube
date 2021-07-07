@@ -1,4 +1,4 @@
-import { tableMd } from './Metadata'
+import { tableMd, TableMdRun } from './Metadata'
 import { useEffect, useState, useMemo } from "react"
 import { indexBy, pick, pipe, uniq, omit } from 'remeda'
 import { blobIndex, idxColDateRange } from './BlobIndex'
@@ -48,17 +48,16 @@ const defaultProps: UseNarrativeProps = {
   videoMap: (v) => ({ ...v, errorType: v.errorType ?? 'Available' }),
 }
 
-export const getVideoMd = (props: NarrativeVideoComponentProps): FilterTableMd => tableMd({
+export const getVideoMd = (props: NarrativeVideoComponentProps, idx: NarrativeIdx): FilterTableMd => tableMd({
   ...md.video,
   narrative: {
     ...md.video.narrative,
     singleSelect: true,
     hideAll: true,
-    values: props.narratives?.map(n => ({ value: n, label: narrativeCfg[n]?.label ?? n }))
+    values: (props.narratives ?? idx?.videos?.cols.narrative.distinct)?.map(n => ({ value: n, label: narrativeCfg[n]?.label ?? n }))
   },
   keywords: {
     ...md.video.keywords,
-
   },
   ...props.md
 })

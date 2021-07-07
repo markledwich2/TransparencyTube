@@ -50,11 +50,7 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
     ... (narrative ? narrativeProps[narrative] : {}),
     ...props
   }
-  const { colorBy, groupBy } = props
-  const videoMd = getVideoMd(props)
-  const colorMd = colorBy && colMd(videoMd[colorBy] ?? md.channel[colorBy])
-  const groupMd = groupBy && colMd(videoMd[groupBy] ?? md.channel[groupBy])
-  const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
+
   const { channels, videoRows, loading, idx, dateRange, dateRangeIdx, setQuery, q, videoFilter, setVideoFilter } = useNarrative(props) // ignore bubbles and go directly to video granularity
   const windowDim = useWindowDim()
   const selectRange = rangeFromQuery(q, null, 'selected-')
@@ -64,6 +60,11 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
     return selectRange.start <= upload && selectRange.end > upload
   }
 
+  const { colorBy, groupBy } = props
+  const videoMd = getVideoMd(props, idx)
+  const colorMd = colorBy && colMd(videoMd[colorBy] ?? md.channel[colorBy])
+  const groupMd = groupBy && colMd(videoMd[groupBy] ?? md.channel[groupBy])
+  const getColor = (v: NarrativeVideo) => colorMd.val[v[colorBy] as any]?.color ?? '#888'
   const { bubbles, videos } = useMemo(() => {
     const bubbles = videoRows?.map(v => ({
       id: v.videoId,
@@ -77,13 +78,14 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
     }))
     const videos = videoRows ? videoRows.filter(v => filterIncludes(pick(q, ['channelId']), v) && inSelectRange(v) != false) : null
     return { bubbles, videos }
-  }, [videoRows, channels]) // videRows will update with new data form indexes, so ignore those on q to keep showing existing data until it's ready 
+  }, [videoRows, channels]) // videRows will update with new data form indexes, so ignore those on q to keep showing existing data until it's ready
 
   const tip = useTip<NarrativeVideo>()
   const barTip = useTip<BarNode<BeehiveNode<NarrativeVideo>>>()
   const highlight = props.words.concat(flatMap(q.narrative ?? [], n => narrativeCfg[n]?.highlight ?? []))
-
   const filterRange = merge(dateRangeIdx, props.filterRange ? rangeFromQuery(props.filterRange) : {})
+  const showNarrativeFilter = !narrative && videoMd['narrative']?.values?.length > 0 || props.narratives?.length > 1
+  const narrativeFilterDisplay = videoMd['narrative']?.values?.length < 7 ? 'buttons' : 'popup'
 
   return <>
     <TextSection style={{ margin: '1em' }}>
@@ -98,7 +100,13 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
           onChange={r => setQuery(rangeToQuery(r))} />
       </FilterPart>
       <FilterPart>
-        {props.narratives?.length > 1 && <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['narrative'])} onFilter={setVideoFilter} rows={videoRows} display='buttons' />}
+        {showNarrativeFilter && <>
+          {narrativeFilterDisplay == 'popup' && <>narrative</>}
+          <InlineValueFilter metadata={videoMd}
+            filter={pickFull(videoFilter, ['narrative'])}
+            onFilter={setVideoFilter} rows={videoRows}
+            display={narrativeFilterDisplay}
+          /></>}
         <InlineValueFilter metadata={videoMd} filter={pickFull(videoFilter, ['errorType', 'keywords'])} onFilter={setVideoFilter} rows={videoRows} showCount />
       </FilterPart>
       <FilterPart>
