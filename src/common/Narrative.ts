@@ -138,8 +138,8 @@ export const narrativeProps = {
     words: [`McDonald's`, 'Maccas', `Macca's`, 'Mickey D', 'Golden Arches', 'Mickey Deez'],
   } as NarrativeVideoComponentProps,
   qMilitary: {
-    defaultFilter: { narrative: ['QAnon - Military in Control'] },
-    filterRange: { start: '2020-09-03' }
+    defaultFilter: { start: '2020-11-03', narrative: ['QAnon - Military in Control'] },
+    filterRange: { start: '2020-11-03' }
   } as NarrativeVideoComponentProps
 }
 
