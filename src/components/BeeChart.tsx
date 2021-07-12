@@ -43,6 +43,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   ticks?: number
   selectedRange?: DateRangeValue
   maxBubbles?: number
+  widthFactor?: number
   groupRender?: (group: string, rows: T[]) => JSX.Element
 }) => {
 
@@ -64,7 +65,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
 
   const { w } = useMemo(() => {
     if (!dNodes) return { w: props.w }
-    const w = max([props.w - 20, max(values(gNodes).map(g => visibleOnly(g).length)) * 1.3])
+    const w = max([props.w - 20, max(values(gNodes).map(g => visibleOnly(g).length)) * (props.widthFactor ?? 1) * 1.3])
     return { w }
   }, [nodeIdsString, props.w])
 

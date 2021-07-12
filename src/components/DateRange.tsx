@@ -34,7 +34,8 @@ export const rangeFromQuery = (q: DateRangeQueryState<typeof prefix>, defaultRan
 
 export const rangeToQuery = (r: DateRangeValue, prefix?: string): DateRangeQueryState<typeof prefix> => {
   prefix ??= ''
-  const res = ({ [`${prefix}start`]: r?.start?.toISOString(), [`${prefix}end`]: r?.end?.toISOString() })
+  const dateStr = (d: Date) => d && !isNaN(d.getTime()) ? d.toISOString() : null
+  const res = ({ [`${prefix}start`]: dateStr(r?.start), [`${prefix}end`]: dateStr(r?.end) })
   return res
 }
 

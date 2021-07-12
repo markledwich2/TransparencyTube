@@ -96,6 +96,7 @@ export const removeUndefined = <T>(a: T): T => mapToObj(entries(a).filter(([_, v
 export const dateFormat = (date: Date | string, tz?: string | 'UTC', fmt: string = 'do MMM yyyy') => {
   if (!date) return
   const d: Date = (typeof (date) == 'string') ? parseISO(date) : date
+  if (isNaN(d.getTime())) return
   return tz ? format(utcToZonedTime(d, tz), fmt, { timeZone: tz }) //https://stackoverflow.com/questions/58561169/date-fns-how-do-i-format-to-utc
     : format(d, fmt)
 }

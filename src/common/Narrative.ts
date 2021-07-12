@@ -33,6 +33,9 @@ export type NarrativeFilterState = DateRangeQueryState<''> & DateRangeQueryState
     errorType?: string[]
     keywords?: string[]
     groupBy?: string
+    sizeFactor?: number
+    widthFactor?: number
+    maxVideos?: number
   }
 
 export interface UseNarrativeProps {
@@ -103,11 +106,11 @@ export const narrativeProps = {
   qanon: {
     narratives: ['QAnon'],
     defaultFilter: { start: '2020-05-01', end: '2021-06-1' },
+    filterRange: { start: '2018-01-01' },
     words: ['qanon', 'trump', 'august', 'reinstate', 'jfk'],
     maxVideos: 3000,
     showLr: false,
     showPlatform: true,
-    sizeFactor: 1,
     ticks: 400
   } as NarrativeVideoComponentProps,
   comcast: {

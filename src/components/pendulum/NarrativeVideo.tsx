@@ -60,6 +60,8 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
     return selectRange.start <= upload && selectRange.end > upload
   }
 
+  const sizeFactor = q.sizeFactor ?? props.sizeFactor
+  const maxVideos = q.maxVideos ?? props.maxVideos
   const { colorBy, groupBy } = props
   const videoMd = getVideoMd(props, idx)
   const colorMd = colorBy && colMd(videoMd[colorBy] ?? md.channel[colorBy])
@@ -141,9 +143,10 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
           selectedRange={rangeFromQuery(q, null, 'selected-')}
           tip={tip}
           barTip={barTip}
-          bubbleSize={windowDim.h / 1200 * props.sizeFactor}
+          bubbleSize={windowDim.h / 1200 * sizeFactor}
+          widthFactor={q.widthFactor}
           ticks={props.ticks}
-          maxBubbles={props.maxVideos}
+          maxBubbles={maxVideos}
           groupRender={(g, videos) => <GroupTitle group={g} videos={videos} keywords={q.keywords} md={groupMd} suffix={props.groupTitleSuffix} />}
         />}
       </ContainerDimensions>
