@@ -142,7 +142,12 @@ export const narrativeProps = {
   qMilitary: {
     defaultFilter: { start: '2020-11-03', narrative: ['QAnon - Military in Control'] },
     filterRange: { start: '2020-11-03' }
-  } as NarrativeVideoComponentProps
+  } as NarrativeVideoComponentProps,
+  ua: {
+    defaultFilter: { start: '2020-01-01', narrative: ['ua-all'] },
+    filterRange: { start: '2019-01-01' },
+    narratives: ['ua-all', 'ua-protest-chicago', 'ua-protest', 'ua-georgia']
+  }
 }
 
 export const narrativeCfg: { [index: string]: { label?: string, highlight?: string[] } } = {
@@ -187,7 +192,11 @@ export const narrativeCfg: { [index: string]: { label?: string, highlight?: stri
   },
   'maccas-fired': {
     label: 'CEO fired'
-  }
+  },
+  'ua-all': { label: 'United Airlines', highlight: ['United', 'Airlines'] },
+  'ua-protest-chicago': { label: 'G. Floyd Protests (Chicago)', highlight: ['protest', 'bml', 'george floyd', 'chicago'] },
+  'ua-protest': { label: 'G. Floyd Protests', highlight: ['protest', 'bml', 'george floyd', 'chicago'] },
+  'ua-georgia': { label: 'Georgia Voting Rights', highlight: ['Georgia', 'Voting Rights'] }
 }
 
 export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
