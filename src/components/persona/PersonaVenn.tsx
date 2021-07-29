@@ -1,18 +1,18 @@
 import React, { useEffect, useState, FunctionComponent as FC, CSSProperties, useMemo, Fragment } from 'react'
 import { flatMap, pick, uniq } from 'remeda'
 import styled from 'styled-components'
-import { getBounds, circleToRect, offsetTransform, pointTranslate, getTextWidth } from '../common/Draw'
-import { Channel, md } from '../common/Channel'
-import { Rec, RecGroup, isRecVideo, isRecGroup, RecVideo } from '../common/Personalization'
-import { VideoCommon } from '../common/RecfluenceApi'
-import { VennSet, vennLayout, VennSetLayout } from '../common/Venn'
-import { Tag } from './Channel'
-import { Video } from './Video'
-import { styles } from './Style'
-import { logIfError, toJson } from '../common/Utils'
+import { getBounds, circleToRect, offsetTransform, pointTranslate, getTextWidth } from '../../common/Draw'
+import { Channel, md } from '../../common/Channel'
+import { Rec, RecGroup, isRecVideo, isRecGroup, RecVideo } from '../../common/Persona'
+import { VideoCommon } from '../../common/RecfluenceApi'
+import { VennSet, vennLayout, VennSetLayout } from '../../common/Venn'
+import { Tag } from '../Channel'
+import { Video } from '../Video'
+import { styles } from '../Style'
+import { logIfError, toJson } from '../../common/Utils'
 import { AccountTag } from './PersonaBar'
-import { Tip, useTip } from './Tip'
-import { videoUrl } from '../common/Video'
+import { Tip, useTip } from '../Tip'
+import { videoUrl } from '../../common/Video'
 
 export type RecVennKey = Pick<Rec, 'label' & 'from_video_id'>
 const tagMd = md.channel.tags.val
@@ -30,7 +30,7 @@ export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, v
   const vennCfg = { width: size, height: size, padding: 20 }
 
   const { chart, circles, bounds } = useMemo(() => {
-    console.log('PersonalizationVenn data')
+    //console.log('PersonalizationVenn data')
     const chart = sets.length > 0 ? (logIfError(() => vennLayout(sets, vennCfg)) ?? []) : []
     const circles = chart.filter(c => c.circle)
     const bounds = getBounds(flatMap(circles, c =>
@@ -39,13 +39,13 @@ export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, v
   }, [toJson(vennCfg), sets])
 
   const videoTip = useTip<RecVideo>()
-  console.log('PersonalizationVenn render')
+  //console.log('PersonalizationVenn render')
 
   const getCircleColor = (c: VennSetLayout<RecGroup>) => tagMd[c.key]?.color
   const rowCircles = flatMap(chart, c => c.circles)
   return <div>
     {useMemo(() => {
-      console.log('PersonalizationVenn svg render')
+      //console.log('PersonalizationVenn svg render')
       return <SvgStyle width={bounds.w} height={bounds.h}>
         <defs>
           {uniq(rowCircles.map(r => r.r)).map(r => <clipPath key={r} id={`clip-${r}`}><circle r={r} /></clipPath>)}

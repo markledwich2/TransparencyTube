@@ -263,7 +263,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
   return <VideoStyle className='video' style={style}>
     <FlexRow style={{ flexWrap: 'wrap' }}>
       {showThumb && <div style={{ position: 'relative' }}>
-        <VideoA id={v.videoId} platform={v.platform} >{thumb && <img className='thumb' src={thumb}
+        <VideoA id={v.videoId} platform={v.platform} >{thumb && <img className='thumb' src={thumb} onLoad={(e) => true}
           style={{ height: '140px', width: '186px', marginTop: '1em', ...props.thumbStyle }} />}</VideoA>
         {v.durationSecs && <div className='duration'>{hoursFormat(v.durationSecs / 60 / 60)}</div>}
         {v.rank && <div className='rank'>{v.rank}</div>}

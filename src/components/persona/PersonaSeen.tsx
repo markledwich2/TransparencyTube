@@ -1,19 +1,19 @@
 import React, { FunctionComponent as FC, CSSProperties, useEffect, useState } from 'react'
-import { FlexRow, StyleProps } from './Style'
-import { dateFormat, numFormat } from '../common/Utils'
+import { FlexRow, StyleProps } from '../Style'
+import { dateFormat, numFormat } from '../../common/Utils'
 import { groupBy, pipe, sortBy } from 'remeda'
-import { Channel, md } from '../common/Channel'
+import { Channel, md } from '../../common/Channel'
 import styled from 'styled-components'
-import { VideoA, Videos } from './Video'
-import { ChannelDetails, ChannelTitle, Tag } from './Channel'
-import { entries, orderBy } from '../common/Pipe'
-import { RotateContent } from './RotateContent'
-import { videoThumb } from '../common/Video'
-import { Seen as Seen, SeenKey } from '../common/Personalization'
-import { blobIndex, BlobIndex } from '../common/BlobIndex'
+import { VideoA, Videos } from '../Video'
+import { ChannelDetails, ChannelTitle, Tag } from '../Channel'
+import { entries, orderBy } from '../../common/Pipe'
+import { RotateContent } from '../RotateContent'
+import { videoThumb } from '../../common/Video'
+import { Seen as Seen, SeenKey } from '../../common/Persona'
+import { blobIndex, BlobIndex } from '../../common/BlobIndex'
 import { AccountTag } from './PersonaBar'
-import { Tip, UseTip, useTip } from './Tip'
-import { Popup } from './Popup'
+import { Tip, UseTip, useTip } from '../Tip'
+import { Popup } from '../Popup'
 import { UnparsedSyntheticReference } from 'typescript'
 import numeral from 'numeral'
 
@@ -58,7 +58,7 @@ const VideoTile: FC<{
   useTip?: UseTip<Channel>
   verb: string
 }> = ({ s, c, useTip, verb }) => <VideoTileStyle data-video-id={s.videoId}>
-  <VideoA id={s.videoId}><img src={videoThumb(s, 'high')} style={{ height: '230px' }} /></VideoA>
+  <VideoA id={s.videoId}><img src={videoThumb(s, 'high')} onError={() => true} style={{ height: '230px' }} /></VideoA>
   <div className="title">{s.videoTitle}</div>
   {c && <ChannelTitle className='channel' c={c} titleStyle={{ fontSize: '1rem' }} logoStyle={{ height: '50px' }} useTip={useTip} />}
   <SeenVideoExtra s={s} verb={verb} />

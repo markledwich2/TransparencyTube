@@ -1,38 +1,35 @@
-import React, { useEffect, useState, FunctionComponent as FC, Fragment, useMemo } from 'react'
+import React, { useEffect, useState, FunctionComponent as FC, useMemo } from 'react'
 import Layout from '../components/Layout'
-import { FlexRow, MinimalPage, NarrowSection, StyleProps, styles } from '../components/Style'
+import { FlexRow, MinimalPage, NarrowSection, styles } from '../components/Style'
 import PurposeBanner from '../components/PurposeBanner'
-import { dateFormat, delay, navigateNoHistory, numFormat, toJson } from '../common/Utils'
-import { first, flatMap, groupBy, pick, pipe, uniq, indexBy, mapValues } from 'remeda'
+import { dateFormat, numFormat, toJson } from '../common/Utils'
+import { pick, uniq, indexBy } from 'remeda'
 import { Channel, getChannels, md } from '../common/Channel'
 import ContainerDimensions from 'react-container-dimensions'
-import { VennSet, vennSets } from '../common/Venn'
-import { VideoCommon } from '../common/RecfluenceApi'
 import { Video } from '../components/Video'
 import { BlobIndex, blobIndex } from '../common/BlobIndex'
 import { useQuery } from '../common/QueryString'
 import { TextSection } from '../components/Markdown'
 import { FilterHeader as FH, FilterPart as FP } from '../components/FilterCommon'
-import { FilterState, InlineValueFilter as FV } from '../components/ValueFilter'
-import { entries, mapEntries, orderBy, takeRandom, values } from '../common/Pipe'
-import PersonaBar, { BarFilter, BarStat, loadBarData, PersonaAllBarData, PersonaBarData, useBarData } from '../components/PersonaBar'
-import { isRecVideo, Rec, RecGroup, RecVideo, Seen, SeenKey } from '../common/Personalization'
-import { PersonaVenn, RecVennKey } from '../components/PersonaVenn'
-import { PersonaSeen, useSeen, PersonaSeenPopup } from '../components/PersonaSeen'
+import { InlineValueFilter as FV } from '../components/ValueFilter'
+import { takeRandom } from '../common/Pipe'
+import PersonaBar, { BarFilter, BarStat, PersonaBarData, useBarData } from '../components/persona/PersonaBar'
+import { loadRecData, Rec, RecState } from '../common/Persona'
+import { PersonaVenn, RecVennKey } from '../components/persona/PersonaVenn'
+import { PersonaSeen, useSeen, PersonaSeenPopup } from '../components/persona/PersonaSeen'
 import { PeriodSelect, periodString } from '../components/Period'
-import { Spinner } from '../components/Spinner'
 import { RotateContent } from '../components/RotateContent'
-import { ChannelDetails, ChannelLogo, ChannelSearch } from '../components/Channel'
-import { TableMd, tableMd, TableMdRun } from '../common/Metadata'
-import { CloseOutline } from 'styled-icons/evaicons-outline'
+import { ChannelDetails } from '../components/Channel'
+import { tableMd, TableMdRun } from '../common/Metadata'
+
 import { parseISO } from 'date-fns'
 import { Tip, useTip } from '../components/Tip'
 import styled from 'styled-components'
 import { Tab, Tabs } from '../components/Tab'
+import { PrefixAll } from '../common/Types'
+import { SelectWithChannelSearch } from '../components/persona/SelectWithChannelSearch'
 
-type PrefixAll<T, P extends string> = {
-  [K in keyof T & string as `${P}${Capitalize<K>}`]: T[K]
-}
+
 
 // type BarFilterPrefix = 'rec' | 'feed'
 // type BarFilters = { [K in `${BarFilterPrefix}${Capitalize<keyof BarFilter>}`]: BarFilter[`${keyof BarFilter}`] }
@@ -241,107 +238,3 @@ const TS = styled(TextSection)`
 
 const vennFilterKeys: (keyof VennFilter)[] = ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']
 type VennFilter = Pick<QueryState, 'vennLabel' | 'vennChannelIds' | 'vennAccounts' | 'vennDay'>
-
-export interface RecState {
-  groups: RecGroup[]
-  recs: Rec[]
-  sets: VennSet<RecGroup>[]
-  byId: Record<string, RecVideo>
-  fromVideos: (VideoCommon & { days: string[] })[]
-  availableChannelIds: string[]
-  availableDays: string[]
-  filter: VennFilter
-}
-export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
-  const vennAccounts = filter.vennAccounts ?? ['Fresh', 'PartisanLeft', 'PartisanRight']
-  const vennLabel = filter.vennLabel ?? (filter.vennChannelIds ? undefined : first(recIdx.cols.label.distinct)) // filter by label if there aren't other filters
-  const accountFilter = (acc: string[]) => acc.filter(a => vennAccounts.includes(a))
-  const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
-
-  const rawRecs = await recIdx.rows({ fromChannelId: filter.vennChannelIds, label: vennLabel })
-  const availableDaysWorking = pipe(
-    mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
-    ({
-      day, videos: uniq(g.filter(r => accountFilter(r.accounts).length == vennAccounts.length)
-        .map(r => r.fromVideoId)).length
-    })),
-    orderBy(v => [v.videos, v.day], ['desc', 'desc'])
-  )
-  const availableDays = availableDaysWorking.map(v => v.day)
-  const dayExists = filter.vennDay && availableDays.includes(filter.vennDay)
-  // vennDay: null -> All, undefined or no overlap -> first, date > videos with that date
-  const vennDay = dayExists ? filter.vennDay : (filter.vennDay === null ? null : first(availableDays))
-  const filteredRecs = rawRecs.filter(r => vennDay == null || vennDay == r.day)
-
-  const recs = filteredRecs
-    .map(r => ({ ...r, accounts: renameAccounts(r.accounts) }))
-    .map(r => ({ ...r, groupAccounts: accountFilter(r.accounts).sort() }))
-  const groups = entries(
-    groupBy(recs, r => `${r.groupAccounts.join(':')}|${r.toChannelId}`)
-  ).map(([id, recs]) => {
-    const r = recs[0]
-    const group = {
-      ...pick(r, ['toChannelId', 'toChannelTitle']),
-      accounts: pipe(recs, flatMap(r => r.accounts), uniq()).sort(),
-      groupAccounts: r.groupAccounts, id
-    }
-
-    // group recs to the same videos
-    const videoRecs = mapEntries(groupBy(recs.map(r => ({ ...r, id: `${id}|${r.toVideoId}` })), r => r.id), (recs, id) => {
-      const { day, fromVideoId, fromVideoTitle, ...r } = recs[0]
-      const recVideo: RecVideo = { ...r, recs, id }
-      return recVideo
-    })
-    return { id, ...group, videoRecs }
-  })
-
-  const sets = vennSets(groups, {
-    getKey: (r) => r.id,
-    getSets: (r) => r.groupAccounts,
-    getSize: (r) => isRecVideo(r) ? r.recs.length * r.groupAccounts.length : null,
-    getChildren: (r) => r.videoRecs
-  })
-
-  const byId = pipe(
-    flatMap(groups, r => r.videoRecs),
-    indexBy(r => r.id)
-  )
-
-  const fromVideos = mapEntries(groupBy(filteredRecs, d => d.fromVideoId), (recs) => {
-    const r = recs[0]
-    const v = ({
-      videoId: r.fromVideoId,
-      videoTitle: r.fromVideoTitle,
-      channelId: r.fromChannelId,
-      channelTitle: r.fromChannelId && chans?.[r.fromChannelId]?.channelTitle,
-      days: uniq(recs.map(r => r.day))
-    })
-    return v
-  })
-
-  const availableChannelIds = recIdx?.cols.fromChannelId?.distinct.filter(id => chans?.[id])
-  return {
-    recs, groups, sets, byId, fromVideos, availableChannelIds, availableDays,
-    filter: { vennLabel, vennChannelIds: filter.vennChannelIds, vennAccounts, vennDay }
-  }
-}
-
-export const SelectWithChannelSearch: FC<{
-  channels: Record<string, Channel>,
-  ids: string[],
-  onSelect: (select: string[]) => void,
-  multiSelect?: boolean
-} & StyleProps> = ({ channels, ids, onSelect, multiSelect, style }) => {
-  return <div style={{ display: 'flex', alignItems: 'center', ...style }}>
-    {channels && ids?.map(id => {
-      const chan = channels[id]
-      return chan && <Fragment key={id}>
-        <ChannelLogo c={chan} style={{ height: '3em' }} />
-        <CloseOutline style={{ verticalAlign: 'middle' }} className='clickable' onClick={() => onSelect(ids.filter(c => c != id))} />
-      </Fragment>
-    })}
-    {channels && (multiSelect || !ids?.length) && <ChannelSearch onSelect={c => {
-      onSelect(uniq((ids ?? []).concat([c.channelId])))
-    }} channels={values(channels)} sortBy='channelViews' style={styles.normalFont} />}
-  </div>
-}

@@ -13,7 +13,10 @@
     "outDir": "./build/",
     "moduleResolution": "node",
     "allowJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "useCache": true,
+    "forceIsolatedModules": true,
+    "transpileOnly": true
   },
   "include": [
     "./src/**/*"

@@ -3,10 +3,9 @@ import ContainerDimensions from 'react-container-dimensions'
 import { indexBy } from 'remeda'
 import { blobIndex, BlobIndex } from '../../common/BlobIndex'
 import { Channel, getChannels } from '../../common/Channel'
-import { Rec } from '../../common/Personalization'
+import { loadRecData, Rec, RecState } from '../../common/Persona'
 import Layout from '../../components/Layout'
-import { PersonaVenn, RecVennKey } from '../../components/PersonaVenn'
-import { loadRecData, RecState } from '../persona'
+import { PersonaVenn, RecVennKey } from '../../components/persona/PersonaVenn'
 
 const VennSandbox = () => {
   const [chans, setChannels] = useState<Record<string, Channel>>()

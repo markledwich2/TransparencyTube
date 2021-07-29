@@ -79,8 +79,8 @@ export const vennLayout = <T>(
   sets: VennSet<T>[],
   cfg: { width: number, height: number, padding: number }): VennSetLayout<T>[] => {
   const setsObj = indexBy(sets, s => setNamesToKey(s.sets))
-  console.log('vennLayout sets:')
-  console.table(sets)
+  //console.log('vennLayout sets:')
+  //console.table(sets)
   const rawVenn: VennChart = venn(sets)
   const scaledVenn: VennChart = scaleSolution(rawVenn, cfg.width, cfg.height, cfg.padding)
   const textCenters: TextCenters = computeTextCentres(scaledVenn, sets)
