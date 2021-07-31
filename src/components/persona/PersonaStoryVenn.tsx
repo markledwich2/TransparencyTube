@@ -15,15 +15,16 @@ import { useTip } from '../Tip'
 import { UsePersona } from '../../common/Persona'
 import { SelectWithChannelSearch } from './SelectWithChannelSearch'
 
-export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery }: UsePersona &
-{
-  setQuery: (value: VennFilter) => void
-}) => {
+export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFilters }:
+  Pick<UsePersona, 'chans' | 'recState' | 'personaMd'> & {
+    setQuery: (value: VennFilter) => void,
+    hideFilters?: boolean
+  }) => {
 
   const vennFilterProps = { metadata: personaMd, rows: recState?.recs }
   const chanTip = useTip<Channel>()
 
-  return <><NarrowSection>
+  return <><NarrowSection style={{ visibility: hideFilters ? 'hidden' : null }}>
     <FH>
       <FP>Recommendations seen by personas <FV metadata={personaMd}
         filter={{ groupAccounts: recState.filter.vennAccounts }}
@@ -63,7 +64,7 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery }: UsePe
       </div>
     </FlexRow>}
 
-    <div style={{ margin: '0 auto', maxWidth: '1000px' }}>
+    <div style={{ margin: '0 auto', maxWidth: '70vh', height: '70vh' }}>
       <ContainerDimensions>
         {({ width, height }) => {
           return <PersonaVenn channels={chans} sets={recState.sets} width={width} height={height} videos={recState.byId} />

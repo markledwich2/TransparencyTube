@@ -6,9 +6,9 @@ import { RecVennKey } from '../components/persona/PersonaVenn'
 import { blobIndex, BlobIndex } from './BlobIndex'
 import { Channel, getChannels, md } from './Channel'
 import { ColumnMdRun, tableMd } from './Metadata'
-import { mapEntries, orderBy, entries } from './Pipe'
+import { mapEntries, orderBy, entries, takeSample, values } from './Pipe'
 import { VideoCommon } from './RecfluenceApi'
-import { dateFormat, delay } from './Utils'
+import { dateFormat, delay, toJson } from './Utils'
 import { VennSet, vennSets } from './Venn'
 
 export interface Rec {
@@ -61,9 +61,12 @@ export interface UsePersona {
   watch: UseSeen
 }
 
-export const usePersona: () => UsePersona = () => {
+export const usePersona = (props?: { filter?: VennFilter }): UsePersona => {
+  const { filter } = { filter: {}, ...props }
+
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
   const [recState, setRecState] = useState<RecState>()
+  //const [recSample, setRecSample] = useState<RecState>()
   const [chans, setChannels] = useState<Record<string, Channel>>()
   const [loaded, setLoaded] = useState(false)
   const watch = useSeen('us_watch')
@@ -95,8 +98,8 @@ export const usePersona: () => UsePersona = () => {
 
   useEffect(() => {
     if (!recIdx) return
-    loadRecData(recIdx, {}, chans).then(setRecState)
-  }, [recIdx])
+    loadRecData(recIdx, filter, chans).then(setRecState)
+  }, [recIdx, toJson(filter)])
 
   return { chans, recState, recIdx, personaMd, loaded, watch }
 }
@@ -106,6 +109,7 @@ export interface VennFilter {
   vennAccounts?: string[]
   vennLabel?: string
   vennDay?: string
+  vennSample?: number
 }
 
 
@@ -127,7 +131,14 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
   const accountFilter = (acc: string[]) => acc.filter(a => vennAccounts.includes(a))
   const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
 
-  const rawRecs = await recIdx.rows({ fromChannelId: filter.vennChannelIds, label: vennLabel })
+  let rawRecs = await recIdx.rows({ fromChannelId: filter.vennChannelIds, label: vennLabel })
+
+  if (filter.vennSample != null) {
+    const chanIds = uniq(rawRecs.map(r => r.fromChannelId))
+    const chanId = chanIds[filter.vennSample % chanIds.length]
+    rawRecs = rawRecs.filter(r => r.fromChannelId == chanId)
+  }
+
   const availableDaysWorking = pipe(
     mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
     ({

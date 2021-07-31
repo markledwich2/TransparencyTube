@@ -80,11 +80,11 @@ export const SeenVideos: FC<AccountVideosProps & { verb: string }> = ({ account,
     useSeen.accountSeen(account).then(setSeen)
   }, [account, useSeen])
 
-  return seen && channels && <Videos videos={seen} channels={channels}
+  return seen && channels ? <Videos videos={seen} channels={channels}
     showChannels showThumb showTags
-    videoStyle={{ position: 'relative' }}
+    videoStyle={{ position: 'relative', marginBottom: '3em' }}
     contentBottom={s => <SeenVideoExtra s={s} verb={verb} />}
-  />
+  /> : <></>
 }
 
 const SeenVideoExtra: FC<{ s: Seen, verb: string }> = ({ s, verb }) => <>

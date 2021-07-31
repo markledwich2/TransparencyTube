@@ -66,6 +66,7 @@ export const groupMap = <T, TVal>(items: T[], getKey: (item: T) => string, getVa
   mapEntries(groupBy(items, getKey), getVal)
 
 export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null
+export const takeSample = <T>(items: T[], n: number): T[] => items ? [...Array(n).keys()].map(_ => takeRandom(items)) : []
 export const asArray = <T,>(v: Array<T> | T) => !v ? [] : Array.isArray(v) ? v as Array<T> : [v as T]
 
 export const flatMap = <T, R>(items: T[], getVals: (i: T) => R[]): R[] => [].concat(...items.map(getVals))

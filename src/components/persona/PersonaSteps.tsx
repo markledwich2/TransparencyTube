@@ -1,64 +1,73 @@
-import React, { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
-import { mapValues } from 'remeda'
+import React, { CSSProperties, FC, PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react'
+import R, { flatMap, map, mapValues, pipe } from 'remeda'
 import { entries, mapEntries } from '../../common/Pipe'
+import { useWindowDim } from '../../common/Window'
 import { Markdown, TextStyle } from '../Markdown'
 import Scrollama, { OnStepProps, ScrollamaProps } from '../scrollama/Scrollama'
 import { Step } from '../scrollama/Step'
 import { StyleProps } from '../Style'
-import { PersonaStepCfg } from './personaContent'
 
-export interface StepCfg { txt: string, style?: CSSProperties }
-export interface StepRunCfg extends StepCfg { i: number, name: string, section: string }
-export type StepSectionsCfg<T> = Record<keyof T & string, Record<string, string | StepCfg>>
+export interface StepCfg { txt: string | string[], style?: CSSProperties }
+export interface StepRunCfg { i: number, name: string, section: string, txt: string, style?: CSSProperties }
+export type StepSectionsCfg<K extends string, U> = Record<K, Record<string, string | StepCfg & U>>
 
-export const createStepSections = <T extends StepSectionsCfg<T>,>(cfg: T) => mapValues(cfg, (stepCfg, section) =>
+export const createStepSections = <K, U>(cfg: StepSectionsCfg<K & string, U>) => mapValues(cfg, (stepCfg, section) =>
   createSteps(stepCfg, section as any as string))
-const createSteps = (sepCfg: Record<string, string | StepCfg>, section: string) =>
-  mapEntries(sepCfg, (step, name, i) => ({ i, name, txt: typeof (step) == 'string' ? step : step.txt, section }))
 
-type ChartWithStepsProps = {
+const createSteps = <U,>(stepCfg: Record<string, string | StepCfg & U>, section: string): (StepRunCfg & U)[] => {
+  var stepProps = (s: (string | StepCfg & U)) => typeof (s) == 'string' ? { txt: s } : (s)
+  var res = pipe(
+    map(entries(stepCfg), ([name, s]) => ({ name, section, ...stepProps(s) })),
+    flatMap(s => typeof (s.txt) == 'string' ? [s] : s.txt.map(t => ({ ...s, txt: t }))),
+    map.indexed((s, i) => ({ i, ...s } as StepRunCfg & U))
+  )
+  return res
+}
+
+type ChartWithStepsProps<T extends StepRunCfg> = {
   name: string
-  steps: StepRunCfg[]
-  onStepProgress?: ({ data, progress }: OnStepProps<StepRunCfg>) => void
+  steps: T[]
+  onStepProgress?: (props: OnStepProps<T>) => void
   chartTop?: number
-  textTop?: number
+  textTop?: number // either an integer in pixels, or a % of window height
   chartStyle?: CSSProperties
   stepSpace?: string
-} & Omit<ScrollamaProps<StepRunCfg>, 'children'>
+} & Omit<ScrollamaProps<T>, 'children'>
 
-export const ChartWithSteps: FC<ChartWithStepsProps> =
-  ({ name, chartTop, children, chartStyle, textTop, steps, stepSpace, ...props }) => {
+export const ChartWithSteps =
+  <T extends StepRunCfg,>({ name, chartTop, children, chartStyle, textTop, steps, stepSpace, ...props }: PropsWithChildren<ChartWithStepsProps<T>>) => {
     const chartRef = useRef<HTMLDivElement>(null)
     const [chartHeight, setChartHeight] = useState<number>(null)
     useEffect(() => { if (chartRef.current) setChartHeight(chartRef.current.clientHeight) })
 
-    //console.log('ChartWS', { name, chartHeight, textTop })
+    const window = useWindowDim()
+    const textTopPx = textTop ? (Number.isInteger(textTop) ? textTop : textTop * window.h) : 100
 
     return <div style={{ position: 'relative' }}>
-      <div className='scroll-chart' ref={chartRef} style={{ position: 'sticky', top: chartTop ?? 0, ...chartStyle }}>
+      <div ref={chartRef} style={{ position: 'sticky', top: chartTop ?? 0, ...chartStyle }}>
         {children}
       </div>
-      <div className='scroll-text' style={{ position: 'relative', top: `${-(chartHeight ?? 0) + (textTop ?? 200)}px` }}>
+      <div style={{ position: 'relative', top: `${-(chartHeight ?? 0) + textTopPx}px`, pointerEvents: 'none' }}>
         {chartHeight && <Scrollama {...props} >
-          {steps.map((s, i) => <Step key={s.name} data={s}>
-            <div style={{ marginBottom: i == steps.length - 1 ? null : stepSpace ?? '100vh', ...s.style }}><TP>{s.txt}</TP></div>
+          {steps.map((s, i) => <Step key={`${s.name}-${s.i}`} data={s}>
+            <div style={{ paddingBottom: i == steps.length - 1 ? null : stepSpace ?? '100vh', ...s.style }}><TP>{s.txt}</TP></div>
           </Step>)}
         </Scrollama>}
       </div>
-    </div >
+    </div>
   }
 
-export const InlineSteps: FC<{ steps: StepRunCfg[], stepSpace?: string }> = ({ steps, stepSpace }) => {
-  return <>{steps.map((s, i) => <Step key={s.name} data={s}>
-    <div style={{ marginBottom: i == steps.length - 1 ? null : stepSpace ?? '5em', ...s.style }}><TP>{s.txt}</TP></div>
-  </Step>)}</>
-}
+export const InlineSteps: FC<{ steps: StepRunCfg[], stepSpace?: string }> = ({ steps, stepSpace }) => <>
+  {steps.map((s, i) => <Step key={s.name} data={s}>
+    <div style={{ marginBottom: i == steps.length - 1 ? null : stepSpace ?? '1em', ...s.style }}><TP>{s.txt}</TP></div>
+  </Step>)}
+</>
 
 const TP: FC<StyleProps & { children: string & ReactNode }> = ({ children, style }) => <TextStyle
   style={{
     margin: '0 auto', position: 'relative', background: 'var(--bg1)', maxWidth: '40em',
     padding: '1em',
-    fontSize: '1.5em',
+    fontSize: '1.6em',
     backgroundColor: 'rgb(var(--bgRgb), 0.6)',
     backdropFilter: 'blur(20px)',
     pointerEvents: 'none',

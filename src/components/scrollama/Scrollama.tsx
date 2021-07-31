@@ -23,7 +23,7 @@ export interface ScollamaPropsShared<T> {
 }
 
 const defaultProps = {
-  offset: '0px',
+  offset: 0.7,
   onStepProgress: null,
   onStepEnter: () => { },
   onStepExit: () => { },
