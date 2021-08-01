@@ -26,7 +26,7 @@ interface RecVennProps {
   debug?: boolean
 }
 export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, videos, debug }) => {
-  const size = Math.min(1000, width)
+  const size = Math.min(height, width)
   const vennCfg = { width: size, height: size, padding: 20 }
 
   const { chart, circles, bounds } = useMemo(() => {

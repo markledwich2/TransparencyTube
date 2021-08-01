@@ -6,13 +6,14 @@ import { MinimalPage } from '../components/Style'
 import { PersonaSeen, PersonaSeenPopup } from '../components/persona/PersonaSeen'
 import { useQuery } from '../common/QueryString'
 import { PrefixAll } from '../common/Types'
-import { usePersona } from '../common/Persona'
-import { BarFilter } from '../components/persona/PersonaBar'
+import { usePersona, usePersonaRecs } from '../common/Persona'
+import PersonaBar, { BarFilter, useBarData } from '../components/persona/PersonaBar'
 import { PersonaStoryVenn } from '../components/persona/PersonaStoryVenn'
 import { getStoryState, sections, StepState } from '../components/persona/personaContent'
 import { InlineSteps, ChartWithSteps, StepRunCfg, StepCfg } from '../components/persona/PersonaSteps'
 import { pick } from 'remeda'
 import styled from 'styled-components'
+import { assign } from '../common/Utils'
 
 export type PersonaStoryState = {
   label?: string
@@ -24,17 +25,19 @@ export type PersonaStoryState = {
   openFeed?: string
 } & PrefixAll<BarFilter, 'rec'> & PrefixAll<BarFilter, 'feed'>
 
-
-
 const ScrollamaDemo = () => {
   const [step, setStep] = useState<StepState>(null)
   const [q, setQuery] = useQuery<PersonaStoryState>()
 
   const story = getStoryState(step)
-  const persona = usePersona({ filter: story.venn.filter })
-  const { chans, loaded, watch, recState } = persona
+  const storyPersona = usePersona({ filter: story.venn.filter, channelSample: story.venn.sample })
+  const { recIdx, chans, loaded, watch, recState } = storyPersona
+  const exploreRecState = usePersonaRecs(recIdx, chans, pick(q, ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']))
   const onStepProgress = useCallback(({ data, progress }: OnStepProps<StepState>) => { setStep({ ...data, progress }) }, [])
-
+  const commonVennProps = pick(storyPersona, ['chans', 'personaMd'])
+  const barData = useBarData()
+  const commonBarData = pick(barData, ['tags', 'months'])
+  const barRecs = barData.recs ? { stats: barData.recs, ...commonBarData } : null
   console.log('step progress', { section: step?.section, prog: step?.i + step?.progress, name: step?.name, ...story })
 
   return <Layout>
@@ -56,21 +59,34 @@ const ScrollamaDemo = () => {
           steps={sections.venn}
           onStepProgress={onStepProgress}
         >
-          <ChartStyle>
-            <PersonaStoryVenn {...pick(persona, ['chans', 'personaMd'])}
-              recState={recState}
-              setQuery={setQuery}
-              hideFilters={!story.venn.showFilters} />
-          </ChartStyle>
+          <TransitionSvgStyle>
+            <PersonaStoryVenn {...commonVennProps} recState={recState} hideFilters />
+          </TransitionSvgStyle>
         </ChartWithSteps>
-      </>
-      }
+        <InlineSteps steps={sections.vennExplore} />
+        <TransitionSvgStyle>
+          {exploreRecState && <PersonaStoryVenn {...commonVennProps} recState={exploreRecState} setQuery={setQuery} />}
+        </TransitionSvgStyle>
+      </>}
+
+      {barRecs && <>
+        <ChartWithSteps
+          name='venn'
+          steps={sections.recs}
+          onStepProgress={onStepProgress}
+        >
+          <TransitionSvgStyle>
+            <PersonaBar data={barRecs} filter={{ accounts: q.recAccounts, period: q.recPeriod, tags: q.recTags }} />
+          </TransitionSvgStyle>
+        </ChartWithSteps>
+      </>}
+
       <PersonaSeenPopup verb='watched' isOpen={q.openWatch != null} onClose={() => setQuery({ openWatch: undefined })} account={q.openWatch} channels={chans} useSeen={watch} />
     </MinimalPage>
   </Layout >
 }
 
-const ChartStyle = styled.div`
+const TransitionSvgStyle = styled.div`
   svg * {
       transition:300ms all
   }

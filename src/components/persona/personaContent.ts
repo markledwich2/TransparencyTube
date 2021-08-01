@@ -1,15 +1,19 @@
-import { pick } from 'remeda'
+import { pick, range } from 'remeda'
 import { VennFilter } from '../../common/Persona'
+import { takeSample } from '../../common/Pipe'
 import { PersonaStoryState } from '../../pages/personaStory'
 import { createStepSections, StepCfg, StepRunCfg } from './PersonaSteps'
 
 
 const vennFilters = {
-  default: { vennAccounts: ['Fresh', 'PartisanLeft', 'PartisanRight'] },
-  partisanAndCulture: { vennAccounts: ['PartisanRight', 'AntiSJW', 'PartisanLeft', 'SocialJustice'] },
-  topViewed: { vennLabel: 'Top Viewed' }
+  cultureWar: { vennAccounts: ['AntiSJW', 'SocialJustice', 'Fresh'] },
+  bubbled: { vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
 }
 
+
+const randomVideos = takeSample(range(0, 200), 20)
+
+//        `Both the video and the personalization impact the recommendations, so let's look at some random videos to get more perspective`
 const sectionCfg = {
   watch: {
     intro: {
@@ -30,17 +34,31 @@ const sectionCfg = {
       style: { paddingTop: '90vh' }
     },
     election3: {
-      txt: [`Now here are the same videos comparing the *Social Justice* and *Anti-Woke* personas as well, without the *Anonymous* account`,
-        `That's just one mainstream news videos, let's look at some random videos to get more perspective`
-      ],
-      vennFilter: vennFilters.partisanAndCulture
+      txt: `Here are *Social Justice* and *Anti-Woke* personas watching the same videos.`,
+      vennFilter: vennFilters.cultureWar,
+    },
+    election4: {
+      txt: `Now *Lat Night Talk Show* and *Manosphere* personas. These are the most "bubbled" groups of our persona's.`,
+      vennFilter: vennFilters.bubbled,
+    },
+    randomIntro: {
+      txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
+      vennFilter: {}
     },
     random: {
-      txt: `Here is the first of 10 random videos keep scrolling`,
-      style: { paddingBottom: '300vh' },
-      vennFilter: vennFilters.topViewed
-    },
-    explore: { txt: `Feel free to filter and explore the different persona's`, showVenFilter: true }
+      txt: range(1, 21).map(i => `**${i}** / ${randomVideos.length}`),
+      style: { paddingBottom: '25vh', width: 'fit-content' }
+    }
+  },
+  vennExplore: {
+    explore: {
+      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's`
+    }
+  },
+  recs: {
+    intro: {
+      txt: `This is the overall stats for recommendations`
+    }
   }
 }
 
@@ -49,18 +67,15 @@ export type StepState = StepRunCfg & StepExtra & { progress?: number }
 export const sections = createStepSections<keyof typeof sectionCfg, StepExtra>(sectionCfg)
 
 export const getStoryState = (step: StepState) => {
-  const progress = step ? step.i + step.progress : 0
-  const afterStep = (section: string, after: number) => step?.section == section && progress >= after
+  const { section, name, i, progress, vennFilter } = (step ?? {})
+  const path = `${section}|${name}`
   return {
     watch: {
-      showHistory: afterStep('watch', 0.7),
+      showHistory: path != 'watch|intro' || progress > 0.3,
     },
     venn: {
-      showFilters: step?.showVenFilter,
-      filter: {
-        ...(step?.vennFilter ?? vennFilters.default),
-        vennSample: step?.name == 'random' ? Math.round(step.progress * 10) : null
-      }
+      filter: vennFilter,
+      sample: name == 'random' ? i + 1 : null
     }
   }
 }

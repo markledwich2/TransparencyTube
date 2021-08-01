@@ -38,7 +38,7 @@ interface RecGroupKey { account: string, toTag: string }
 
 export type PersonaBarData = Pick<PersonaAllBarData, 'months' | 'tags'> & { stats: BarStat[] }
 
-const PersonaBar: FC<{ data: PersonaBarData, filter: BarFilter }> = ({ data, filter }) => {
+export const PersonaBar: FC<{ data: PersonaBarData, filter: BarFilter }> = ({ data, filter }) => {
   const statsByAccount = getStatsByAccount(data, filter)
   const cfg = { font: '14px sans-serif' }
   const toTags = uniq(flatMap(values(statsByAccount), vs => vs).map(r => r.toTag))

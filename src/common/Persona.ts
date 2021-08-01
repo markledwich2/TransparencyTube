@@ -1,3 +1,4 @@
+import { shuffle } from 'd3'
 import { parseISO } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
 import { first, flatMap, groupBy, indexBy, pick, pipe, uniq } from 'remeda'
@@ -61,15 +62,23 @@ export interface UsePersona {
   watch: UseSeen
 }
 
-export const usePersona = (props?: { filter?: VennFilter }): UsePersona => {
-  const { filter } = { filter: {}, ...props }
+export const usePersona = (props?: { filter?: VennFilter, channelSample?: number }): UsePersona => {
+  const { channelSample } = props
 
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
-  const [recState, setRecState] = useState<RecState>()
-  //const [recSample, setRecSample] = useState<RecState>()
   const [chans, setChannels] = useState<Record<string, Channel>>()
   const [loaded, setLoaded] = useState(false)
   const watch = useSeen('us_watch')
+
+  const channelShuffle = useMemo(
+    () => chans ? shuffle(recIdx?.cols.fromChannelId.distinct ?? []).filter(c => chans[c]) : []
+    , [recIdx, chans])
+  const filter = {
+    ...props.filter,
+    vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [channelShuffle[channelSample % channelShuffle.length]] : undefined)
+  }
+
+  const recState = usePersonaRecs(recIdx, chans, filter)
 
   useEffect(() => {
     getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))
@@ -96,12 +105,17 @@ export const usePersona = (props?: { filter?: VennFilter }): UsePersona => {
     })
   }, [recState, recIdx])
 
+  return { chans, recState, recIdx, personaMd, loaded, watch }
+}
+
+export const usePersonaRecs = (recIdx: BlobIndex<Rec, RecVennKey>, chans: Record<string, Channel>, filter: VennFilter) => {
+  const [recState, setRecState] = useState<RecState>()
   useEffect(() => {
     if (!recIdx) return
     loadRecData(recIdx, filter, chans).then(setRecState)
   }, [recIdx, toJson(filter)])
 
-  return { chans, recState, recIdx, personaMd, loaded, watch }
+  return recState
 }
 
 export interface VennFilter {
@@ -109,7 +123,6 @@ export interface VennFilter {
   vennAccounts?: string[]
   vennLabel?: string
   vennDay?: string
-  vennSample?: number
 }
 
 
@@ -125,19 +138,15 @@ export interface RecState {
 }
 
 
-export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
+export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter?: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
+  filter ??= {}
+
   const vennAccounts = filter.vennAccounts ?? ['Fresh', 'PartisanLeft', 'PartisanRight']
   const vennLabel = filter.vennLabel ?? (filter.vennChannelIds ? undefined : first(recIdx.cols.label.distinct)) // filter by label if there aren't other filters
   const accountFilter = (acc: string[]) => acc.filter(a => vennAccounts.includes(a))
   const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
 
   let rawRecs = await recIdx.rows({ fromChannelId: filter.vennChannelIds, label: vennLabel })
-
-  if (filter.vennSample != null) {
-    const chanIds = uniq(rawRecs.map(r => r.fromChannelId))
-    const chanId = chanIds[filter.vennSample % chanIds.length]
-    rawRecs = rawRecs.filter(r => r.fromChannelId == chanId)
-  }
 
   const availableDaysWorking = pipe(
     mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
@@ -150,7 +159,9 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
   const availableDays = availableDaysWorking.map(v => v.day)
   const dayExists = filter.vennDay && availableDays.includes(filter.vennDay)
   // vennDay: null -> All, undefined or no overlap -> first, date > videos with that date
-  const vennDay = dayExists ? filter.vennDay : (filter.vennDay === null ? null : first(availableDays))
+  const vennDay = dayExists
+    ? filter.vennDay
+    : (filter.vennDay === null ? null : (availableDays.length == 1 ? first(availableDays) : null))
   const filteredRecs = rawRecs.filter(r => vennDay == null || vennDay == r.day)
 
   const recs = filteredRecs

@@ -17,40 +17,41 @@ import { SelectWithChannelSearch } from './SelectWithChannelSearch'
 
 export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFilters }:
   Pick<UsePersona, 'chans' | 'recState' | 'personaMd'> & {
-    setQuery: (value: VennFilter) => void,
+    setQuery?: (value: VennFilter) => void,
     hideFilters?: boolean
   }) => {
 
   const vennFilterProps = { metadata: personaMd, rows: recState?.recs }
   const chanTip = useTip<Channel>()
+  const fromVideoCount = recState?.fromVideos?.length
 
   return <><NarrowSection style={{ visibility: hideFilters ? 'hidden' : null }}>
     <FH>
       <FP>Recommendations seen by personas <FV metadata={personaMd}
-        filter={{ groupAccounts: recState.filter.vennAccounts }}
+        filter={{ groupAccounts: recState?.filter.vennAccounts }}
         onFilter={f => setQuery({ vennAccounts: f.groupAccounts })}
         rows={recState?.groups} />
       </FP>
-      <FP>
+      {/* <FP>
         in video collection <FV {...vennFilterProps} filter={{ label: recState?.filter?.vennLabel }} onFilter={f => setQuery({ vennLabel: f.label })} />
-      </FP>
+      </FP> */}
       {chans && <FP>from channel
         <SelectWithChannelSearch ids={recState?.filter.vennChannelIds}
-          onSelect={ids => setQuery({ vennChannelIds: ids?.length ? ids : undefined })}
+          onSelect={ids => setQuery?.({ vennChannelIds: ids?.length ? ids : undefined })}
           channels={chans}
           style={{ marginLeft: '1em' }} />
         {recState.availableChannelIds && <FP><button
           style={{ ...styles.centerH, display: 'block' }}
-          onClick={() => setQuery({ vennChannelIds: [takeRandom(recState.availableChannelIds)], vennLabel: undefined, vennDay: undefined })}
+          onClick={() => setQuery?.({ vennChannelIds: [takeRandom(recState.availableChannelIds)], vennLabel: undefined, vennDay: undefined })}
         >Random</button></FP>}
       </FP>}
-      <FP>on day<FV {...vennFilterProps} filter={{ day: recState?.filter?.vennDay }}
-        onFilter={f => setQuery({ vennDay: f.day })} /></FP>
+      <FP>on <FV {...vennFilterProps} filter={{ day: recState?.filter?.vennDay }}
+        onFilter={f => setQuery?.({ vennDay: f.day })} /></FP>
     </FH>
   </NarrowSection>
 
     {recState?.fromVideos && <FlexRow style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'center' }}>
-      <div><div style={{ marginBottom: '1em' }}>Showing recommendations from <b>{numFormat(recState.fromVideos.length)}</b> videos</div>
+      <div>
         <RotateContent
           data={recState.fromVideos}
           getDelay={() => 4000 + Math.random() * 1000}
@@ -61,13 +62,14 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
             const c = chans?.[v.channelId] ?? { channelId: v.channelId, channelTitle: v.channelTitle }
             return <Video v={v} c={c} showThumb showChannel useTip={chanTip} />
           }} />
+        <p style={{ visibility: fromVideoCount > 1 ? null : 'hidden' }}>recommendations from <b>{numFormat(fromVideoCount)}</b> videos</p>
       </div>
     </FlexRow>}
 
-    <div style={{ margin: '0 auto', maxWidth: '70vh', height: '70vh' }}>
+    <div style={{ width: '100%', height: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <ContainerDimensions>
         {({ width, height }) => {
-          return <PersonaVenn channels={chans} sets={recState.sets} width={width} height={height} videos={recState.byId} />
+          return <PersonaVenn channels={chans} sets={recState?.sets} width={width} height={height} videos={recState?.byId} />
         }}
       </ContainerDimensions>
     </div>
