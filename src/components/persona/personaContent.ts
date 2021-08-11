@@ -1,17 +1,16 @@
-import { pick, range } from 'remeda'
+import { first, mapToObj, mapValues, range } from 'remeda'
 import { VennFilter } from '../../common/Persona'
 import { takeSample } from '../../common/Pipe'
-import { PersonaStoryState } from '../../pages/personaStory'
-import { createStepSections, StepCfg, StepRunCfg } from './PersonaSteps'
+import { createStepSections, StepRunCfg } from './PersonaSteps'
+import deepmerge from 'deepmerge'
+import { dedent } from '../../common/Utils'
+import { BarFilter } from './PersonaBarUse'
 
 
-const vennFilters = {
-  cultureWar: { vennAccounts: ['AntiSJW', 'SocialJustice', 'Fresh'] },
-  bubbled: { vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
-}
+const randomVideos = takeSample(range(0, 200), 8)
 
-
-const randomVideos = takeSample(range(0, 200), 20)
+const minStepTextStyle = { backgroundColor: 'rgb(var(--bgRgb), 0.3)', backdropFilter: 'blur(2px)', fontWeight: 'bold' }
+const interestingAccounts = ['Fresh', 'PartisanLeft', 'PartisanRight', 'SocialJustice', 'AntiSJW', 'LateNightTalkShow', 'Conspiracy', 'Mainstream News', 'Non-political']
 
 //        `Both the video and the personalization impact the recommendations, so let's look at some random videos to get more perspective`
 const sectionCfg = {
@@ -35,47 +34,109 @@ const sectionCfg = {
     },
     election3: {
       txt: `Here are *Social Justice* and *Anti-Woke* personas watching the same videos.`,
-      vennFilter: vennFilters.cultureWar,
+      vennFilter: { vennAccounts: ['AntiSJW', 'SocialJustice', 'Fresh'] },
     },
     election4: {
       txt: `Now *Lat Night Talk Show* and *Manosphere* personas. These are the most "bubbled" groups of our persona's.`,
-      vennFilter: vennFilters.bubbled,
+      vennFilter: { vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
     },
     randomIntro: {
       txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
-      vennFilter: {}
+      vennFilter: { vennAccounts: [''] },
+      style: { paddingBottom: '35vh' }
     },
     random: {
-      txt: range(1, 21).map(i => `**${i}** / ${randomVideos.length}`),
-      style: { paddingBottom: '25vh', width: 'fit-content' }
+      txt: range(1, randomVideos.length + 1).map(i => `**${i}** / ${randomVideos.length}`),
+      style: { paddingBottom: '25vh', width: 'fit-content' },
+      textStyle: minStepTextStyle
     }
   },
   vennExplore: {
     explore: {
-      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's`
+      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's. Lick **RANDOM** to see a random channels recommendations.`
+    }
+  },
+  recsAnalysis: {
+    intro: dedent`## Influence of Personalization
+    
+    Here are some overall measures influence of personalization on YouTube recommendations. We found that on average, when a persona watched the same video in the same week, only **26% of recommendations were repeated**. This is a baseline that we compare the personalization to.
+    
+    ** Persona Personalization **
+    When a persona watched the **same video as an anonymous user** within 7 days, only 16% of recommendations were repeated - **10% less repeated recommendations vs watching as the same persona**. 
+    
+    ** Influence of video relevance **
+    When a personas watch **different videos** on the same day, only 6% of recommendations were repeated - **20% less repeated recommendations vs watching the same video**.
+    `
+  },
+  recsIntro: {
+    intro: {
+      txt: dedent`Now we'll be looking at the overall recommendations shown broken down by which political leaning they are towards.
+      - **% of persona recommendations**: the percent of all recommendations show to this persona. Note that these add up to more than 100% because recommended video categories overlap with each other (e.g. a video's channel can be bother *MSM* and *Partisan Left*).
+      - **vs video views**: \`[% of recommendations] - [% of total video views]\`. This is for comparison vs a simple/neural algorithm which would recommend proportional to views.
+      - **vs anonymous**: \`[% of recommendations] - [% equivalent anonymous recommendations]\`. A comparison to a user which is not logged in.
+      We will start with recommendations show to the  *Anonymous* persona then move though a sample of the others.`,
+      style: { paddingTop: '5em' }
     }
   },
   recs: {
     intro: {
-      txt: `This is the overall stats for recommendations`
+      txt: `Most **Anonymous** recommendations are towards **Non-Political** and **Mainstream News**. The most favoured category is **Partisan Left** when compared to the views to those videos. With this as a baseline, how does personalization impact this? `,
+      barFilter: { accounts: ['Fresh'], tags: interestingAccounts },
+      style: { paddingTop: '90vh', paddingBottom: '90vh' }
+
+    },
+    ...mapToObj([
+      [`PartisanLeft`, `Personalization means that *Partisan Left* persona sees their favorite category 21%-points more compared to the anonymous viewer. The other categories are less impacted, surprisingly *Mainstream News* received 12% less despite mainly being left-leaning.`],
+      ['PartisanRight', `*Partisan right* videos are shown their own category of video 11% more than anonymous, with *Mainstream news*, *Partisan left* and *Social Justice* video's being shown less often`],
+      ['SocialJustice', `*Social Justice* within-bubble recommendations are 18% more than an anonymous viewer`],
+      ['AntiSJW', `*Anti-Woke* within-bubble recommendations are 13% more than an anonymous viewer. They receive 16% more to *Non-political* news, which is more than the within-bubble personalization.`],
+      ['LateNightTalkShow', `The *Late night talk show* persona's within-bubble recommendations are 41% more than the anonymous viewer - by far the most dramatic personalization of all the persona's. It's not clear that YouTube is treating this content differently, it could be that because the amount of video's within this bubble is very small, so the algorithm might perceive a stronger signal is what the persona watched compared to the others.`],
+      ['Conspiracy', `*Conspiracy* within-bubble recommendations are only is only 1.9% higher than an anon viewer. They saw 16% more recommendations towards *Non-political* videos.`]
+    ], ([a, txt]) => [a, {
+      txt,
+      barFilter: { accounts: [a], tags: interestingAccounts }
+    }]),
+    msm: {
+      txt: dedent`Given the persona's history is in a complete bubble, the level of personalization is more moderate than we expected. 
+      There is one strange pattern that stands out - *Mainstream news* is universally disadvantaged by personalization except for within-bubble recommendations. Here are the persona's recommendations towards mainstream news compared`,
+      barFilter: {
+        tags: ['Mainstream News'],
+        accounts: interestingAccounts
+      }
     }
   }
 }
 
-type StepExtra = { vennFilter?: VennFilter, showVenFilter?: boolean }
+type SectionName = keyof typeof sectionCfg
+
+type StepExtra = { vennFilter?: VennFilter, barFilter?: BarFilter, showVenFilter?: boolean }
 export type StepState = StepRunCfg & StepExtra & { progress?: number }
-export const sections = createStepSections<keyof typeof sectionCfg, StepExtra>(sectionCfg)
+export const sections = createStepSections<SectionName, StepExtra>(sectionCfg)
 
 export const getStoryState = (step: StepState) => {
-  const { section, name, i, progress, vennFilter } = (step ?? {})
+  const { section, name, stepIndex: i, progress, vennFilter } = (step ?? {})
   const path = `${section}|${name}`
-  return {
+
+  const sectionProgress = !step ? 0 : step.sectionIndex + step.stepPct + (1 / sections[section]?.length) * progress // e.g. step 1/4 in section 2 = 2.25
+  const preLoad = (sectionName: SectionName, buffer?: number) => sectionProgress > first(sections[sectionName]).sectionIndex - (buffer ?? 1.1)
+
+  const defaultState = mapValues(sections, (_, section) => ({ preLoad: preLoad(section) }))
+  const customState = {
     watch: {
       showHistory: path != 'watch|intro' || progress > 0.3,
     },
     venn: {
       filter: vennFilter,
       sample: name == 'random' ? i + 1 : null
-    }
+    },
+    vennExplore: {
+      samples: randomVideos.length
+    },
+    recs: {
+      barFilter: step?.barFilter ?? { accounts: ['Fresh'] }
+    },
+    sectionProgress
   }
+  const res = deepmerge(defaultState, customState)
+  return res
 }

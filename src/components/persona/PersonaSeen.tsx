@@ -23,8 +23,9 @@ export const PersonaSeen: FC<{
   seen: UseSeen
   showSeen: (account: string) => void
   channels: Record<string, Channel>
-  verb: string
-} & StyleProps> = ({ seen, showSeen, channels, verb, style }) => {
+  verb: string,
+  suspend?: boolean
+} & StyleProps> = ({ seen, showSeen, channels, verb, suspend, style }) => {
   const tip = useTip<Channel>()
   const { featuredSeen } = seen
   return <>
@@ -39,6 +40,7 @@ export const PersonaSeen: FC<{
             data={ws}
             getDelay={() => 4000 + Math.random() * 1000}
             style={{ maxWidth: '100%', width: '300px', height: '400px' }}
+            suspend={suspend}
             template={(w: Seen) => {
               if (!w)
                 return <></>

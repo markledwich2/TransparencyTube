@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect, cloneElement, ReactNode, Children, PropsWithChildren, ReactChild, FunctionComponentElement } from 'react'
 import { useInView } from 'react-intersection-observer'
+import { assign } from '../../common/Utils'
 import { ScollamaPropsShared, ScrollamaProps } from './Scrollama'
 
 const useRootMargin = offset => `-${offset * 100}% 0px -${100 - offset * 100}% 0px`
@@ -11,7 +12,7 @@ const useProgressRootMargin = (direction, offset, node, innerHeight) => {
   return `-${offset * 100}% 0px ${(offsetHeight * 100) - (100 - (offset * 100))}% 0px`
 }
 
-interface StepProps<T> extends ScollamaPropsShared<T> {
+export interface StepProps<T> extends ScollamaPropsShared<T> {
   data: T
   scrollamaId?: string
   innerHeight?: number
@@ -27,12 +28,12 @@ export const Step = <T,>(props: PropsWithChildren<StepProps<T>>) => {
     onStepProgress: null,
     onStepEnter: () => { },
     onStepExit: () => { },
-    offset: 0.3,
+    offset: 0.4,
     handleSetLastScrollTop: () => { }
     , ...props
   }
 
-  const scrollTop = document.documentElement.scrollTop
+  const scrollTop = typeof document != 'undefined' ? document.documentElement.scrollTop : 0
   const direction = lastScrollTop < scrollTop ? 'down' : 'up'
   const rootMargin = useRootMargin(offset)
   const ref = useRef(null)
@@ -48,13 +49,14 @@ export const Step = <T,>(props: PropsWithChildren<StepProps<T>>) => {
     [direction, offset, ref, innerHeight]
   )
 
-  const { ref: scrollProgressRef, entry: scrollProgressEntry } = useInView({
+  const { ref: scrollProgressRef, entry: scrollProgressEntry } = assign({ ref: null }, useInView({
     rootMargin: progressRootMargin,
     threshold: progressThreshold,
-  })
+  }))
 
   const setRefs = useCallback(
     (node) => {
+      if (!ref) return
       ref.current = node
       inViewRef(node)
       scrollProgressRef(node)

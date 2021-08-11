@@ -14,7 +14,14 @@ export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   cols: Record<keyof TRow, IndexCol<TRow>>
   baseUri: Uri
   fileRowsCache: { [key: string]: TRow[] }
+  /**
+   * returns rows that match the given filters. e.g. rows({cat:'Fruit'})
+   */
   rows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
+
+  /**
+   * returns rows that match the given filters. e.g. this searches for Fruit or Vegg categories  ([{cat:'Fruit'}, {cat:'Vegg'}], { andOr: 'or' })
+   */
   rowsWith: (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow>) => Promise<TRow[]>
 }
 

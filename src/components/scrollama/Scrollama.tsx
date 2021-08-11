@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, CSSProperties, FunctionComponent as FC, PropsWithChildren, useMemo, Children } from 'react'
 
 export interface OnStepProps<T> {
-  element: Element
+  element?: Element
   data: T
-  direction: 'up' | 'down'
-  entry: any
-  scrollamaId: string
+  direction?: 'up' | 'down'
+  entry?: any
+  scrollamaId?: string
   progress?: number
 }
 

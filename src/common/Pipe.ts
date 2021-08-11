@@ -32,6 +32,7 @@ export const max = (items: number[]) => firstBy(items, i => i, 'desc')
 export const values = <V>(o: Record<any, V>): V[] => Object.values(o)
 export const keys = <T>(o: T): (keyof T)[] => Object.keys(o) as unknown as (keyof T)[]
 export const entries = <X extends string, Y>(o: { [key in X]: Y }): [X, Y][] => Object.entries(o) as any
+export const entriesToObj = <T>(entries: [string, T][]) => mapToObj(entries, e => e)
 export const pickFull = <T extends {}, K extends keyof T>(
   object: T,
   names: readonly K[]
@@ -60,11 +61,36 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
 }
 
 export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.includes(n))
-export const mapEntries = <T, U>(group: Record<string, T>, groupMap: (values: T, key: string, i: number) => U): U[] =>
-  entries(group).map(([key, values], i) => groupMap(values, key, i))
 
-export const groupMap = <T, TVal>(items: T[], getKey: (item: T) => string, getVal: (values: T[], key: string) => TVal): TVal[] =>
-  mapEntries(groupBy(items, getKey), getVal)
+/**
+ * Maps a record providing 
+ */
+export const mapEntries = <K extends string, T, U>(group: Record<K, T>, fn: (values: T, key: string, i: number) => U): U[] => {
+  if (!group) return null
+  return entries(group).map(([key, values], i) => fn(values, key, i))
+}
+
+/**
+ * like remeda mapValues, but provides an index to fn
+ */
+export const mapValuesIdx = <T extends object, S>(obj: T, fn: (value: T[keyof T], key: keyof T, i: number) => S): Record<keyof T, S> =>
+  Object.keys(obj).reduce((acc, key, i) => {
+    acc[key] = fn(obj[key], key as keyof T, i)
+    return acc
+  }, {} as any)
+
+/**
+ * Groups items by `getKey` then maps using getVal.
+ * @example groupMap(
+ *  [{cat:'Fruit', name:'Apple'},{cat:'Fruit', name:'Banana'},{cat:'Veggie', name:'Capsicum'}], 
+ *  k => k.cat, 
+ *  (g, cat) => ({cat, products:g})
+ * ) // => [{cat:'Fruit', products:['Apple', 'Banana']}, {cat:'Veggie', products:['Capsicum']}]
+ */
+export const groupMap = <T, TVal, K extends string>(items: T[], getKey: (item: T) => K, getVal: (values: T[], key: K, i: number) => TVal): TVal[] => {
+  if (!items) return null
+  return mapEntries(groupBy(items, getKey), getVal)
+}
 
 export const takeRandom = <T>(items: T[]): T => items ? items[Math.floor(Math.random() * items.length)] : null
 export const takeSample = <T>(items: T[], n: number): T[] => take(shuffle(items.slice()), n)
@@ -72,3 +98,5 @@ export const takeSample = <T>(items: T[], n: number): T[] => take(shuffle(items.
 export const asArray = <T,>(v: Array<T> | T) => !v ? [] : Array.isArray(v) ? v as Array<T> : [v as T]
 
 export const flatMap = <T, R>(items: T[], getVals: (i: T) => R[]): R[] => [].concat(...items.map(getVals))
+
+export const compactObj = <T>(obj: T) => mapToObj(keys(obj).filter(k => obj[k] != null), k => [k, obj[k]])

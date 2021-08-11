@@ -6,7 +6,8 @@ import { StyleProps } from './Style'
 interface RotateContentProps<T> {
   data: T[]
   template: (d: T) => JSX.Element
-  getDelay: () => number
+  getDelay: () => number,
+  suspend?: boolean
 }
 
 const Container = styled.div`
@@ -41,7 +42,7 @@ interface RotateState { status: RotateStatus, i: number }
 /**
  * Cycles through the given content in a fixed size container
  */
-export const RotateContent = <T,>({ data, template, getDelay, style }: RotateContentProps<T> & StyleProps) => {
+export const RotateContent = <T,>({ data, template, getDelay, suspend, style }: RotateContentProps<T> & StyleProps) => {
   const [s, setState] = useState<RotateState>({ status: 'off', i: 0 })
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export const RotateContent = <T,>({ data, template, getDelay, style }: RotateCon
       var cs = { ...s }
       const setCs = async (newCs: RotateState, ms: number = 200) => {
         await delay(ms)
-        setState(newCs)
+        if (!suspend)
+          setState(newCs)
         return newCs
       }
 
@@ -67,7 +69,7 @@ export const RotateContent = <T,>({ data, template, getDelay, style }: RotateCon
       }
     })()
     return () => { isRunning = false }
-  }, [data])
+  }, [data, suspend])
 
   const d = data?.[s.i % data.length]
   const dPreload = data?.[(s.i + 1) % data.length]

@@ -1,7 +1,7 @@
 import { shuffle } from 'd3'
 import { parseISO } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
-import { first, flatMap, groupBy, indexBy, pick, pipe, uniq } from 'remeda'
+import { first, flatMap, groupBy, indexBy, pick, pipe, range, uniq } from 'remeda'
 import { UseSeen, useSeen } from '../components/persona/PersonaSeen'
 import { RecVennKey } from '../components/persona/PersonaVenn'
 import { blobIndex, BlobIndex } from './BlobIndex'
@@ -62,8 +62,8 @@ export interface UsePersona {
   watch: UseSeen
 }
 
-export const usePersona = (props?: { filter?: VennFilter, channelSample?: number }): UsePersona => {
-  const { channelSample } = props
+export const usePersona = (props?: { filter?: VennFilter, channelSample?: number, preLoadSamples?: number }): UsePersona => {
+  const { channelSample, preLoadSamples } = props
 
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
   const [chans, setChannels] = useState<Record<string, Channel>>()
@@ -73,9 +73,11 @@ export const usePersona = (props?: { filter?: VennFilter, channelSample?: number
   const channelShuffle = useMemo(
     () => chans ? shuffle(recIdx?.cols.fromChannelId.distinct ?? []).filter(c => chans[c]) : []
     , [recIdx, chans])
+  const getSampleChannel = (i: number) => channelShuffle[i % channelShuffle.length]
+
   const filter = {
     ...props.filter,
-    vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [channelShuffle[channelSample % channelShuffle.length]] : undefined)
+    vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [getSampleChannel(channelSample)] : undefined)
   }
 
   const recState = usePersonaRecs(recIdx, chans, filter)
@@ -85,6 +87,15 @@ export const usePersona = (props?: { filter?: VennFilter, channelSample?: number
     blobIndex<Rec, RecVennKey>("us_recs").then(setRecIdx)
     delay(100).then(() => setLoaded(true))
   }, [])
+
+
+  // pre-warm samples by pre-loading the files used and discarding the rows
+  useEffect(() => {
+    if (!preLoadSamples || !recIdx) return
+    console.log('usePersona - loading samples')
+    recIdx.rows(range(0, preLoadSamples - 1).map(i => ({ fromChannelId: getSampleChannel(i) })))
+      .then(r => console.log('usePersona loaded samples', r.length))
+  }, [preLoadSamples, recIdx])
 
   const personaMd = useMemo(() => {
     return ({
@@ -114,7 +125,6 @@ export const usePersonaRecs = (recIdx: BlobIndex<Rec, RecVennKey>, chans: Record
     if (!recIdx) return
     loadRecData(recIdx, filter, chans).then(setRecState)
   }, [recIdx, toJson(filter)])
-
   return recState
 }
 
