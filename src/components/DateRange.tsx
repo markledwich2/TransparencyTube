@@ -1,5 +1,8 @@
 
-import { parseISO, addDays, startOfToday, endOfToday, isSameDay, startOfDay, startOfWeek, endOfWeek, endOfDay, startOfMonth, endOfMonth, addMonths, startOfYear, endOfYear, addYears, format } from 'date-fns'
+import {
+  parseISO, addDays, startOfToday, endOfToday, isSameDay, startOfDay, startOfWeek, endOfWeek, endOfDay,
+  startOfMonth, endOfMonth, addMonths, startOfYear, endOfYear, addYears, format
+} from 'date-fns'
 import React, { useEffect, useState } from 'react'
 import { DateRangePicker, DateRangeProps, defaultStaticRanges } from 'react-date-range'
 import 'react-date-range/dist/styles.css'

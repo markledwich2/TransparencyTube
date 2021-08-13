@@ -60,11 +60,11 @@ export const ChartWithSteps =
       onStepProgress(s)
     }, [])
 
-    return <div style={{ position: 'relative' }}>
-      <div ref={chartRef} style={{ position: 'sticky', top: chartTop ?? 0, ...chartStyle }}>
+    return <div data-name='ChartWithSteps-Outer' style={{ position: 'relative' }}>
+      <div data-name='ChartWithSteps-ChartDiv' ref={chartRef} style={{ position: 'sticky', top: chartTop ?? 0, ...chartStyle }}>
         {children}
       </div>
-      <div style={{ position: 'relative', top: `${-(chartHeight ?? 0) + textTopPx}px`, pointerEvents: 'none' }}>
+      <div data-name='ChartWithSteps-StepContent' style={{ position: 'relative', top: `${-(chartHeight ?? 0) + textTopPx}px`, pointerEvents: 'none' }}>
         {chartHeight && <Scrollama {...props} onStepProgress={onStep} >
           {steps.map((s, i) => <Step key={`${s.name}-${s.stepIndex}`} data={s}>
             <div style={{
@@ -95,7 +95,6 @@ export const InlineSteps = <T extends StepRunCfg>({ steps, stepSpace, onStepProg
 const InlineStep = <T extends StepRunCfg>({ step, onStepProgress, style }: { step: T } & StyleProps & Pick<StepProps<T>, 'onStepProgress'>) => {
   return <InView
     onChange={(inView, entry) => {
-      console.log('inline step', { inView, entry })
       if (!inView) return
       return onStepProgress?.({ data: step, progress: 0 })
     }}>

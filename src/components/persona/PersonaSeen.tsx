@@ -31,7 +31,7 @@ export const PersonaSeen: FC<{
   return <>
     <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: '1rem', justifyContent: 'center', ...style }}>
       {featuredSeen && sortBy(entries(featuredSeen), ([account, _]) => tagMd[account]?.label).map(([account, ws]) => {
-        return <div key={account} style={{ margin: '1em' }}>
+        return <div key={account} style={{ margin: '2em' }}>
           <FlexRow style={{ marginBottom: '0.6em', alignItems: 'center' }}>
             <AccountTag account={account} />
             <a onClick={() => showSeen(account)}>show all</a>

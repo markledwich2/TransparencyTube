@@ -28,31 +28,6 @@
             "problemMatcher": [
                 "$eslint-stylish"
             ]
-        },
-        {
-            "label": "ttube_client - build",
-            "type": "npm",
-            "script": "build",
-            "runOptions": {},
-            "problemMatcher": [
-                "$eslint-stylish"
-            ],
-            "group": "build",
-            "options": {
-                "cwd": "./ttube_client"
-            },
-            "detail": "ttube_client>  npm run build"
-        },
-        {
-            "label": "ttube_client dev",
-            "type": "npm",
-            "script": "dev",
-            "path": "ttube_client/",
-            "problemMatcher": [
-                "$eslint-stylish"
-            ],
-            "group": "build",
-            "detail": "ttube_client>  npm run dev"
         }
     ]
 }

@@ -83,7 +83,10 @@ export const usePersona = (props?: { filter?: VennFilter, channelSample?: number
   const recState = usePersonaRecs(recIdx, chans, filter)
 
   useEffect(() => {
-    getChannels().then(chans => setChannels(indexBy(chans, c => c.channelId)))
+    getChannels().then(chans => {
+      console.log('usePersona loaded chans', chans.length)
+      return setChannels(indexBy(chans, c => c.channelId))
+    })
     blobIndex<Rec, RecVennKey>("us_recs").then(setRecIdx)
     delay(100).then(() => setLoaded(true))
   }, [])

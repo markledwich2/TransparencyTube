@@ -63,7 +63,9 @@ export const treeParents = <T>(node: T, getParent: (n: T) => T) => {
 export const isSubset = <T>(subset: T[], items: T[]) => subset.every(n => items.includes(n))
 
 /**
- * Maps a record providing 
+ * Map's entries according to `fn` who'd results are returned as an array.
+ * e.g. `mapEntries({panda:{size:5},fish:{size:2}], (animal, name, i) => ({animal, name, rank:i+1}))` // returns [{animal:'panda', size:5, rank:1}, {animal:'fish', size:2, rank:2}]
+ * This is like remeda's mapEntries, but with an index parameter.
  */
 export const mapEntries = <K extends string, T, U>(group: Record<K, T>, fn: (values: T, key: string, i: number) => U): U[] => {
   if (!group) return null

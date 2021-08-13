@@ -3,7 +3,7 @@ import React, { } from 'react'
 import { FlexRow, NarrowSection, styles } from '../Style'
 import { Channel } from '../../common/Channel'
 import { PersonaVenn } from './PersonaVenn'
-import { takeRandom } from '../../common/Pipe'
+import { keys, takeRandom } from '../../common/Pipe'
 import { numFormat } from '../../common/Utils'
 import { FilterHeader as FH, FilterPart as FP } from '../FilterCommon'
 import { InlineValueFilter as FV } from '../ValueFilter'
@@ -25,6 +25,8 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
   const chanTip = useTip<Channel>()
   const fromVideoCount = recState?.fromVideos?.length
 
+  console.log('PersonaStoryVenn', { chans: chans && keys(chans).length, recState: recState?.recs.length })
+
   return <><NarrowSection style={{ visibility: hideFilters ? 'hidden' : null }}>
     <FH>
       <FP>Recommendations seen by personas <FV metadata={personaMd}
@@ -32,10 +34,8 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
         onFilter={f => setQuery({ vennAccounts: f.groupAccounts })}
         rows={recState?.groups} />
       </FP>
-      {/* <FP>
-        in video collection <FV {...vennFilterProps} filter={{ label: recState?.filter?.vennLabel }} onFilter={f => setQuery({ vennLabel: f.label })} />
-      </FP> */}
-      {chans && <FP>from channel
+
+      {chans && recState && <FP>from channel
         <SelectWithChannelSearch ids={recState?.filter.vennChannelIds}
           onSelect={ids => setQuery?.({ vennChannelIds: ids?.length ? ids : undefined })}
           channels={chans}

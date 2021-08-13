@@ -16,8 +16,8 @@ import styled from 'styled-components'
 import { toJson } from '../common/Utils'
 import { format } from 'd3'
 import { useStateRef } from '../common/UseStateRef'
-import { BarFilter, useBarData } from '../components/persona/PersonaBarUse'
-import { useInView } from 'react-intersection-observer'
+import { BarFilter } from '../components/persona/PersonaBarUse'
+import { keys } from '../common/Pipe'
 
 export type PersonaStoryState = {
   label?: string
@@ -49,60 +49,71 @@ const PersonaStory = () => {
     channelSample: story.venn.sample,
     preLoadSamples: story.vennExplore.preLoad ? story.vennExplore.samples : null
   })
-  const exploreRecState = usePersonaRecs(storyPersona.recIdx, storyPersona.chans, pick(q, ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']))
-
+  const exploreRecState = usePersonaRecs(storyPersona.recIdx, storyPersona.chans,
+    pick(q, ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']))
   const commonVennProps = pick(storyPersona, ['chans', 'personaMd'])
-
   console.log('step progress', progFormat(story.sectionProgress), { section: step?.section, name: step?.name, ...story })
+
+  const suspendWatch = story.sectionProgress > 2.5
 
   return <Layout>
     <MinimalPage>
-      {storyPersona.loaded && <ChartWithSteps
+      <ChartWithSteps
         name='watch'
         steps={sections.watch}
         textTop={0.4}
         onStepProgress={onStepProgress}
-        chartStyle={{ filter: story.watch.showHistory ? null : 'blur(20px)', transition: '500ms filter linear' }}
+        chartStyle={{
+          display: 'flex',
+          filter: !story.watch.showHistory ? 'blur(20px)' : null,
+          transition: '500ms filter linear',
+          minHeight: '100vh'
+        }}
       >
-        <PersonaSeen seen={storyPersona.watch} verb='watched' showSeen={openWatch => setQuery({ openWatch })} channels={storyPersona.chans} suspend={story.sectionProgress > 2.5} />
-      </ChartWithSteps>}
+        {useMemo(() => <PersonaSeen
+          seen={storyPersona?.watch}
+          verb='watched'
+          showSeen={openWatch => setQuery({ openWatch })}
+          channels={storyPersona?.chans}
+          suspend={suspendWatch} />
+          , [storyPersona?.watch, storyPersona?.chans, suspendWatch])}
+      </ChartWithSteps>
 
-      {useMemo(() => <>
-        {storyPersona.recState && <>
-          <InlineSteps steps={sections.vennIntro} onStepProgress={onStepProgress} />
-          <ChartWithSteps
-            name='venn'
-            steps={sections.venn}
-            onStepProgress={onStepProgress}
-          >
-            <TransitionSvgStyle>
-              <PersonaStoryVenn {...commonVennProps} recState={storyPersona.recState} hideFilters />
-            </TransitionSvgStyle>
-          </ChartWithSteps>
-          <InlineSteps steps={sections.vennExplore} onStepProgress={onStepProgress} />
-          <TransitionSvgStyle>
-            {exploreRecState && <PersonaStoryVenn {...commonVennProps} recState={exploreRecState} setQuery={setQuery} />}
-          </TransitionSvgStyle>
-        </>}
-      </>, [storyPersona.recState, exploreRecState])}
-
+      <InlineSteps steps={sections.vennIntro} onStepProgress={onStepProgress} />
+      <ChartWithSteps
+        name='venn'
+        steps={sections.venn}
+        onStepProgress={onStepProgress}
+      >
+        <TransitionSvgStyle>
+          {useMemo(() =>
+            <PersonaStoryVenn {...commonVennProps} recState={storyPersona?.recState} hideFilters />
+            , [storyPersona?.recState, storyPersona?.chans])}
+        </TransitionSvgStyle>
+      </ChartWithSteps>
+      <InlineSteps steps={sections.vennExplore} onStepProgress={onStepProgress} />
+      <TransitionSvgStyle>
+        {useMemo(() =>
+          <PersonaStoryVenn {...commonVennProps} recState={exploreRecState} setQuery={setQuery} />
+          , [exploreRecState, storyPersona?.chans])}
+      </TransitionSvgStyle>
 
       <InlineSteps steps={sections.recsAnalysis} onStepProgress={onStepProgress} />
 
       <InlineSteps steps={sections.recsIntro} onStepProgress={onStepProgress} />
       {useMemo(() =>
         <ChartWithSteps
-          name='venn'
+          name='recs'
           steps={sections.recs}
           onStepProgress={onStepProgress}
         >
           <TransitionSvgStyle style={{ display: 'flex', justifyContent: 'center' }}>
-            {<PersonaBar
+            <PersonaBar
               filter={story.recs?.barFilter}
               style={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}
               colPanelStyle={{ minWidth: '10em', maxWidth: '20em' }}
               noLoad={!story.recs.preLoad}
-            />}
+            />
           </TransitionSvgStyle>
         </ChartWithSteps>
         , [story.recs?.barFilter, story.recs.preLoad])}

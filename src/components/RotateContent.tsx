@@ -43,7 +43,7 @@ interface RotateState { status: RotateStatus, i: number }
  * Cycles through the given content in a fixed size container
  */
 export const RotateContent = <T,>({ data, template, getDelay, suspend, style }: RotateContentProps<T> & StyleProps) => {
-  const [s, setState] = useState<RotateState>({ status: 'off', i: 0 })
+  const [s, setState] = useState<RotateState>({ status: 'on', i: 0 })
 
   useEffect(() => {
     let isRunning = true;

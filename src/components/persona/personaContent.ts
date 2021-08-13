@@ -123,7 +123,7 @@ export const getStoryState = (step: StepState) => {
   const defaultState = mapValues(sections, (_, section) => ({ preLoad: preLoad(section) }))
   const customState = {
     watch: {
-      showHistory: path != 'watch|intro' || progress > 0.3,
+      showHistory: sectionProgress > 0.3,
     },
     venn: {
       filter: vennFilter,
