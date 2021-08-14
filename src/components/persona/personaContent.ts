@@ -7,7 +7,7 @@ import { dedent } from '../../common/Utils'
 import { BarFilter } from './PersonaBarUse'
 
 
-const randomVideos = takeSample(range(0, 200), 8)
+const randomVideos = 8
 
 const minStepTextStyle = { backgroundColor: 'rgb(var(--bgRgb), 0.3)', backdropFilter: 'blur(2px)', fontWeight: 'bold' }
 const interestingAccounts = ['Fresh', 'PartisanLeft', 'PartisanRight', 'SocialJustice', 'AntiSJW', 'LateNightTalkShow', 'Conspiracy', 'Mainstream News', 'Non-political']
@@ -46,7 +46,7 @@ const sectionCfg = {
       style: { paddingBottom: '35vh' }
     },
     random: {
-      txt: range(1, randomVideos.length + 1).map(i => `**${i}** / ${randomVideos.length}`),
+      txt: range(1, randomVideos + 1).map(i => `**${i}** / ${randomVideos}`),
       style: { paddingBottom: '25vh', width: 'fit-content' },
       textStyle: minStepTextStyle
     }
@@ -127,10 +127,9 @@ export const getStoryState = (step: StepState) => {
     },
     venn: {
       filter: vennFilter,
-      sample: name == 'random' ? i + 1 : null
-    },
-    vennExplore: {
-      samples: randomVideos.length
+      sampleFilter: { vennLabel: 'Other' },
+      sample: name == 'random' ? i + 1 : null,
+      samples: randomVideos
     },
     recs: {
       barFilter: step?.barFilter ?? { accounts: ['Fresh'] }

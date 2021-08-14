@@ -119,9 +119,13 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
     const parallelism = cfg?.parallelism ?? 8
 
     const filterMethod = cfg?.andOr == 'or' ? 'some' : 'every'
-    const filesOverlap = (f: IndexFile<TKey>) => filters[filterMethod](q => isFilterRange(q)
-      ? compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
-      : compare(f.first, q) <= 0 && compare(f.last, q) >= 0)
+    const filesOverlap = (f: IndexFile<TKey>) => filters[filterMethod](q => {
+      const overlap = isFilterRange(q)
+        ? compare(f.first, q.to) <= 0 && compare(f.last, q.from) >= 0
+        : compare(f.first, q) <= 0 && compare(f.last, q) >= 0
+      //if (overlap) console.log('filter overlap', { q, isRange: isFilterRange(q), f: f.first, l: f.last })
+      return overlap
+    })
 
     let files = index.keyFiles.filter(filesOverlap)
     if (cfg?.order == 'desc') files = files.reverse()

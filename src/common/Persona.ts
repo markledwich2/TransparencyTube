@@ -62,8 +62,8 @@ export interface UsePersona {
   watch: UseSeen
 }
 
-export const usePersona = (props?: { filter?: VennFilter, channelSample?: number, preLoadSamples?: number }): UsePersona => {
-  const { channelSample, preLoadSamples } = props
+export const usePersona = (props?: { filter?: VennFilter, sampleFilter?: VennFilter, channelSample?: number, preLoadSamples?: number }): UsePersona => {
+  const { channelSample, preLoadSamples, sampleFilter } = props
 
   const [recIdx, setRecIdx] = useState<BlobIndex<Rec, RecVennKey>>(null)
   const [chans, setChannels] = useState<Record<string, Channel>>()
@@ -76,8 +76,9 @@ export const usePersona = (props?: { filter?: VennFilter, channelSample?: number
   const getSampleChannel = (i: number) => channelShuffle[i % channelShuffle.length]
 
   const filter = {
+    ...(channelSample ? sampleFilter : null),
     ...props.filter,
-    vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [getSampleChannel(channelSample)] : undefined)
+    vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [getSampleChannel(channelSample)] : undefined),
   }
 
   const recState = usePersonaRecs(recIdx, chans, filter)
@@ -95,9 +96,9 @@ export const usePersona = (props?: { filter?: VennFilter, channelSample?: number
   // pre-warm samples by pre-loading the files used and discarding the rows
   useEffect(() => {
     if (!preLoadSamples || !recIdx) return
-    console.log('usePersona - loading samples')
-    recIdx.rows(range(0, preLoadSamples - 1).map(i => ({ fromChannelId: getSampleChannel(i) })))
-      .then(r => console.log('usePersona loaded samples', r.length))
+    //const f = vennToBlobFilter({ ...sampleFilter, vennChannelIds: range(0, preLoadSamples - 1).map(i => getSampleChannel(i)) })
+    //console.log('usePersona - loading samples', f)
+    //recIdx.rows(f).then(r => console.log('usePersona - loaded samples', { f, rows: r?.length }))
   }, [preLoadSamples, recIdx])
 
   const personaMd = useMemo(() => {
@@ -151,33 +152,43 @@ export interface RecState {
 }
 
 
-export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter?: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
-  filter ??= {}
+const vennToBlobFilter = (filter: VennFilter) => filter?.vennChannelIds?.length
+  ? filter.vennChannelIds.map(c => ({ label: filter?.vennLabel ?? null, fromChannelId: c }))
+  : [{ label: filter?.vennLabel }]
 
-  const vennAccounts = filter.vennAccounts ?? ['Fresh', 'PartisanLeft', 'PartisanRight']
-  const vennLabel = filter.vennLabel ?? (filter.vennChannelIds ? undefined : first(recIdx.cols.label.distinct)) // filter by label if there aren't other filters
-  const accountFilter = (acc: string[]) => acc.filter(a => vennAccounts.includes(a))
+
+export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter?: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
+  filter = {
+    vennAccounts: ['Fresh', 'PartisanLeft', 'PartisanRight'],
+    vennLabel: first(recIdx.cols.label.distinct),
+    ...filter
+  }
+  const accountFilter = (acc: string[]) => acc.filter(a => filter.vennAccounts.includes(a))
   const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
 
-  let rawRecs = await recIdx.rows({ fromChannelId: filter.vennChannelIds, label: vennLabel })
+  const blobFilter = vennToBlobFilter(filter)
+  console.log('loadRecData', blobFilter)
+
+
+  let rawRecs = await recIdx.rowsWith(blobFilter, { andOr: 'or' })
 
   const availableDaysWorking = pipe(
     mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
     ({
-      day, videos: uniq(g.filter(r => accountFilter(r.accounts).length == vennAccounts.length)
+      day, videos: uniq(g.filter(r => accountFilter(r.accounts).length == filter.vennAccounts.length)
         .map(r => r.fromVideoId)).length
     })),
     orderBy(v => [v.videos, v.day], ['desc', 'desc'])
   )
   const availableDays = availableDaysWorking.map(v => v.day)
-  const dayExists = filter.vennDay && availableDays.includes(filter.vennDay)
-  // vennDay: null -> All, undefined or no overlap -> first, date > videos with that date
-  const vennDay = dayExists
-    ? filter.vennDay
-    : (filter.vennDay === null ? null : (availableDays.length == 1 ? first(availableDays) : null))
-  const filteredRecs = rawRecs.filter(r => vennDay == null || vennDay == r.day)
+  // const dayExists = filter.vennDay && availableDays.includes(filter.vennDay)
+  // // vennDay: null -> All, undefined or no overlap -> first, date > videos with that date
+  // const vennDay = dayExists
+  //   ? filter.vennDay
+  //   : (filter.vennDay === null ? null : (availableDays.length == 1 ? first(availableDays) : null))
+  // const filteredRecs = rawRecs.filter(r => vennDay == null || vennDay == r.day)
 
-  const recs = filteredRecs
+  const recs = rawRecs
     .map(r => ({ ...r, accounts: renameAccounts(r.accounts) }))
     .map(r => ({ ...r, groupAccounts: accountFilter(r.accounts).sort() }))
   const groups = entries(
@@ -211,7 +222,7 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
     indexBy(r => r.id)
   )
 
-  const fromVideos = mapEntries(groupBy(filteredRecs, d => d.fromVideoId), (recs) => {
+  const fromVideos = mapEntries(groupBy(rawRecs, d => d.fromVideoId), (recs) => {
     const r = recs[0]
     const v = ({
       videoId: r.fromVideoId,
@@ -226,6 +237,6 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
   const availableChannelIds = recIdx?.cols.fromChannelId?.distinct.filter(id => chans?.[id])
   return {
     recs, groups, sets, byId, fromVideos, availableChannelIds, availableDays,
-    filter: { vennLabel, vennChannelIds: filter.vennChannelIds, vennAccounts, vennDay }
+    filter
   }
 }

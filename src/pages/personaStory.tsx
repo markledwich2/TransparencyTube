@@ -47,7 +47,8 @@ const PersonaStory = () => {
   const storyPersona = usePersona({
     filter: story.venn.filter,
     channelSample: story.venn.sample,
-    preLoadSamples: story.vennExplore.preLoad ? story.vennExplore.samples : null
+    sampleFilter: story.venn.sampleFilter,
+    preLoadSamples: story.vennExplore.preLoad ? story.venn.samples : null
   })
   const exploreRecState = usePersonaRecs(storyPersona.recIdx, storyPersona.chans,
     pick(q, ['vennLabel', 'vennChannelIds', 'vennAccounts', 'vennDay']))
