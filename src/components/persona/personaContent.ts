@@ -47,13 +47,14 @@ const sectionCfg = {
     },
     random: {
       txt: range(1, randomVideos + 1).map(i => `**${i}** / ${randomVideos}`),
-      style: { paddingBottom: '25vh', width: 'fit-content' },
+      style: { paddingBottom: '40vh', width: 'fit-content' },
       textStyle: minStepTextStyle
     }
   },
   vennExplore: {
     explore: {
-      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's. Lick **RANDOM** to see a random channels recommendations.`
+      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's. Lick **RANDOM** to see a random channels recommendations.`,
+      vennFilter: { vennLabel: 'Other' }
     }
   },
   recsAnalysis: {

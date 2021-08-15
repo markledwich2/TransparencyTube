@@ -96,9 +96,10 @@ export const usePersona = (props?: { filter?: VennFilter, sampleFilter?: VennFil
   // pre-warm samples by pre-loading the files used and discarding the rows
   useEffect(() => {
     if (!preLoadSamples || !recIdx) return
-    //const f = vennToBlobFilter({ ...sampleFilter, vennChannelIds: range(0, preLoadSamples - 1).map(i => getSampleChannel(i)) })
-    //console.log('usePersona - loading samples', f)
-    //recIdx.rows(f).then(r => console.log('usePersona - loaded samples', { f, rows: r?.length }))
+    const f = vennToBlobFilter({ ...sampleFilter, vennChannelIds: range(0, preLoadSamples - 1).map(i => getSampleChannel(i)) })
+    console.log('usePersona - loading samples', f)
+    recIdx.rowsWith(f, { andOr: 'or' })
+      .then(r => console.log('usePersona - loaded samples', { f, rows: r?.length }))
   }, [preLoadSamples, recIdx])
 
   const personaMd = useMemo(() => {
@@ -128,7 +129,7 @@ export const usePersonaRecs = (recIdx: BlobIndex<Rec, RecVennKey>, chans: Record
   useEffect(() => {
     if (!recIdx) return
     loadRecData(recIdx, filter, chans).then(setRecState)
-  }, [recIdx, toJson(filter)])
+  }, [recIdx, toJson(filter), chans])
   return recState
 }
 
@@ -160,15 +161,17 @@ const vennToBlobFilter = (filter: VennFilter) => filter?.vennChannelIds?.length
 export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filter?: VennFilter, chans?: Record<string, Channel>): Promise<RecState> => {
   filter = {
     vennAccounts: ['Fresh', 'PartisanLeft', 'PartisanRight'],
-    vennLabel: first(recIdx.cols.label.distinct),
+    vennLabel: first(recIdx.cols.label.distinct) ?? '',
     ...filter
   }
   const accountFilter = (acc: string[]) => acc.filter(a => filter.vennAccounts.includes(a))
   const renameAccounts = (acc: string[]) => acc.map(a => a == 'MainstreamNews' ? 'Mainstream News' : a)
 
+
+  if (!filter.vennLabel && !filter.vennChannelIds)
+    debugger
   const blobFilter = vennToBlobFilter(filter)
   console.log('loadRecData', blobFilter)
-
 
   let rawRecs = await recIdx.rowsWith(blobFilter, { andOr: 'or' })
 

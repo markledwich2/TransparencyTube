@@ -89,7 +89,7 @@ const PersonaStory = () => {
         <TransitionSvgStyle>
           {useMemo(() =>
             <PersonaStoryVenn {...commonVennProps} recState={storyPersona?.recState} hideFilters />
-            , [storyPersona?.recState, storyPersona?.chans])}
+            , [storyPersona?.recState, storyPersona?.chans, storyPersona?.personaMd])}
         </TransitionSvgStyle>
       </ChartWithSteps>
       <InlineSteps steps={sections.vennExplore} onStepProgress={onStepProgress} />

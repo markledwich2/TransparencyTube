@@ -40,9 +40,11 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
           onSelect={ids => setQuery?.({ vennChannelIds: ids?.length ? ids : undefined })}
           channels={chans}
           style={{ marginLeft: '1em' }} />
-        {recState.availableChannelIds && <FP><button
+        {recState.availableChannelIds?.length > 0 && <FP><button
           style={{ ...styles.centerH, display: 'block' }}
-          onClick={() => setQuery?.({ vennChannelIds: [takeRandom(recState.availableChannelIds)], vennLabel: undefined, vennDay: undefined })}
+          onClick={() => {
+            return setQuery?.({ vennChannelIds: [takeRandom(recState.availableChannelIds)], vennLabel: 'Other', vennDay: null })
+          }}
         >Random</button></FP>}
       </FP>}
       <FP>on <FV {...vennFilterProps} filter={{ day: recState?.filter?.vennDay }}

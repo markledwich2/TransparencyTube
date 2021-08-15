@@ -36,7 +36,7 @@ export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, v
     const bounds = getBounds(flatMap(circles, c =>
       [circleToRect(c.circle)].concat(c.circles.map(d => pointTranslate(circleToRect(d), c.offset)))), vennCfg.padding) // get the bounds from all circles
     return { chart, circles, bounds }
-  }, [toJson(vennCfg), sets])
+  }, [toJson(vennCfg), sets, channels, videos])
 
   const videoTip = useTip<RecVideo>()
 
