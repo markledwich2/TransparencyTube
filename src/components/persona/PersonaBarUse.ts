@@ -15,11 +15,24 @@ export const barMd = {
   source: {
     rec: 'Video Recommendations',
     feed: 'Home Page Videos'
+  },
+  measures: {
+    pctOfAccountRecs: {
+      title: '% of persona’s recommendations', shortTitle: '% of total', x: { min: 0 }
+    } as BarLayout,
+    vsPoliticalViewsPp: {
+      title: "percentage point difference between **persona's recommendations** and the portion of views to political videos", shortTitle: '**vs political views**', x: {}
+    } as BarLayout,
+    vsFreshPp: {
+      title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**", shortTitle: '**vs anonymous**', x: {}
+    } as BarLayout
   }
 }
 
+type RecSource = keyof typeof barMd.source
+
 export interface BarStat {
-  source: keyof typeof barMd.source
+  source: RecSource
   account: string
   toTag: string
   recs: number
@@ -30,17 +43,16 @@ export interface BarStat {
 }
 
 export interface BarFilter {
-
+  source?: RecSource[]
   tags?: string[]
   accounts?: string[]
 }
 
 const chartGroup = (b: BarStat) => pick(b, ['account', 'source'])
 
-
 export const usePersonaBar = (filter: BarFilter, noLoad?: boolean) => {
   const stats = useBarData(noLoad)
-  const statsFiltered = stats?.filter(r => filterIncludes({ toTag: filter.tags, account: filter.accounts }, r))
+  const statsFiltered = stats?.filter(r => filterIncludes({ toTag: filter.tags, account: filter.accounts, source: filter.source }, r))
   return { cfg: { font: '14px sans-serif' }, stats, statsFiltered }
 }
 
@@ -59,21 +71,12 @@ export const loadBarData = async () => {
 }
 
 
+
 export interface Scale { min?: number, max?: number }
 export interface BarLayout { title: string, shortTitle: string, x: Scale }
 
 export const layoutCharts = (stats: BarStat[], statsFiltered: BarStat[], cfg: { width: number, font: string }) => {
-  const measureCfg = {
-    pctOfAccountRecs: {
-      title: '% of persona’s recommendations', shortTitle: '% of total', x: { min: 0 }
-    } as BarLayout,
-    vsPoliticalViewsPp: {
-      title: "percentage point difference between **persona's recommendations** and the portion of views to political videos", shortTitle: '**vs political views**', x: {}
-    } as BarLayout,
-    vsFreshPp: {
-      title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**", shortTitle: '**vs anonymous**', x: {}
-    } as BarLayout
-  }
+
 
   const byGroup = groupBy(statsFiltered, r => toJson(chartGroup(r)))
   const legendsByGroup = mapValues(byGroup, (rows, j) => {
@@ -83,11 +86,11 @@ export const layoutCharts = (stats: BarStat[], statsFiltered: BarStat[], cfg: { 
 
   const legendWith = max(values(legendsByGroup).map(l => l.bounds.w))
   const barPaddingX = getTextWidth('000%', cfg.font) // pad enough to fit a label in the gap
-  const barWidth = (cfg.width - legendWith) / keys(measureCfg).length - 10 // pad a little extra around all the charts
+  const barWidth = (cfg.width - legendWith) / keys(barMd.measures).length - 10 // pad a little extra around all the charts
 
 
   // include measures that have at least one non-null value
-  const measuresDisplayed = entriesToObj(entries(measureCfg).filter(([m, _]) => statsFiltered.some(r => r[m] != null)))
+  const measuresDisplayed = entriesToObj(entries(barMd.measures).filter(([m, _]) => statsFiltered.some(r => r[m] != null)))
   const measures = mapValues(measuresDisplayed, (c, m) => {
     const all = stats.map(r => r[m] as number) // scale across all data so that filtering between is comparible
     const x = {

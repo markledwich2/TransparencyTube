@@ -39,7 +39,6 @@ export interface Seen {
 }
 
 export type SeenKey = Partial<Pick<Seen, 'part' | 'account'>>
-
 export type RecVideo = Omit<Rec, 'fromVideoId' | 'fromVideoTitle' | 'day'> & { recs: Rec[], id: string }
 export type RecGroup = Pick<Rec, 'toChannelId' | 'toChannelTitle'> & { id: string, groupAccounts: string[], videoRecs: RecVideo[] }
 export const isRec = (o: any): o is Rec => o.fromVideoId !== undefined && o.toVideoId !== undefined
@@ -79,6 +78,10 @@ export const usePersona = (props?: { filter?: VennFilter, sampleFilter?: VennFil
     ...(channelSample ? sampleFilter : null),
     ...props.filter,
     vennChannelIds: props.filter?.vennChannelIds ?? (channelSample ? [getSampleChannel(channelSample)] : undefined),
+  }
+
+  if ((!filter.vennLabel || filter.vennLabel == 'Other') && !filter.vennChannelIds?.length) {
+    filter.vennChannelIds = [''] // dodgy protection against loading all recs
   }
 
   const recState = usePersonaRecs(recIdx, chans, filter)
@@ -128,7 +131,9 @@ export const usePersonaRecs = (recIdx: BlobIndex<Rec, RecVennKey>, chans: Record
   const [recState, setRecState] = useState<RecState>()
   useEffect(() => {
     if (!recIdx) return
-    loadRecData(recIdx, filter, chans).then(setRecState)
+    loadRecData(recIdx, filter, chans).then(r => {
+      setRecState(r)
+    })
   }, [recIdx, toJson(filter), chans])
   return recState
 }

@@ -1,14 +1,13 @@
-import React, { CSSProperties, FunctionComponent as FC } from 'react'
+import React, { CSSProperties, FunctionComponent as FC, ReactNode } from 'react'
 import ContainerDimensions from 'react-container-dimensions'
 import styled from 'styled-components'
 import { Tag } from '../Channel'
 import { FlexCol, FlexRow, StyleProps, styles } from '../Style'
 import ReactMarkdown from 'react-markdown'
 import { UserCircle } from '@styled-icons/boxicons-solid'
+import { StyledIcon } from '@styled-icons/styled-icon'
 import { BarStat, BarFilter, layoutCharts, tagMd, usePersonaBar, barMd } from './PersonaBarUse'
 import { groupMap } from '../../common/Pipe'
-
-
 
 
 export const PersonaBar: FC<{ filter: BarFilter, colPanelStyle?: CSSProperties, noLoad?: boolean } & StyleProps> = ({ filter, style, colPanelStyle, noLoad }) => {
@@ -21,7 +20,7 @@ export const PersonaBar: FC<{ filter: BarFilter, colPanelStyle?: CSSProperties, 
         return <div>
           {charts && groupMap(charts, c => c.source, (charts, source, sourceIdx) => {
             const multiAccount = charts.length > 1
-            return <div key={source}>
+            return <div key={source ?? '_'}>
               <h3 style={{ marginTop: '1em' }}>{barMd.source[source]}</h3>
               {charts.map(({ legend, charts, account }, groupIdx) => <div style={{ marginTop: '1em' }}>
                 <AccountTag account={account} style={{ fontSize: multiAccount ? '1em' : '1.2em' }} />
@@ -105,9 +104,12 @@ const SvgStyle = styled.svg`
   }
 `
 
-export const AccountTag: FC<{ account: string } & StyleProps> = ({ account, style }) => {
-  const accountMd = tagMd[account]
-  return <Tag color={accountMd?.color} style={style}>
-    {accountMd?.label ?? account}<UserCircle style={{ ...styles.inlineIcon, marginLeft: '0.6em' }} />
-  </Tag>
-}
+export const AccountTag: FC<{ account: string, icon?: StyledIcon, noIcon?: boolean } & StyleProps> =
+  ({ account, style, icon: Icon, noIcon }) => {
+    const accountMd = tagMd[account]
+    const iconStyle = { ...styles.inlineIcon, marginLeft: '0.6em' }
+    Icon ??= UserCircle
+    return <Tag color={accountMd?.color} style={style}>
+      {accountMd?.label ?? account}{!noIcon && <Icon style={iconStyle} />}
+    </Tag>
+  }

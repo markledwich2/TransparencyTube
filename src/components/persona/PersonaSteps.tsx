@@ -72,7 +72,7 @@ export const ChartWithSteps =
 
               ...s.style
             }}>
-              <TP active={stepState && stepId(stepState) == stepId(s)} style={s.textStyle}>{s.txt}</TP>
+              <StepText active={stepState && stepId(stepState) == stepId(s)} style={s.textStyle}>{s.txt}</StepText>
             </div>
           </Step>)}
         </Scrollama>}
@@ -98,11 +98,11 @@ const InlineStep = <T extends StepRunCfg>({ step, onStepProgress, style }: { ste
       if (!inView) return
       return onStepProgress?.({ data: step, progress: 0 })
     }}>
-    <div style={style}><TP active style={step.textStyle}>{step.txt}</TP></div>
+    <div style={style}><StepText active style={step.textStyle}>{step.txt}</StepText></div>
   </InView>
 }
 
-const TP: FC<StyleProps & { children: string & ReactNode, active?: boolean }> = ({ children, style, active }) => <TextStyle
+export const StepText: FC<StyleProps & { children: string & ReactNode, active?: boolean }> = ({ children, style, active }) => <TextStyle
   style={{
     margin: '0 auto', position: 'relative', background: 'var(--bg1)', maxWidth: '40em',
     padding: '0.5em 1em',
