@@ -2,7 +2,7 @@ import { any } from 'prop-types'
 import { toKey } from 'react-select/src/utils'
 import { blobCfg, webCfg } from './Cfg'
 import { Uri } from './Uri'
-import { getJson, getJsonl, PartialRecord } from './Utils'
+import { getJson, getJsonl } from './Utils'
 import { flatMap, indexBy, splitAt, mapToObj } from 'remeda'
 import { entries } from './Pipe'
 import { isNamedExportBindings } from 'typescript'
@@ -20,7 +20,7 @@ export interface BlobIndex<TRow, TKey extends Partial<TRow>> {
   rows: (...filters: (TKey | FilterRange<TKey>)[]) => Promise<TRow[]>
 
   /**
-   * returns rows that match the given filters. e.g. this searches for Fruit or Vegg categories  ([{cat:'Fruit'}, {cat:'Vegg'}], { andOr: 'or' })
+   * returns rows that match the given filters. e.g. this searches for Fruit or Veg categories  ([{cat:'Fruit'}, {cat:'Veg'}], { andOr: 'or' })
    */
   rowsWith: (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow>) => Promise<TRow[]>
 }
@@ -64,11 +64,11 @@ export const isFilterRange = <TKey>(f: any): f is FilterRange<TKey> => f.from !=
 export const noCacheReq = { headers: { 'Cache-Control': 'no-cache' } }
 const enableLocalCache = true
 
-export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = "v2"): Promise<BlobIndex<TRow, TKey>> => {
+export const blobIndex = async <TRow extends TKey, TKey>(path: string, cdn = true, version = "v2"): Promise<BlobIndex<TRow, TKey>> => {
   const subPath = [path, version ?? blobCfg.indexVersion]
   const baseUri = blobCfg.indexUri.addPath(...subPath)
   const baseUriCdn = cdn ? blobCfg.indexCdnUri.addPath(...subPath) : baseUri
-  const fileRowsCache = {}
+  const fileRowsCache: Record<string, TRow[]> = {}
   const indexUrl = baseUri.addPath('index.json.gz').url
 
   let index: BlobIndexFile<TRow, TKey> = null
@@ -95,9 +95,9 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
     return 0
   }
 
-  const fileRows = async (file: string) => {
+  const getFileRows = async (file: string) => {
     const cache = enableLocalCache ? fileRowsCache[file] : null
-    if (cache) return cache
+    if (cache) return { rows: cache, cached: true }
     const path = baseUriCdn.addPath(file).url
 
     let rows: TRow[] = []
@@ -109,7 +109,7 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
     }
     if (rows && enableLocalCache)
       fileRowsCache[file] = rows
-    return rows
+    return { rows, cached: false }
   }
 
   const getRows = async (filters: (TKey | FilterRange<TKey>)[], cfg: GetRowsCfg<TRow> = null) => {
@@ -129,14 +129,18 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
 
     let files = index.keyFiles.filter(filesOverlap)
     if (cfg?.order == 'desc') files = files.reverse()
-    console.log(`index files in ${indexUrl} loaded`, files)
+    //console.log(`index files in ${indexUrl} loaded`, files)
     let filtered: TRow[] = []
+    let cachedFileCount = 0
+    let fileCount = files.length
 
     while (files.length > 0) {
       const [toRead, remaining] = files.length <= parallelism ? [files, []] : splitAt(files, parallelism)
       files = remaining
-      const rows = flatMap(await Promise.all(toRead.map(f => fileRows(f.file))), r => r)
-      filtered = filtered.concat(rows.filter((r: TKey) => filters[filterMethod](q => isFilterRange(q)
+      const fileRows = await Promise.all(toRead.map(f => getFileRows(f.file)))
+      cachedFileCount += fileRows.filter(f => f.cached).length
+      const rows = flatMap(fileRows, r => r.rows)
+      filtered = filtered.concat(rows.filter(r => filters[filterMethod](q => isFilterRange(q)
         ? compare(r, q.from) >= 0 && compare(r, q.to) <= 0 // ensure row falls within range. files will have some that don't match
         : entries(q).every(([p, v]) => r[p] == v) // ensure each value of row matches
       )))
@@ -146,9 +150,8 @@ export const blobIndex = async <TRow, TKey>(path: string, cdn = true, version = 
       }
     }
 
-    console.log(`index ${indexUrl} - ${filtered.length} rows returned for filter:`, filters)
+    console.log(`index ${indexUrl} - ${filtered.length} rows returned, ${cachedFileCount} cached/${fileCount} files for filter:`, filters)
     //console.table(filtered.slice(0, 10))
-
     return filtered
   }
 

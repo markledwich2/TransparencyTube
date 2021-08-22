@@ -42,7 +42,7 @@ export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, v
   const getCircleColor = (c: VennSetLayout<RecGroup>) => tagMd[c.key]?.color
   const rowCircles = chart && flatMap(chart, c => c.circles)
 
-  return <div>
+  return <div style={{ height: size, display: 'flex', alignItems: 'center' }}>
     {useMemo(() =>
       <SvgStyle width={bounds?.w} height={bounds?.h}>
         <defs>

@@ -176,7 +176,7 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
   if (!filter.vennLabel && !filter.vennChannelIds)
     debugger
   const blobFilter = vennToBlobFilter(filter)
-  console.log('loadRecData', blobFilter)
+  //console.log('loadRecData', blobFilter)
 
   let rawRecs = await recIdx.rowsWith(blobFilter, { andOr: 'or' })
 

@@ -29,7 +29,12 @@ export const PersonaSeen: FC<{
   const tip = useTip<Channel>()
   const { featuredSeen } = seen
   return <>
-    <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: '1rem', justifyContent: 'center', ...style }}>
+    <div style={{
+      display: 'flex', flexWrap: 'wrap', fontSize: '1rem',
+      alignContent: 'center', justifyContent: 'center',
+      maxWidth: '2000px',
+      ...style
+    }}>
       {featuredSeen && sortBy(entries(featuredSeen), ([account, _]) => tagMd[account]?.label).map(([account, ws]) => {
         return <div key={account} style={{ margin: '2em' }}>
           <FlexRow style={{ marginBottom: '0.6em', alignItems: 'center' }}>
@@ -39,7 +44,7 @@ export const PersonaSeen: FC<{
           <RotateContent
             data={ws}
             getDelay={() => 4000 + Math.random() * 1000}
-            style={{ maxWidth: '100%', width: '300px', height: '400px' }}
+            style={{ maxWidth: '100%', width: '20em', height: '26em' }}
             suspend={suspend}
             template={(w: Seen) => {
               if (!w)
@@ -60,7 +65,7 @@ const VideoTile: FC<{
   useTip?: UseTip<Channel>
   verb: string
 }> = ({ s, c, useTip, verb }) => <VideoTileStyle data-video-id={s.videoId}>
-  <VideoA id={s.videoId}><img src={videoThumb(s, 'high')} onError={() => true} style={{ height: '230px' }} /></VideoA>
+  <VideoA id={s.videoId}><img src={videoThumb(s, 'high')} onError={() => true} style={{ width: '100%' }} /></VideoA>
   <div className="title">{s.videoTitle}</div>
   {c && <ChannelTitle className='channel' c={c} titleStyle={{ fontSize: '1rem' }} logoStyle={{ height: '50px' }} useTip={useTip} />}
   <SeenVideoExtra s={s} verb={verb} />
@@ -137,14 +142,14 @@ const videoOverlayStyle: CSSProperties = {
 const VideoTileStyle = styled.div`
   position: relative;
   .title {
-    position:absolute;
+    /* position:absolute;
     width:100%;
     top: 195px;
     left: 0px;
     background-color: rgba(0, 0, 0, 0.8);
     height: 45px;
-    overflow:hidden;
-    font-weight:bold;
+    overflow:hidden; */
+    font-weight: bold;
   }
   .detail {  }
   .channel {

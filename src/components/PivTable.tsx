@@ -20,7 +20,6 @@ export const PivTable = <T extends object,>({ rows, rowGroup, colGroup, colHeade
     const groupVals = (getGroup: (r: T) => string) => rows ? sortBy(uniq(rows.map(getGroup)), g => g == 'Non-political' ? 'z' : g) : []
     const colGroupVals = groupVals(getColGroup)
     const rowGroupVals = groupVals(getRowGroup)
-    console.log('colGroupVals', colGroupVals)
     const byRowCol = rows && mapValues(groupBy(rows, getRowGroup), colRows => indexBy(colRows, getColGroup))
     const getRow = (rowVal: string, colVal: string) => byRowCol?.[rowVal]?.[colVal]
     return { colGroupVals, rowGroupVals, getRow }
@@ -34,7 +33,7 @@ export const PivTable = <T extends object,>({ rows, rowGroup, colGroup, colHeade
       </tr>
     </thead>
     <tbody>
-      {rowGroupVals?.map(rg => <tr>
+      {rowGroupVals?.map(rg => <tr key={rg}>
         <th>{rowHeader(rg)}</th>
         {colGroupVals?.map(cg => {
           const r = getRow(rg, cg)

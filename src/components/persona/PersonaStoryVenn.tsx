@@ -1,6 +1,6 @@
 
 import React, { } from 'react'
-import { FlexRow, NarrowSection, styles } from '../Style'
+import { FlexCenter, FlexRow, NarrowSection, styles } from '../Style'
 import { Channel } from '../../common/Channel'
 import { PersonaVenn } from './PersonaVenn'
 import { keys, takeRandom } from '../../common/Pipe'
@@ -25,9 +25,9 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
   const chanTip = useTip<Channel>()
   const fromVideoCount = recState?.fromVideos?.length
 
-  console.log('PersonaStoryVenn', { chans: chans && keys(chans).length, recState: recState?.recs.length })
+  //console.log('PersonaStoryVenn', { chans: chans && keys(chans).length, recState: recState?.recs.length, videos: recState?.fromVideos })
 
-  return <><NarrowSection style={{ visibility: hideFilters ? 'hidden' : null }}>
+  return <><NarrowSection style={{ display: hideFilters ? 'none' : null }}>
     <FH>
       <FP>Recommendations seen by personas <FV metadata={personaMd}
         filter={{ groupAccounts: recState?.filter.vennAccounts }}
@@ -51,30 +51,29 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
         onFilter={f => setQuery?.({ vennDay: f.day })} /></FP>
     </FH>
   </NarrowSection>
-
-    {recState?.fromVideos && <FlexRow style={{ marginBottom: '1em', alignItems: 'center', justifyContent: 'center' }}>
+    {recState?.fromVideos && <FlexCenter style={{ margin: '0 1em', padding: '1em' }}>
       <div>
         <RotateContent
           data={recState.fromVideos}
           getDelay={() => 4000 + Math.random() * 1000}
-          style={{ maxWidth: '100%' }}
+          style={{ maxWidth: '100%', height: '10em' }}
           template={(v) => {
             if (!v)
               return
             const c = chans?.[v.channelId] ?? { channelId: v.channelId, channelTitle: v.channelTitle }
-            return <Video v={v} c={c} showThumb showChannel useTip={chanTip} />
+            return <Video v={v} c={c} showThumb showChannel useTip={chanTip} thumbStyle={{ height: '8em', width: '14em', objectFit: 'cover' }} />
           }} />
         <p style={{ visibility: fromVideoCount > 1 ? null : 'hidden' }}>recommendations from <b>{numFormat(fromVideoCount)}</b> videos</p>
       </div>
-    </FlexRow>}
+    </FlexCenter>}
 
-    <div style={{ width: '100%', height: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <FlexCenter style={{ width: '100%' }}>
       <ContainerDimensions>
         {({ width, height }) => {
-          return <PersonaVenn channels={chans} sets={recState?.sets} width={width} height={height} videos={recState?.byId} />
+          return <PersonaVenn channels={chans} sets={recState?.sets} width={width} height={width} videos={recState?.byId} />
         }}
       </ContainerDimensions>
-    </div>
+    </FlexCenter>
   </>
 }
 

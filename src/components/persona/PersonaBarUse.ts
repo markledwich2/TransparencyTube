@@ -4,7 +4,7 @@ import { getBounds, getTextWidth, pointTranslate, Rect } from '../../common/Draw
 import { md } from '../../common/Channel'
 import { compactObj, entries, entriesToObj, keys, mapEntries, max, min, orderBy, sumBy, values } from '../../common/Pipe'
 import { getJsonlResult as jRes } from '../../common/RecfluenceApi'
-import { numFormat, parseJson, PartialRecord, toJson } from '../../common/Utils'
+import { numFormat, parseJson, toJson } from '../../common/Utils'
 import { scaleLinear } from '@visx/scale'
 import { filterIncludes } from '../ValueFilter'
 import { FilterKeys } from '../../common/Types'
@@ -31,7 +31,7 @@ export const barMd = {
 
 type RecSource = keyof typeof barMd.source
 
-export interface BarStat {
+export interface RecStat {
   source: RecSource
   account: string
   toTag: string
@@ -39,43 +39,42 @@ export interface BarStat {
   pctOfAccountRecs: number
   freshPctOfAccount: number
   vsFreshPp: number
-  vsPoliticalViewsPp: number
+  vsPoliticalViewsPp: number,
+  self?: boolean
 }
 
-export interface BarFilter {
+export interface RecStatFilter {
   source?: RecSource[]
   tags?: string[]
   accounts?: string[]
 }
 
-const chartGroup = (b: BarStat) => pick(b, ['account', 'source'])
+const chartGroup = (b: RecStat) => pick(b, ['account', 'source'])
 
-export const usePersonaBar = (filter: BarFilter, noLoad?: boolean) => {
+export const usePersonaBar = (filter: RecStatFilter, noLoad?: boolean) => {
   const stats = useBarData(noLoad)
   const statsFiltered = stats?.filter(r => filterIncludes({ toTag: filter.tags, account: filter.accounts, source: filter.source }, r))
   return { cfg: { font: '14px sans-serif' }, stats, statsFiltered }
 }
 
 export const useBarData = (noLoad?: boolean) => {
-  const [data, setData] = useState<BarStat[]>(null)
+  const [data, setData] = useState<RecStat[]>(null)
   useEffect(() => {
     if (noLoad) return
-    loadBarData().then(d => setData(d))
+    loadBarData().then(setData)
   }, [noLoad])
   return data
 }
 
 export const loadBarData = async () => {
-  const stats = await jRes<BarStat>('us_rec_stats_v2')
-  return stats.map(r => ({ ...r, toTag: r.toTag ?? 'Other' })).filter(r => tagMd[r.toTag])
+  const stats = await jRes<RecStat>('us_rec_stats_v2')
+  return stats.map(r => ({ ...r, toTag: r.toTag ?? 'Other', self: r.account == r.toTag })).filter(r => tagMd[r.toTag])
 }
-
-
 
 export interface Scale { min?: number, max?: number }
 export interface BarLayout { title: string, shortTitle: string, x: Scale }
 
-export const layoutCharts = (stats: BarStat[], statsFiltered: BarStat[], cfg: { width: number, font: string }) => {
+export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { width: number, font: string }) => {
 
 
   const byGroup = groupBy(statsFiltered, r => toJson(chartGroup(r)))
@@ -104,11 +103,11 @@ export const layoutCharts = (stats: BarStat[], statsFiltered: BarStat[], cfg: { 
   })
 
   const layout = mapEntries(byGroup, (rows, j) => {
-    const { account, source }: Pick<BarStat, 'account' | 'source'> = parseJson(j)
+    const { account, source }: Pick<RecStat, 'account' | 'source'> = parseJson(j)
 
     const legend = legendsByGroup[j]
     const referenceBars = indexBy(legend.items.map(i => ({ tag: i.tag, ...i.rect })), i => i.tag)
-    const referenceBar = (r: BarStat) => referenceBars[r.toTag]
+    const referenceBar = (r: RecStat) => referenceBars[r.toTag]
 
     const measureGroups = compact(mapEntries(measures, (c, m) => {
       const xZero = c.scale(0)

@@ -19,6 +19,7 @@ const lightValues = css`
 --fg3:#666;
 --bg: #fff;
 --bgRgb: 255,255,255;
+--fgRgb: 0,0,0;
 --bg1: #eee;
 --bg2: #ddd;
 --bg3: #bbb;
@@ -32,6 +33,7 @@ const darkValues = css`
 --fg3: #999;
 --bg: #000;
 --bgRgb: 0,0,0;
+--fgRgb: 255,255,255;
 --bg1: #181818;
 --bg2: #222;
 --bg3: #444;
@@ -138,6 +140,13 @@ export const GlobalStyle = createGlobalStyle`
 
 
 export const loadingFilter = 'opacity(0.4)'
+
+
+export const FlexCenter = styled.div`
+  display:flex;
+  align-items: center;
+  justify-content: center;
+`
 
 export const FlexRow = styled.div<{ space?: string }>`
   display:flex;

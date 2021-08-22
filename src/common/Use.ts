@@ -1,4 +1,4 @@
-import { MutableRefObject, useCallback, useRef, useState } from 'react'
+import { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 
 export const useStateRef = <T>(defaultValue: T): [T, (val: T) => void, MutableRefObject<T>] => {
   const [state, setState] = useState(defaultValue)
@@ -9,4 +9,10 @@ export const useStateRef = <T>(defaultValue: T): [T, (val: T) => void, MutableRe
     setState(ref.current)
   }, [])
   return [state, dispatch, ref]
+}
+
+export const usePrevious = <T>(value: T) => {
+  const ref = useRef<T>()
+  useEffect(() => { ref.current = value })
+  return ref.current
 }

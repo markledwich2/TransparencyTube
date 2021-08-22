@@ -155,10 +155,6 @@ export const safeLocation = (): Location => typeof window === 'undefined' ? null
 
 export const navigateNoHistory = (to: string) => history.replaceState({}, '', to)
 
-export type PartialRecord<K extends keyof any, T> = {
-  [P in K]?: T
-}
-
 export const useDebounce = <T>(value: T, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value)
   useEffect(

@@ -324,7 +324,7 @@ interface VideoChannelProps {
 const VideoChannel = ({ c, v, onOpenChannel, highlightWords, showTags, showPlatform, useTip }: VideoChannelProps) => {
   if (!c) c = { channelId: v.channelId, channelTitle: v.channelTitle, logoUrl: v.channelLogo }
   return <div style={{ color: 'var(--fg2)', marginTop: '8px' }}>
-    <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px' }} titleStyle={{ fontSize: '1em' }}
+    <ChannelTitle c={c as ChannelWithStats} logoStyle={{ height: '60px', width: '60px' }} titleStyle={{ fontSize: '1em' }}
       onLogoClick={onOpenChannel} highlightWords={highlightWords} showTags={showTags} showPlatform={showPlatform} useTip={useTip} />
   </div>
 }

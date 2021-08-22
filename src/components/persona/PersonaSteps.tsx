@@ -106,7 +106,7 @@ export const StepText: FC<StyleProps & { children: string & ReactNode, active?: 
   style={{
     margin: '0 auto', position: 'relative', background: 'var(--bg1)', maxWidth: '40em',
     padding: '0.5em 1em',
-    fontSize: '1.6em',
+    fontSize: '1.3em',
     backgroundColor: 'rgb(var(--bgRgb), 0.8)',
     backdropFilter: 'blur(20px)',
     filter: active ? null : 'opacity(0.6)',

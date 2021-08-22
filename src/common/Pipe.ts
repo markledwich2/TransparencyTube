@@ -31,7 +31,7 @@ export const min = (items: number[]) => firstBy(items, i => i, 'asc')
 export const max = (items: number[]) => firstBy(items, i => i, 'desc')
 export const values = <V>(o: Record<any, V>): V[] => Object.values(o)
 export const keys = <T>(o: T): (keyof T)[] => Object.keys(o) as unknown as (keyof T)[]
-export const entries = <X extends string, Y>(o: { [key in X]: Y }): [X, Y][] => Object.entries(o) as any
+export const entries = <X extends string, Y>(o: { [key in X]?: Y }): [X, Y][] => Object.entries(o) as any
 export const entriesToObj = <T>(entries: [string, T][]) => mapToObj(entries, e => e)
 export const pickFull = <T extends {}, K extends keyof T>(
   object: T,

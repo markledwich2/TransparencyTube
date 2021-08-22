@@ -1,10 +1,11 @@
-import { first, mapToObj, mapValues, range } from 'remeda'
+import { find, findIndex, first, flatMap, mapToObj, mapValues, range, reverse } from 'remeda'
 import { VennFilter } from '../../common/Persona'
-import { takeSample } from '../../common/Pipe'
+import { takeSample, values } from '../../common/Pipe'
 import { createStepSections, StepRunCfg } from './PersonaSteps'
 import deepmerge from 'deepmerge'
 import { dedent } from '../../common/Utils'
-import { BarFilter, barMd } from './PersonaBarUse'
+import { RecStatFilter, barMd } from './PersonaBarUse'
+import { RecStatHighlight } from './PersonaTable'
 
 
 const randomVideos = 8
@@ -45,14 +46,16 @@ const sectionCfg = {
     },
     randomIntro: {
       txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
-      vennFilter: { vennAccounts: [''] },
+      // vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
       style: { paddingBottom: '35vh' }
     },
-    random: {
-      txt: range(1, randomVideos + 1).map(i => `**${i}** / ${randomVideos}`),
+    ...mapToObj(range(1, randomVideos + 1), i => [`random${i}`, {
+      txt: `**${i}** / ${randomVideos}`,
       style: { paddingBottom: '40vh', width: 'fit-content' },
-      textStyle: minStepTextStyle
-    }
+      textStyle: minStepTextStyle,
+      vennFilter: { vennLabel: 'Other', vennAccounts: ['PartisanLeft', 'PartisanRight', 'Fresh'] },
+      vennSample: i
+    }])
   },
   vennExplore: {
     explore: {
@@ -65,10 +68,10 @@ const sectionCfg = {
     
     Here are some overall measures influence of personalization on YouTube recommendations. We found that on average, when a persona watched the same video in the same week, only **26% of recommendations were repeated**. This is a baseline that we compare the personalization to.
     
-    ** Persona Personalization **
+    **Persona Personalization**
     When a persona watched the **same video as an anonymous user** within 7 days, only 16% of recommendations were repeated - **10% less repeated recommendations vs watching as the same persona**. 
     
-    ** Influence of video relevance **
+    **Influence of video relevance**
     When a personas watch **different videos** on the same day, only 6% of recommendations were repeated - **20% less repeated recommendations vs watching the same video**.
     `
   },
@@ -103,55 +106,111 @@ const sectionCfg = {
   },
   recsTableIntro: {
     intro: {
-      txt: dedent`Here is personalized recommendation data on videos from persona's (left) towards videos (top).`,
+      txt: dedent`Here is the same data for all persona's (left) towards videos (top). The table takes a little effort to understand, but is easier to spot patterns.`,
       style: { paddingTop: '20vh' }
     }
   },
   recsTable: {
-    intro: {
-      txt: `The first thing that stands out is that MSM is hugely disadvantaged by personalization. The only accounts that receive more MSM recs is the one that watched exclusively MSM. No other type of video received this disadvantage in our same 🤔`,
-      style: { paddingTop: '90vh' }
+    recIntro: {
+      txt: `First up, we are looking at the ${barMd.measures.vsFreshPp.title} on video recommendations`,
+      style: { paddingTop: '90vh' },
+      tableFilter: { source: ['rec'] } as RecStatFilter,
+      tableHighlight: null
     },
-    msm: {
-      txt: dedent`Given the persona's history is in a complete bubble, the level of personalization is more moderate than we expected. 
-      There is one strange pattern that stands out - *Mainstream news* is universally disadvantaged by personalization except for within-bubble recommendations. Here are the persona's recommendations towards mainstream news compared`,
-      tableHighlight: {
-        tags: ['Mainstream News'],
-        accounts: interestingAccounts
-      }
-    }
+    recMsm: {
+      txt: `The first thing that stands out is that MSM is dramatically disadvantaged by personalization. The only accounts that receive more MSM recs is the one that watched exclusively MSM. No other type of video received this disadvantage in our same 🤔`,
+      tableHighlight: { toTag: ['Mainstream News'] }
+    },
+    recSelf: {
+      txt: `Of **self-recommendations**, late night talk show's and partisan left persona's receive receive the highest self-recommending personalization. Late night shows stand out. Potentially they are favoured by the orlgoythm, or perhaps just because there are so few channels, the history for these persona's were more concentrated for the algorithm to pick as a signal.`,
+      tableHighlight: { self: [true] }
+    },
+    home1: {
+      txt: `On the **home page**, personalization is increased as there is no context of a video to dilute it. All persona's home page shows more less non-political content vs an anonymous user.`,
+      tableFilter: { source: ['feed'] } as RecStatFilter,
+      tableHighlight: { toTag: ['Non-political'] }
+    },
+    home2: {
+      txt: `Surprisingly, even tho our persona's are watching political content, they see less mainstream news content than an anonymous user`,
+      tableHighlight: { toTag: ['Mainstream News'] }
+    },
+    home3: {
+      txt: `Self recommendations are much stronger on the home-page vs video recommendations. Late night and partisan left are similar to the other persona's, with QAnon and White Identitarian having the lowest impact from personalization.`,
+      tableHighlight: { self: [true] }
+    },
   }
 }
 
 type SectionName = keyof typeof sectionCfg
 
-type StepExtra = { vennFilter?: VennFilter, barFilter?: BarFilter, showVenFilter?: boolean }
+type StepExtra = {
+  vennFilter?: VennFilter, barFilter?: RecStatFilter, showVenFilter?: boolean,
+  tableHighlight?: RecStatHighlight, tableFilter?: RecStatFilter,
+  vennSample?: number
+}
 export type StepState = StepRunCfg & StepExtra & { progress?: number }
 export const sections = createStepSections<SectionName, StepExtra>(sectionCfg)
 
+export type StoryState = ReturnType<typeof getStoryState>
+
+export const getSectionProgress = (s: StepState) => !s ? 0 : s.sectionIndex + s.stepPct + (1 / sections[s.section]?.length) * s.progress
+
 export const getStoryState = (step: StepState) => {
-  const { section, name, stepIndex: i, progress, vennFilter } = (step ?? {})
-  const path = `${section}|${name}`
+  step ??= {} as StepState
 
-  const sectionProgress = !step ? 0 : step.sectionIndex + step.stepPct + (1 / sections[section]?.length) * progress // e.g. step 1/4 in section 2 = 2.25
+  const sectionProgress = getSectionProgress(step) // e.g. step 1/4 in section 2 = 2.25
   const preLoad = (sectionName: SectionName, buffer?: number) => sectionProgress > first(sections[sectionName]).sectionIndex - (buffer ?? 1.1)
-
   const defaultState = mapValues(sections, (_, section) => ({ preLoad: preLoad(section) }))
+  const smear = <T>(getValue: (s: StepState) => T, dir?: 'up' | 'down') => smearValue(step, getValue, dir)
+
   const customState = {
+    step,
     watch: {
       showHistory: sectionProgress > 0.3,
     },
     venn: {
-      filter: vennFilter,
+      filter: smear(s => s.vennFilter),
       sampleFilter: { vennLabel: 'Other' },
-      sample: name == 'random' ? i + 1 : null,
+      sample: smear(s => s.vennSample, 'up'), // only smear from above
       samples: randomVideos
     },
     recs: {
-      barFilter: step?.barFilter ?? { accounts: ['Fresh'] }
+      barFilter: smear(s => s.barFilter) ?? { accounts: ['Fresh'] }
+    },
+    recsTable: {
+      tableHighlight: smear(s => s.tableHighlight),
+      tableFilter: smear(s => s.tableFilter)
     },
     sectionProgress
   }
   const res = deepmerge(defaultState, customState)
   return res
+}
+
+/** returns the first value that has been defined, starting with the given step, then looking up, then looking down */
+const smearValue = <T>(step: StepState, getValue: (s: StepState) => T, dir?: 'up' | 'down') => {
+  const v = getValue(step)
+  if (v !== undefined) return v
+  const stepsToLook = (!dir || dir == 'up' ? stepsFrom(step, 'up') : [])
+    .concat(!dir || dir == 'down' ? stepsFrom(step, 'down') : [])
+  for (let s of stepsToLook) {
+    const v = getValue(s)
+    if (v !== undefined) {
+      if (s != step) console.log(`smeared value`, { v, path: `${s.section}.${s.name}` })
+      return v
+    }
+  }
+  return undefined
+}
+
+const stepPath = (step: StepState) => `${step.section}.${step.stepIndex}-${step.name}`
+
+const stepsFromForward = flatMap(values(sections), s => s)
+const stepsFromBack = reverse(stepsFromForward)
+
+const stepsFrom = (step: StepState, dir: 'down' | 'up') => {
+  const allSteps = dir == 'down' ? stepsFromForward : stepsFromBack
+  const i = findIndex(allSteps, s => stepPath(s) == stepPath(step))
+  if (i == -1) return []
+  return allSteps.slice(i + 1).map(s => ({ ...s, dir }))
 }

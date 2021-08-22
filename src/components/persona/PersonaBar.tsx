@@ -6,11 +6,11 @@ import { FlexCol, FlexRow, StyleProps, styles } from '../Style'
 import ReactMarkdown from 'react-markdown'
 import { UserCircle } from '@styled-icons/boxicons-solid'
 import { StyledIcon } from '@styled-icons/styled-icon'
-import { BarStat, BarFilter, layoutCharts, tagMd, usePersonaBar, barMd } from './PersonaBarUse'
+import { RecStat, RecStatFilter, layoutCharts, tagMd, usePersonaBar, barMd } from './PersonaBarUse'
 import { groupMap } from '../../common/Pipe'
 
 
-export const PersonaBar: FC<{ filter: BarFilter, colPanelStyle?: CSSProperties, noLoad?: boolean } & StyleProps> = ({ filter, style, colPanelStyle, noLoad }) => {
+export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperties, noLoad?: boolean } & StyleProps> = ({ filter, style, colPanelStyle, noLoad }) => {
   const { cfg, stats, statsFiltered } = usePersonaBar(filter, noLoad)
 
   return <div className='bar' style={{ font: cfg.font, ...style }}>
@@ -18,7 +18,7 @@ export const PersonaBar: FC<{ filter: BarFilter, colPanelStyle?: CSSProperties, 
       {({ width }) => {
         const charts = stats && layoutCharts(stats, statsFiltered, { width, font: cfg.font })
         return <div>
-          {charts && groupMap(charts, c => c.source, (charts, source, sourceIdx) => {
+          {charts && groupMap(charts, c => c.source ?? '_', (charts, source, sourceIdx) => {
             const multiAccount = charts.length > 1
             return <div key={source ?? '_'}>
               <h3 style={{ marginTop: '1em' }}>{barMd.source[source]}</h3>
@@ -105,11 +105,11 @@ const SvgStyle = styled.svg`
 `
 
 export const AccountTag: FC<{ account: string, icon?: StyledIcon, noIcon?: boolean } & StyleProps> =
-  ({ account, style, icon: Icon, noIcon }) => {
+  ({ account, style, icon: Icon, noIcon, className }) => {
     const accountMd = tagMd[account]
     const iconStyle = { ...styles.inlineIcon, marginLeft: '0.6em' }
     Icon ??= UserCircle
-    return <Tag color={accountMd?.color} style={style}>
+    return <Tag {...{ className, style }} color={accountMd?.color}>
       {accountMd?.label ?? account}{!noIcon && <Icon style={iconStyle} />}
     </Tag>
   }
