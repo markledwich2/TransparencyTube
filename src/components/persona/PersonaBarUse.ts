@@ -8,6 +8,7 @@ import { numFormat, parseJson, toJson } from '../../common/Utils'
 import { scaleLinear } from '@visx/scale'
 import { filterIncludes } from '../ValueFilter'
 import { FilterKeys } from '../../common/Types'
+import { useWindowDim } from '../../common/Window'
 
 export const tagMd = { ...md.channel.tags.val, ...{ Other: { value: 'Other', color: '#666', label: 'Non-political' } } }
 
@@ -53,9 +54,12 @@ const chartGroup = (b: RecStat) => pick(b, ['account', 'source'])
 
 export const usePersonaBar = (filter: RecStatFilter, noLoad?: boolean) => {
   const stats = useBarData(noLoad)
+  const { w } = useWindowDim()
   const statsFiltered = stats?.filter(r => filterIncludes({ toTag: filter.tags, account: filter.accounts, source: filter.source }, r))
-  return { cfg: { font: '14px sans-serif' }, stats, statsFiltered }
+  return { cfg: { font: `${chartFontSize(w)}px sans-serif` }, stats, statsFiltered }
 }
+
+const chartFontSize = (w: number) => w > 1280 ? 14 : (w > 800 ? 12 : 10)
 
 export const useBarData = (noLoad?: boolean) => {
   const [data, setData] = useState<RecStat[]>(null)
@@ -75,18 +79,17 @@ export interface Scale { min?: number, max?: number }
 export interface BarLayout { title: string, shortTitle: string, x: Scale }
 
 export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { width: number, font: string }) => {
-
+  const emInPx = getTextWidth('m', cfg.font) // get the with on an m charachter in pixes. This way we inherit the global font size changes for out cals.
 
   const byGroup = groupBy(statsFiltered, r => toJson(chartGroup(r)))
   const legendsByGroup = mapValues(byGroup, (rows, j) => {
     const tagTotals = mapValues(groupBy(rows, r => r.toTag), g => sumBy(g, r => r.pctOfAccountRecs))
-    return layoutLegend(orderBy(keys(tagTotals), t => tagTotals[t], 'desc'), { pad: 10, between: 10, iconWidth: 20, itemHeight: 25, labelFont: `bold ${cfg.font}` })
+    return layoutLegend(orderBy(keys(tagTotals), t => tagTotals[t], 'desc'), { pad: emInPx * 0.5, between: emInPx * 0.5, iconWidth: 0, itemHeight: emInPx * 2, labelFont: `bold ${cfg.font}` })
   })
 
   const legendWith = max(values(legendsByGroup).map(l => l.bounds.w))
   const barPaddingX = getTextWidth('000%', cfg.font) // pad enough to fit a label in the gap
   const barWidth = (cfg.width - legendWith) / keys(barMd.measures).length - 10 // pad a little extra around all the charts
-
 
   // include measures that have at least one non-null value
   const measuresDisplayed = entriesToObj(entries(barMd.measures).filter(([m, _]) => statsFiltered.some(r => r[m] != null)))
@@ -140,7 +143,7 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
       const lines = [{ x1: xZero, y1: 0, x2: xZero, y2: legend.bounds.h }]
       return { x: 0, y: 0, w: barWidth, h: legend.bounds.h, bars, labels, lines, title: c.title, shortTitle: c.shortTitle }
     }))
-    return { account, source, legend, charts: measureGroups }
+    return { account, source, legend, charts: measureGroups, emInPx }
   })
   return layout
 }

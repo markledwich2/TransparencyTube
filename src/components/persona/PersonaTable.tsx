@@ -1,17 +1,16 @@
 import React, { FunctionComponent as FC } from 'react'
 import { assign, numFormat } from '../../common/Utils'
-import Layout from '../Layout'
 import { RecStatFilter, barMd, RecStat, usePersonaBar } from './PersonaBarUse'
 import { AccountTag } from './PersonaBar'
-import styled, { StyledProps } from 'styled-components'
+import styled from 'styled-components'
 import { hsl, scaleDiverging } from 'd3'
 import { PivTable } from '../PivTable'
 import { StyleProps } from '../Style'
-import { Markdown } from '../Markdown'
 import { StepText } from './PersonaSteps'
 import { FilterKeys, PartialRecord } from '../../common/Types'
 import { entries } from '../../common/Pipe'
 import classNames from 'classnames'
+import { UseTip } from '../Tip'
 
 const rbPallet = { neg: '#eb4258', pos: '#1fc2bf' }
 
@@ -31,8 +30,8 @@ const groupCols = {
 
 const highlightClass = (h?: boolean) => h == null ? null : h ? 'highlight' : 'un-highlight'
 
-export const PersonaTable: FC<StyleProps & { filter?: RecStatFilter, highlight?: RecStatHighlight, measure?: RecStatMeasure }> =
-  ({ style, filter, highlight, measure }) => {
+export const PersonaTable: FC<StyleProps & { filter?: RecStatFilter, highlight?: RecStatHighlight, measure?: RecStatMeasure, accountTip?: UseTip<string>, videoTip?: UseTip<string> }> =
+  ({ style, filter, highlight, measure, accountTip, videoTip }) => {
 
     measure ??= 'vsFreshPp'
 
@@ -58,10 +57,14 @@ export const PersonaTable: FC<StyleProps & { filter?: RecStatFilter, highlight?:
       <StepText active>{barMd.measures[measure].title}</StepText>
       <TableStyle>
         <PivTable rows={dStats} rowGroup={groupCols.row} colGroup={groupCols.col}
-          colHeader={(g) => <AccountTag className={headerInfo('col', g).className}
-            account={g} noIcon style={{ writingMode: 'vertical-lr', padding: '1em 0.2em', margin: '0.5em' }} />}
-          rowHeader={(g) => <AccountTag className={headerInfo('row', g).className}
-            account={g} style={{ margin: '0.5em' }} />}
+          colHeader={g => <AccountTag className={headerInfo('col', g).className}
+            account={g} noIcon style={{ writingMode: 'vertical-lr', padding: '1em 0.2em', margin: '0.5em' }}
+            accountTip={videoTip}
+          />}
+          rowHeader={g => <AccountTag className={headerInfo('row', g).className}
+            account={g} style={{ margin: '0.5em' }}
+            accountTip={accountTip}
+          />}
           cell={r => {
             const { value, highlighted, backgroundColor } = cellInfo(r)
             return <div style={{ backgroundColor }}
@@ -71,27 +74,21 @@ export const PersonaTable: FC<StyleProps & { filter?: RecStatFilter, highlight?:
           }}
         />
       </TableStyle>
+
     </div>
   }
 
 const TableStyle = styled.div`
   & {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    font-size: 9px;
+    @media (min-width: 800px) {
+      font-size: 12px;
+    }
+    @media (min-width: 1200px) {
+      font-size: 14px;
+    }
   }
-  thead th {
-    background-color: var(--bg);
-    z-index: 20;
-    top: 0;
-    position: sticky;
-  }
-  tbody th {
-    background-color: var(--bg);
-    z-index: 20;
-    left: 0;
-    position: sticky;
-  }
+
   .highlight {
     z-index: 100;
   }
@@ -106,9 +103,9 @@ const TableStyle = styled.div`
     justify-content: center;
     align-items: center;
     font-weight: bold;
-    min-height: 3em;
-    min-width: 3em;
-    border-radius: 3px;
+    min-height: 2.7em;
+    min-width: 2.7em;
+    border-radius: 1px;
     margin:1px;
   }
 `

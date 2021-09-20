@@ -14,6 +14,7 @@ import ContainerDimensions from 'react-container-dimensions'
 import { useTip } from '../Tip'
 import { UsePersona } from '../../common/Persona'
 import { SelectWithChannelSearch } from './SelectWithChannelSearch'
+import { useWindowDim } from '../../common/Window'
 
 export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFilters }:
   Pick<UsePersona, 'chans' | 'recState' | 'personaMd'> & {
@@ -24,6 +25,7 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
   const vennFilterProps = { metadata: personaMd, rows: recState?.recs }
   const chanTip = useTip<Channel>()
   const fromVideoCount = recState?.fromVideos?.length
+  const windowDim = useWindowDim()
 
   //console.log('PersonaStoryVenn', { chans: chans && keys(chans).length, recState: recState?.recs.length, videos: recState?.fromVideos })
 
@@ -69,9 +71,12 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
 
     <FlexCenter style={{ width: '100%' }}>
       <ContainerDimensions>
-        {({ width, height }) => {
-          return <PersonaVenn channels={chans} sets={recState?.sets} width={width} height={width} videos={recState?.byId} />
-        }}
+        {({ width }) => <PersonaVenn
+          channels={chans}
+          sets={recState?.sets}
+          width={width}
+          height={Math.max(windowDim.h - 250, 400)}
+          videos={recState?.byId} />}
       </ContainerDimensions>
     </FlexCenter>
   </>

@@ -7,7 +7,7 @@ import { PersonaSeen, PersonaSeenPopup } from '../components/persona/PersonaSeen
 import { useQuery } from '../common/QueryString'
 import { PrefixAll } from '../common/Types'
 import { usePersona, usePersonaRecs } from '../common/Persona'
-import PersonaBar from '../components/persona/PersonaBar'
+import PersonaBar, { AccountTip } from '../components/persona/PersonaBar'
 import { PersonaStoryVenn } from '../components/persona/PersonaStoryVenn'
 import { getSectionProgress, getStoryState, sections, StepState, StoryState } from '../components/persona/personaContent'
 import { InlineSteps, ChartWithSteps } from '../components/persona/PersonaSteps'
@@ -16,9 +16,10 @@ import styled from 'styled-components'
 import { toJson } from '../common/Utils'
 import { format } from 'd3'
 import { useStateRef } from '../common/Use'
-import { RecStatFilter } from '../components/persona/PersonaBarUse'
+import { RecStatFilter, tagMd } from '../components/persona/PersonaBarUse'
 import { keys } from '../common/Pipe'
 import { PersonaTable } from '../components/persona/PersonaTable'
+import { Tip, useTip } from '../components/Tip'
 
 export type PersonaStoryState = {
   label?: string
@@ -64,6 +65,9 @@ const PersonaStory = () => {
   const suspendWatch = story?.sectionProgress > 2.5
   const commonStepProps = { onStepProgress }
 
+  const accountTip = useTip<string>()
+  const videoTip = useTip<string>()
+
   return <Layout>
     <MinimalPage>
       <ChartWithSteps
@@ -72,7 +76,8 @@ const PersonaStory = () => {
         textTop={0.4}
         chartStyle={{
           display: 'flex', justifyContent: 'center',
-          filter: !story?.watch.showHistory ? 'blur(20px)' : null,
+          filter: story?.watch.showHistory ? null : 'blur(20px)',
+          pointerEvents: story?.watch.showHistory ? 'auto' : 'none',
           transition: '500ms filter linear',
           minHeight: '100vh'
         }}
@@ -120,6 +125,7 @@ const PersonaStory = () => {
               style={centeredChartStyle}
               colPanelStyle={{ minWidth: '10em', maxWidth: '20em' }}
               noLoad={!story?.recs.preLoad}
+              accountTip={accountTip} videoTip={videoTip}
             />
           </ChartStepStyle>
         </ChartWithSteps>
@@ -133,12 +139,18 @@ const PersonaStory = () => {
         {...commonStepProps}
       >
         <ChartStepStyle >
-          <PersonaTable style={centeredChartStyle} highlight={story?.recsTable.tableHighlight} filter={story?.recsTable.tableFilter} />
+          <PersonaTable style={centeredChartStyle} highlight={story?.recsTable.tableHighlight} filter={story?.recsTable.tableFilter}
+            accountTip={accountTip} videoTip={videoTip}
+          />
         </ChartStepStyle>
       </ChartWithSteps>
 
       <PersonaSeenPopup verb='watched' isOpen={q.openWatch != null} onClose={() => setQuery({ openWatch: undefined })}
         account={q.openWatch} channels={storyPersona.chans} useSeen={storyPersona.watch} />
+      <Tip {...accountTip.tipProps}>The persona (<b>{tagMd[accountTip.data]?.label}</b>) who is being shown the recommendation.<br /><br />
+        <AccountTip account={accountTip.data} /></Tip>
+      <Tip {...videoTip.tipProps}>The channel classification (<b>{tagMd[videoTip.data]?.label}</b>) of the recommended video.<br /><br />
+        <AccountTip account={videoTip.data} /></Tip>
     </MinimalPage>
   </Layout>
 }
