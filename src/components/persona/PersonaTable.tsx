@@ -52,9 +52,9 @@ export const PersonaTable: FC<StyleProps & { filter?: RecStatFilter, highlight?:
       const highlighted = highlight ? highlight[groupCols[mode]]?.includes(groupVal) : null
       return { highlighted, className: classNames('header', highlightClass(highlighted)) }
     }
-
+    const source = filter?.source?.[0]
     return <div style={style}>
-      <StepText active>{barMd.measures[measure].title}</StepText>
+      <StepText active>{`${barMd.measures[measure].title}${source ? ` - *${barMd.source[source].label}*` : ''}`}</StepText>
       <TableStyle>
         <PivTable rows={dStats} rowGroup={groupCols.row} colGroup={groupCols.col}
           colHeader={g => <AccountTag className={headerInfo('col', g).className}

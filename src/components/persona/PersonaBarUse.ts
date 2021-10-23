@@ -14,8 +14,8 @@ export const tagMd = { ...md.channel.tags.val, ...{ Other: { value: 'Other', col
 
 export const barMd = {
   source: {
-    rec: 'Video Recommendations',
-    feed: 'Home Page Videos'
+    rec: { title: 'Video Recommendations', label: 'Video' },
+    feed: { title: 'Home Page Videos', label: 'Home Page' }
   },
   measures: {
     pctOfAccountRecs: {
