@@ -3,8 +3,8 @@ import { Channel, md } from '../common/Channel'
 import { HelpOutline } from '@styled-icons/material'
 import { Markdown } from './Markdown'
 import { Tag } from './Channel'
-import { indexBy, pipe } from 'remeda'
-import { orderBy, values } from '../common/Pipe'
+import { indexBy, pipe, sortBy } from 'remeda'
+import { values } from '../common/Pipe'
 import numeral from 'numeral'
 import { StyleProps, styles } from './Style'
 import { UseTip } from './Tip'
@@ -31,13 +31,13 @@ export const TagInfo: FC<TagProps & { channels: Channel[] } & StyleProps> = ({ t
 
   const hasTag = (c: Channel, tag: string) => c.tags?.includes(tag)
 
-  const overlaps = pipe(
+  const overlaps = sortBy(
     values(tags).filter(u => u.value != t.value).map(u => ({
       tag: u,
       pct: channels.filter(c => hasTag(c, u.value) && hasTag(c, t.value)).length /
         channels.filter(c => hasTag(c, t.value)).length
     })).filter(o => o.pct > 0.02),
-    orderBy(o => o.pct, 'desc')
+    [o => o.pct, 'desc']
   )
 
   return <div style={{ maxWidth: '40em', ...style }}>

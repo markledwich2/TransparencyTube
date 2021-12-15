@@ -4,7 +4,6 @@ import { pack, hierarchy, HierarchyNode, sum, HierarchyCircularNode } from 'd3'
 import { first, flatMap, groupBy, indexBy, last, mapValues, pick, pipe, } from 'remeda'
 import { getPackDim } from './Bubble'
 import { Circle, circleFromD3, circleToRect, getBounds, Point } from './Draw'
-import orderBy from 'lodash.orderby'
 
 
 interface VennChartCircle { x: number, y: number, radius: number }

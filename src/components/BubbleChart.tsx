@@ -5,7 +5,7 @@ import { GroupedNodes, BubblesSelectionState, getZoomToFit, BubbleNode, buildBub
 import { sumBy } from '../common/Pipe'
 import { Fullscreen } from '@styled-icons/boxicons-regular'
 import { Popup } from './Popup'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { HierarchyCircularNode } from 'd3'
 import { toJson } from '../common/Utils'
 import { loadingFilter, NormalFont, StyleProps, styles } from './Style'
@@ -84,7 +84,7 @@ export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup,
   }, [d, toJson(pick(selections, ['openGroup', 'openRowKey']))])
 
   return <>
-    { useMemo(() => {
+    {useMemo(() => {
       return <div className="bubbles-container" style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null, ...style }}>
         {d.groupedNodes && d.groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...d.commonProps} />)}
         {openNodes && <BubbleChart groupNodes={openNodes} {...d.commonProps} isOpen />}
@@ -150,7 +150,7 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
     </BubbleDiv>
 
     {isOpen && <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
-      <ContainerDimensions >
+      <ReactResizeDetector  >
         {({ width, height }) => <BubbleDiv key={group} onClick={onDeselect}>
           <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
             {info}
@@ -158,7 +158,7 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
           </div>
           {!isOpen && <FullscreenIcon onClick={() => onOpenGroup(group)} />}
         </BubbleDiv>}
-      </ContainerDimensions>
+      </ReactResizeDetector>
     </Popup>}
   </>, [isOpen, svgProps.nodes])
 }
@@ -183,6 +183,8 @@ const imgPad = 3
 
 const BubbleSvg: FC<{ onSelect: (row: any) => void, bubbleTip: UseTip<any> } & GroupedNodes<any> & BubblePackProps> =
   ({ nodes, dim, zoom, onSelect, bubbleTip }) => {
+
+    console.log('bubble svg', { dim, zoom })
 
     const displayNodes = useMemo(() => {
       const dx = -dim.x.min.x + dim.x.min.r

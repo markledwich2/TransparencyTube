@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { compact, flatMap, groupBy, indexBy, mapValues, pick, uniq } from 'remeda'
+import { compact, flatMap, groupBy, indexBy, mapValues, pick, sortBy, uniq } from 'remeda'
 import { getBounds, getTextWidth, pointTranslate, Rect } from '../../common/Draw'
 import { md } from '../../common/Channel'
-import { compactObj, entries, entriesToObj, keys, mapEntries, max, min, orderBy, sumBy, values } from '../../common/Pipe'
+import { compactObj, entries, entriesToObj, keys, mapEntries, max, min, sumBy, values } from '../../common/Pipe'
 import { getJsonlResult as jRes } from '../../common/RecfluenceApi'
 import { numFormat, parseJson, toJson } from '../../common/Utils'
-import { scaleLinear } from '@visx/scale'
+import { scaleLinear } from 'd3-scale'
 import { filterIncludes } from '../ValueFilter'
 import { FilterKeys } from '../../common/Types'
 import { useWindowDim } from '../../common/Window'
@@ -84,7 +84,7 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
   const byGroup = groupBy(statsFiltered, r => toJson(chartGroup(r)))
   const legendsByGroup = mapValues(byGroup, (rows, j) => {
     const tagTotals = mapValues(groupBy(rows, r => r.toTag), g => sumBy(g, r => r.pctOfAccountRecs))
-    return layoutLegend(orderBy(keys(tagTotals), t => tagTotals[t], 'desc'), { pad: emInPx * 0.5, between: emInPx * 0.5, iconWidth: 0, itemHeight: emInPx * 2, labelFont: `bold ${cfg.font}` })
+    return layoutLegend(sortBy(keys(tagTotals) as string[], [t => tagTotals[t], 'desc']), { pad: emInPx * 0.5, between: emInPx * 0.5, iconWidth: 0, itemHeight: emInPx * 2, labelFont: `bold ${cfg.font}` })
   })
 
   const legendWith = max(values(legendsByGroup).map(l => l.bounds.w))
@@ -99,7 +99,7 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
       min: c.x?.min ?? min(all),
       max: c.x?.max ?? max(all)
     }
-    const scale = scaleLinear<number>({ range: [barPaddingX, barWidth - barPaddingX], domain: [x.min, x.max] })
+    const scale = scaleLinear<number>([x.min, x.max], [barPaddingX, barWidth - barPaddingX])
     return {
       ...c, x, scale
     }

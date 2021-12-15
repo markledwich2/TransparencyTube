@@ -5,8 +5,8 @@ import { Uri } from './Uri'
 const branchEnv = tryCatch(() => process.env.GATSBY_BRANCH_ENV)
 const branchSuffix = branchEnv ? `-dev-${branchEnv}` : ''
 console.log('env info', { branchEnv, branchSuffix })
-const blobUri = new Uri(`https://pyt.blob.core.windows.net/data${branchSuffix}`)
-const blobCdnUri = branchSuffix ? blobUri : new Uri('https://pyt-data.azureedge.net/data')
+const blobUri = new Uri(`https://ytapp.blob.core.windows.net/public${branchSuffix}`)
+const blobCdnUri = branchSuffix ? blobUri : new Uri('https://ttube.azureedge.net/public')
 export const blobCfg = {
   resultsUri: blobUri.addPath('results'),
   indexUri: blobUri.addPath('results/index'),

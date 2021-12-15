@@ -7,9 +7,9 @@ import { ChannelDetails, ChannelTitle, Tag } from './Channel'
 import styled from 'styled-components'
 import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, isVideoError, isVideoNarrative, NarrativeVideo, VideoCaption, VideoChannelExtra } from '../common/RecfluenceApi'
 import { Channel, channelUrl, md, PlatformName } from '../common/Channel'
-import { flatMap, groupBy, indexBy, map, pipe, take } from 'remeda'
-import { entries, minBy, orderBy, sumBy } from '../common/Pipe'
-import ContainerDimensions from 'react-container-dimensions'
+import { flatMap, groupBy, indexBy, map, pipe, sortBy, take } from 'remeda'
+import { entries, minBy, sumBy } from '../common/Pipe'
+import ReactResizeDetector from 'react-resize-detector'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
 import { Tip, useTip, UseTip } from './Tip'
@@ -63,9 +63,9 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
     let groupedVids: VideoGroup<T, TExtra>[] = null
     let groupedVidsTotal: number = null
     if (groupChannels && videos) {
-      var groupedVidsRaw = groupChannels && pipe(
-        entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: orderBy(e[1], v => v.videoViews, 'desc') })),
-        orderBy(g => sumBy(g.vids, v => v.videoViews), 'desc'),
+      var groupedVidsRaw = groupChannels && sortBy(
+        entries(groupBy(videos, v => v.channelId)).map(e => ({ channelId: e[0], vids: sortBy(e[1], [v => v.videoViews, 'desc']) })),
+        [g => sumBy(g.vids, v => v.videoViews), 'desc']
       )
       groupedVidsTotal = groupedVidsRaw.length
       if (groupedVidsTotal > 1) groupedVidsRaw = take(groupedVidsRaw, limit)
@@ -120,7 +120,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
     }}>
       {videos?.length === 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
       {groupedVids &&
-        <ContainerDimensions>
+        <ReactResizeDetector>
           {({ width }) => {
             const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
             const videoWidth = width / numCols - videoPadding * numCols
@@ -165,7 +165,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
               )}
             </FlexRow>
           }}
-        </ContainerDimensions>}
+        </ReactResizeDetector>}
       {!groupedVids && videos && videos.slice(0, limit).map(v => <Video
         key={v.videoId}
         onOpenChannel={onOpenChannel}
@@ -256,7 +256,7 @@ export const Video: FC<VideoProps> = ({ v, style, c, onOpenChannel, showChannel,
   const fViews = numFormat(v.videoViews)
   const errorTypeOpt = isVideoError(v) ? md.video.errorType.val[v.errorType] : null
 
-  const captions = orderBy(v?.captions ?? loadedCaps ?? [], cap => cap.offsetSeconds, 'asc')
+  const captions = sortBy(v?.captions ?? loadedCaps ?? [], [cap => cap.offsetSeconds, 'asc'])
   const showLoadCaptions = captions?.length <= 0 && loadCaptions && !(isVideoError(v) && !v.hasCaptions)
   const thumb = videoThumb(v, 'high')
 

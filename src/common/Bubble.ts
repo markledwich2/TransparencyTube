@@ -1,6 +1,5 @@
 import { pack, hierarchy, HierarchyCircularNode } from 'd3'
-import orderBy from 'lodash.orderby'
-import { pipe, map, indexBy, flatMap, filter, first } from 'remeda'
+import { pipe, map, indexBy, flatMap, filter, first, sortBy, clamp } from 'remeda'
 import { BubbleDataCfg } from '../components/BubbleChart'
 import { Channel, md } from './Channel'
 import { colMd, ColumnMdVal } from './Metadata'
@@ -79,7 +78,7 @@ export const getGroupData = <T extends object>(rows: T[], selections: BubblesSel
     return { group: g, nodes, groupRows }
   })
 
-  return orderBy(groups, n => sumBy(n.nodes, c => c.val), 'desc')
+  return sortBy(groups, [n => sumBy(n.nodes, c => c.val), 'desc'])
 }
 
 export interface GroupNodes<T> {
@@ -118,7 +117,7 @@ export const getPackDim = <T>(nodes: HierarchyCircularNode<T>[]) => {
 export const buildBubbleNodes = <T extends object>(rows: T[], selections: BubblesSelectionState<T>, dataCfg: BubbleDataCfg<any>, containerWidth: number)
   : GroupNodes<T> => {
   const groupData = getGroupData(rows, selections, dataCfg)
-  const packSize = Math.min(containerWidth - 20, 800)
+  const packSize = clamp(containerWidth - 20, { min: 10, max: 800 })
   const groupedNodes: GroupedNodes<T>[] = groupData.map(t => {
 
     if (t.nodes.length == 0)
@@ -147,6 +146,8 @@ export const buildBubbleNodes = <T extends object>(rows: T[], selections: Bubble
     if (n.data?.row)
       n.data.img = dataCfg.image(n.data.row)
   })
+
+  console.log('buildBubbleNodes', { zoom, groupData })
 
   return { groupedNodes, maxSize, zoom, packSize, containerWidth }
 }

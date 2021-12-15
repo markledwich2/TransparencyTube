@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { indexBy } from 'remeda'
 import { blobIndex, BlobIndex } from '../../common/BlobIndex'
 import { Channel, getChannels } from '../../common/Channel'
@@ -17,9 +17,9 @@ const VennSandbox = () => {
   }, [])
 
   return <Layout>
-    <ContainerDimensions>
+    <ReactResizeDetector>
       {({ width, height }) => rs && <PersonaVenn channels={chans} sets={rs.sets} width={width} videos={rs.byId} />}
-    </ContainerDimensions>
+    </ReactResizeDetector>
   </Layout>
 }
 

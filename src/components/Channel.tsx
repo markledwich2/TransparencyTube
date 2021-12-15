@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useState, FunctionComponent as FC } from 'react'
-import { indexBy } from 'remeda'
+import { indexBy, sortBy as orderBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel, md, openYtChannel } from '../common/Channel'
 import { dateFormat, hoursFormat, numFormat } from '../common/Utils'
@@ -11,7 +11,6 @@ import { Bot, User, UserCircle as Creator, UserBadge as Reviewer } from '@styled
 import { Markdown } from './Markdown'
 import Highlighter from "react-highlight-words"
 import { SearchSelect } from './SearchSelect'
-import orderBy from 'lodash.orderby'
 import { UseTip } from './Tip'
 
 export interface TopVideosProps {
@@ -219,7 +218,7 @@ export const ChannelSearch = <T extends Channel>({ onSelect, channels, sortBy = 
   search={(q) => new Promise((resolve) => resolve(
     orderBy(
       channels.filter(f => f.channelTitle?.match(new RegExp(`${q}`, 'i'))),
-      c => c[sortBy], 'desc')
+      [c => c[sortBy] as any as number | string | boolean, 'desc'])
   ))}
   itemRender={(c: Channel) => <ChannelTitle c={c} showTags showPlatform style={{ width: '30em', padding: '1em 0' }} onLogoClick={onSelect}
     logoStyle={{ width: '100px' }} />}

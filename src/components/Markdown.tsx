@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, FunctionComponent as FC } from 'react'
-import ReactMarkdown, { ReactMarkdownProps } from 'react-markdown'
+import ReactMarkdown, { Options as MarkdownOptions } from 'react-markdown'
 import styled from 'styled-components'
 import { StyleProps } from './Style'
 
@@ -46,6 +46,6 @@ export const TextSection = styled(TextStyle)`
   max-width: 65rem;
 `
 
-export const Markdown: FC<ReactMarkdownProps & StyleProps> = ({ children, ...props }) => <TextStyle {...props}>
+export const Markdown: FC<MarkdownOptions & StyleProps> = ({ children, ...props }) => <TextStyle {...props}>
   <ReactMarkdown>{typeof children == 'string' ? children.replace(/\n/ig, '\n  \n  ') : children}</ReactMarkdown>
 </TextStyle>

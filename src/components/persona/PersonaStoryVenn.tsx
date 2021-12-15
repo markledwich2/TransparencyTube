@@ -10,7 +10,7 @@ import { InlineValueFilter as FV } from '../ValueFilter'
 import { VennFilter } from '../../common/Persona'
 import { RotateContent } from '../RotateContent'
 import { Video } from '../Video'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { useTip } from '../Tip'
 import { UsePersona } from '../../common/Persona'
 import { SelectWithChannelSearch } from './SelectWithChannelSearch'
@@ -70,14 +70,14 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
     </FlexCenter>}
 
     <FlexCenter style={{ width: '100%' }}>
-      <ContainerDimensions>
+      <ReactResizeDetector>
         {({ width }) => <PersonaVenn
           channels={chans}
           sets={recState?.sets}
           width={width}
           height={Math.max(windowDim.h - 250, 400)}
           videos={recState?.byId} />}
-      </ContainerDimensions>
+      </ReactResizeDetector>
     </FlexCenter>
   </>
 }

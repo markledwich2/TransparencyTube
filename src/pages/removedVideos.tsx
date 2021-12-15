@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { filter, indexBy, map, pipe, pick } from 'remeda'
+import { filter, indexBy, map, pipe, pick, sortBy } from 'remeda'
 import { blobIndex, BlobIndex, idxColDateRange } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -10,7 +10,6 @@ import { FlexRow, MinimalPage, StyleProps } from "../components/Style"
 import { VideoId, Videos } from '../components/Video'
 import { Popup } from '../components/Popup'
 import { ChannelDetails, Tag } from '../components/Channel'
-import { orderBy } from '../common/Pipe'
 import { DateRangeQueryState, InlineDateRange, rangeFromQuery } from '../components/DateRange'
 import SearchText from '../components/SearchText'
 import { Period } from '../components/Period'
@@ -92,11 +91,10 @@ const RemovedVideosPage = () => {
   const openChannel = q.openChannelId ? channels?.[q.openChannelId] : null
   const onOpenChannel = (c: Channel) => setQuery({ openChannelId: c.channelId })
 
-  const vidsFiltered = videos ? pipe(videos,
+  const vidsFiltered = videos ? sortBy(pipe(videos,
     map(v => ({ ...videoWithEx(v, channels), copyrightHolder: v.copyrightHolder?.substring(0, 15) })), //TODO: use css. This is a shortcut for now
-    filter(v => filterIncludes(videoFilter, v) && searchIncludes(q.search, v)),
-    orderBy(v => v.videoViews, 'desc')
-  ) : null
+    filter(v => filterIncludes(videoFilter, v) && searchIncludes(q.search, v))
+  ), [v => v.videoViews, 'desc']) : null
 
   return <Layout>
     <PurposeBanner>

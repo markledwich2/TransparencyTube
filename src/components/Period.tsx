@@ -1,7 +1,7 @@
 import { format, parseISO, getYear } from 'date-fns'
 import React from 'react'
-import { compact, first, groupBy, map, pipe } from 'remeda'
-import { entries, orderBy, values } from '../common/Pipe'
+import { compact, first, groupBy, map, pipe, sortBy } from 'remeda'
+import { entries, values } from '../common/Pipe'
 import { dateFormat } from '../common/Utils'
 import { InlineForm } from './InlineForm'
 import { OptionList } from './InlineSelect'
@@ -72,10 +72,13 @@ export const PeriodSelect = ({ periods, period, onPeriod, showAll }: PeriodSelec
   if (showAll)
     periods.push({ type: null, value: null })
 
-  const periodGroups = pipe(periods,
-    map(p => periodOption(p)),
-    orderBy([p => p.parent?.value ?? p.value.value, p => p.parent ? 1 : -1, p => p.value.value, p => p.daysTill ? numeral(p.daysTill).format('####') : 0]
-      , ['desc', 'asc', 'desc', 'asc']),
+  const periodGroups = pipe(
+    sortBy(periods.map(p => periodOption(p)),
+      [p => p.parent?.value ?? p.value.value, 'desc'],
+      [p => p.parent ? 1 : -1, 'asc'],
+      [p => p.value.value, 'desc'],
+      [p => p.daysTill ? numeral(p.daysTill).format('####') : 0, 'asc']
+    ),
     groupBy(p => p.group)
   )
 

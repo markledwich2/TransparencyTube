@@ -1,6 +1,6 @@
 import { parseISO } from 'date-fns'
 import React, { Fragment, useMemo, FunctionComponent as FC } from 'react'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { Narrative2CaptionKey, NarrativeVideo, VideoCaption } from '../../common/RecfluenceApi'
 import { useNarrative, UseNarrativeProps, narrativeCfg, narrativeProps, getVideoMd } from '../../common/Narrative'
 import { Tip, UseTip, useTip } from '../Tip'
@@ -132,7 +132,7 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
     </FilterHeader>
 
     <div style={{ filter: loading ? loadingFilter : null }}>
-      <ContainerDimensions>
+      <ReactResizeDetector>
         {({ width }) => <BeeChart
           w={width - 5}
           nodes={bubbles}
@@ -149,7 +149,7 @@ export const NarrativeVideoComponent: FC<RouteComponentProps<NarrativeVideoCompo
           maxBubbles={maxVideos}
           groupRender={(g, videos) => <GroupTitle group={g} videos={videos} keywords={q.keywords} md={groupMd} suffix={props.groupTitleSuffix} />}
         />}
-      </ContainerDimensions>
+      </ReactResizeDetector>
     </div>
 
     <Tip {...tip.tipProps}>

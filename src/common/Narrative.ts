@@ -1,6 +1,6 @@
 import { tableMd, TableMdRun } from './Metadata'
 import { useEffect, useState, useMemo } from "react"
-import { indexBy, pick, pipe, uniq, omit } from 'remeda'
+import { indexBy, pick, pipe, uniq, omit, sortBy } from 'remeda'
 import { blobIndex, idxColDateRange } from './BlobIndex'
 import { md } from './Channel'
 import { useQuery } from './QueryString'
@@ -8,7 +8,6 @@ import { NarrativeVideo, NarrativeCaption, NarrativeIdx, NarrativeChannel, Narra
 import { assign, toJson } from './Utils'
 import { filterIncludes, FilterTableMd } from '../components/ValueFilter'
 import { DateRangeQueryState, DateRangeValue, rangeFromQuery } from '../components/DateRange'
-import { orderBy } from './Pipe'
 import { BubblesSelectionState } from './Bubble'
 import { NarrativeVideoComponentProps } from '../components/pendulum/NarrativeVideo'
 
@@ -217,10 +216,7 @@ export const useNarrative = (props: UseNarrativeProps): UseNarrative => {
 
   const { selectedChannels, videoRows } = useMemo(() => {
     const { videos, channels } = vidChans
-    const videoRows = videos ? pipe(
-      videos.filter(v => filterIncludes(videoFilter, v, false)),
-      orderBy(v => v.videoViews, 'desc')
-    ) : null
+    const videoRows = videos ? sortBy(videos.filter(v => filterIncludes(videoFilter, v, false)), [v => v.videoViews, 'desc']) : null
     const selectedChannels = q.selectedKeys && channels && uniq(q.selectedKeys.map(k => bubbleKeyObject(k).channelId)).map(id => channels[id])
     return { selectedChannels, videoRows }
   }, [toJson(omit(q, ['narrative', 'start', 'end'])), vidChans, idx])

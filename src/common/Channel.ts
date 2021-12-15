@@ -1,7 +1,7 @@
 
 import { dedent, getJsonl, hoursFormat, numFormat } from './Utils'
-import { indexBy, map, pipe } from 'remeda'
-import { entries, orderBy, sumBy } from './Pipe'
+import { indexBy, map, pipe, sortBy } from 'remeda'
+import { entries, sumBy } from './Pipe'
 import { blobCfg } from './Cfg'
 import { ColumnMd, Opt, tableMd } from './Metadata'
 
@@ -31,7 +31,7 @@ export const hiddenTags = ['Black', 'LGBT']
 const sharedMd = {
   tags: {
     label: 'Tag',
-    desc: `Cultural or political classification for channel (e.g. Libertarian or  Partisan Right).
+    desc: dedent`Cultural or political classification for channel (e.g. Libertarian or  Partisan Right).
   They are tagged by either:
   - Reviewers using [this method](https://github.com/markledwich2/Recfluence#soft-tags)
   - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#soft-tag-predictions)
@@ -68,7 +68,7 @@ const sharedMd = {
   } as ColumnMd,
   lr: {
     label: 'Left/Right',
-    desc: `Classification as left/center/right by either:
+    desc: dedent`Classification as left/center/right by either:
 - Reviewers using [this method](https://github.com/markledwich2/Recfluence#leftcenterright)
 - Sam Clark's [predictive model](https://github.com/sam-clark/chan2vec#chan2vec) `,
     values: [
@@ -95,7 +95,7 @@ export const md = {
     platform: sharedMd.platform,
     media: {
       label: 'Media',
-      desc: `The channel is considered **Mainstream Media** when tagged as \`Mainstream News\`, \`Late night Talk Show\` or \`Missing Link Media\`, the rest are labeled **YouTube**. `,
+      desc: dedent`The channel is considered **Mainstream Media** when tagged as \`Mainstream News\`, \`Late night Talk Show\` or \`Missing Link Media\`, the rest are labeled **YouTube**. `,
       values: [
         { value: 'Mainstream Media', label: 'Mainstream Media', color: '#aa557f' },
         { value: 'YouTube', label: 'YouTube', color: '#56b881' }
@@ -105,7 +105,7 @@ export const md = {
       values: [
         { value: 'channelViews', label: 'Channel Views', desc: 'The total number of channel views for all time as provided by the YouTube API.' },
         {
-          value: 'views', label: 'Views', desc: `Video views within the selected period.
+          value: 'views', label: 'Views', desc: dedent`Video views within the selected period.
     *Transparency.tube* records statistics for younger-than-365-days videos for all channels each day.
 
 Note:
@@ -115,7 +115,7 @@ Note:
 Click on a channel to see more detail about the collection of video statistics.
      ` },
         {
-          value: 'watchHours', label: 'Watched', format: (n: number) => hoursFormat(n), desc: `Estimated hours watch of this video. 
+          value: 'watchHours', label: 'Watched', format: (n: number) => hoursFormat(n), desc: dedent`Estimated hours watch of this video. 
     This estimate is based on the [data collected](https://github.com/sTechLab/YouTubeDurationData) from [this study from 2017](https://arxiv.org/pdf/1603.08308.pdf). 
     For each video, we calculate \`*average % of video watch for this videos duration\` x \`video views\`` },
         { value: 'subs', label: 'Subscribers', desc: 'The number of subscribers to the channel as provided by the YouTube API. Note, a small amount of channels hide this data.' }
@@ -194,7 +194,7 @@ export async function getChannels(): Promise<Channel[]> {
   )
 
   channels.forEach(c => {
-    c.tags = orderBy(c.tags?.filter(t => !hiddenTags.includes(t)) ?? [], t => tagViews[t]?.sum ?? 0, 'asc') // rarer tags go first so colors are more meaningful
+    c.tags = sortBy(c.tags?.filter(t => !hiddenTags.includes(t)) ?? [], [t => tagViews[t]?.sum ?? 0, 'asc']) // rarer tags go first so colors are more meaningful
     c.media = c.tags?.find(t => ['Mainstream News', 'MissingLinkMedia', 'LateNightTalkShow'].includes(t)) ? 'Mainstream Media' : 'YouTube'
   })
   return channels

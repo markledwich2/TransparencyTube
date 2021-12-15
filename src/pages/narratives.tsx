@@ -7,7 +7,7 @@ import { MinimalPage } from "../components/Style"
 import { getJsonl, numFormat } from '../common/Utils'
 import PurposeBanner from '../components/PurposeBanner'
 import { sumBy } from '../common/Pipe'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { Tag } from '../components/Channel'
 import { Markdown, TextSection } from '../components/Markdown'
 import { ChevronDownOutline, ChevronUpOutline } from '@styled-icons/evaicons-outline'
@@ -134,7 +134,7 @@ const NarrativesPage = () => {
       })}
     </PurposeBanner>
     <PageStyle>
-      <ContainerDimensions>
+      <ReactResizeDetector>
         {({ width }) => <Tabs titleStyle={{ textTransform: 'uppercase' }}>
           <Tab label='Videos'>
             <NarrativeVideoComponent {...narrativeProps['2020 Election Fraud']}
@@ -182,7 +182,7 @@ const NarrativesPage = () => {
             </TextSection>
           </Tab>
         </Tabs>}
-      </ContainerDimensions>
+      </ReactResizeDetector>
     </PageStyle>
   </Layout>
 }

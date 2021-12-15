@@ -96,7 +96,7 @@ export interface Narrative2CaptionKey {
   uploadDate: string
 }
 
-export interface NarrativeCaption extends NarrativeCaptionKey {
+export interface NarrativeCaption extends Narrative2CaptionKey {
   videoId: string,
   channelId: string
   captions?: VideoCaption[]

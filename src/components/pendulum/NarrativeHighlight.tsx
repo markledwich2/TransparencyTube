@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState, FunctionComponent as FC } from 'react'
-import { pick } from 'remeda'
+import { pick, sortBy } from 'remeda'
 import styled from 'styled-components'
 import { Channel } from '../../common/Channel'
 import { getJsonlResult, NarrativeName, VideoChannelExtra, VideoCommon } from '../../common/RecfluenceApi'
@@ -9,7 +9,6 @@ import { Spinner } from '../Spinner'
 import { FlexRow, GlobalStyle, MinimalPage } from '../Style'
 import { Video } from '../Video'
 import { ChevronRightOutline } from '@styled-icons/evaicons-outline'
-import { orderBy } from '../../common/Pipe'
 import { HScroll } from '../HScroll'
 
 interface HighlightData {
@@ -30,7 +29,7 @@ export const highlightData: { [index: string]: () => Promise<HighlightData[]> } 
       offsetSeconds: number
     }>('narrative_vaccine_personal_highlight')
 
-    return orderBy(rows, r => r.subs, 'desc')
+    return sortBy(rows, [r => r.subs, 'desc'])
       .map((r, i) => ({
         v: {
           ...pick(r, ['videoId', 'channelId', 'channelTitle', 'videoTitle', 'videoViews', 'durationSecs']),
@@ -47,7 +46,7 @@ export const highlightData: { [index: string]: () => Promise<HighlightData[]> } 
 
   'Vaccine DNA': async () => {
     const rows = await getJsonlResult<VideoChannelExtra & VideoCommon & { subs: number, logoUrl: string }>('narrative_vaccine_dna_highlight')
-    return orderBy(rows, r => r.videoViews, 'desc')
+    return sortBy(rows, [r => r.videoViews, 'desc'])
       .map((r, i) => ({
         v: {
           ...pick(r, ['videoId', 'channelId', 'channelTitle', 'videoTitle', 'videoViews', 'durationSecs', 'captions']),

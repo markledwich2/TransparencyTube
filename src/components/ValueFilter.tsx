@@ -1,9 +1,8 @@
-import { StringKeyOf } from 'elastic-ts/dist/elasticBuilder/utils'
 import React, { FunctionComponent as FC } from "react"
-import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact, uniqBy, concat, mapToObj } from 'remeda'
+import rem, { uniq, flatMap, indexBy, pipe, map, groupBy, mapValues, mapKeys, compact, uniqBy, concat, mapToObj, sortBy } from 'remeda'
 import styled from 'styled-components'
 import { colMd, ColumnMd, ColumnMdRun, ColumnMdVal, Opt, TableMd, TablesMetadata } from '../common/Metadata'
-import { asArray, entries, keys, orderBy, values } from '../common/Pipe'
+import { asArray, entries, keys, values } from '../common/Pipe'
 import { numFormat } from '../common/Utils'
 import { Tag } from './Channel'
 import { InlineForm, InlineFormOptions } from './InlineForm'
@@ -96,13 +95,12 @@ const tableColOptions = <TRow extends object, TFilter>(md: FilterTableMd, col: s
 
   const sort = c.sort ?? (showCount ? { getVal: (v) => v.value.num, dir: 'desc' } : { getVal: (v) => v.label, dir: 'desc' })
 
-  const filterOptions = pipe(filterValues,
-    map(v => {
+  const filterOptions = sortBy(
+    filterValues.map(v => {
       const m = mdByVal[v.value]
       return ({ value: v, label: m?.label ?? v.value, color: m?.color, desc: m?.desc, selected: isSelected(filter, col, v.value) })
     }), // get metadata for all values
-    orderBy(v => sort.getVal(v), sort.dir)
-  )
+    [v => sort.getVal(v), sort.dir])
   return c.hideAll ? filterOptions : [allOption].concat(filterOptions)
 }
 

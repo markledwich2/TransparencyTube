@@ -8,7 +8,7 @@ import { ChannelDetails, ChannelSearch } from './Channel'
 import { values } from '../common/Pipe'
 import { indexBy } from 'remeda'
 import styled from 'styled-components'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews, indexPeriods } from '../common/RecfluenceApi'
 import { NormalFont } from './Style'
 import { useQuery } from '../common/QueryString'
@@ -54,7 +54,7 @@ export const ChannelViewsPage = () => {
 
   return <div style={{ minHeight: '100vh' }}>
     {channels && defaultPeriod && indexes && <>
-      <ContainerDimensions >
+      <ReactResizeDetector >
         {({ width }) => <Bubbles
           channels={channels}
           width={width}
@@ -64,7 +64,7 @@ export const ChannelViewsPage = () => {
           selections={q}
           defaultPeriod={defaultPeriod}
         />}
-      </ContainerDimensions>
+      </ReactResizeDetector>
       <div style={{ height: '2em' }} />
       <Popup isOpen={openChannel != null} onRequestClose={onCloseChannel}>
         <ChannelDetails channel={openChannel} mode='max' indexes={indexes} defaultPeriod={defaultPeriod} />
@@ -182,9 +182,9 @@ const MeasureOptionStyle = styled.div`
 `
 
 const ColOption = (o: ColumnMdOpt) => <MeasureOptionStyle><NormalFont>
-  <b>{o.label}</b><Markdown source={o.desc} />
+  <b>{o.label}</b><Markdown>{o.desc}</Markdown>
 </NormalFont></MeasureOptionStyle>
 
 export const MeasureOption = (o: ColumnMdVal<string>) => <MeasureOptionStyle><NormalFont>
-  <b>{o.label}</b><Markdown source={o.desc} />
+  <b>{o.label}</b><Markdown>{o.desc}</Markdown>
 </NormalFont></MeasureOptionStyle>

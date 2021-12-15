@@ -1,7 +1,5 @@
-import React, { CSSProperties, FC, PropsWithChildren, ReactElement, ReactNode, useState } from 'react'
-import { compact, first, indexBy } from 'remeda'
+import React, { CSSProperties, FC, ReactElement, useState } from 'react'
 import styled from 'styled-components'
-import { values } from '../common/Pipe'
 import { FlexRow, StyleProps } from './Style'
 
 const TabsStyle = styled(FlexRow)`

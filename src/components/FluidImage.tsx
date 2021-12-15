@@ -2,7 +2,6 @@ import { StaticQuery, graphql } from 'gatsby'
 import GatsbyImage, { FluidObject } from 'gatsby-image'
 import React from 'react'
 import { last } from 'remeda'
-import { uri } from '../common/Uri'
 import { StyleProps } from './Style'
 
 

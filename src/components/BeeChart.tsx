@@ -1,12 +1,10 @@
-import {
-  SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide, ScaleTime, scaleLinear, Simulation, ScaleLinear
-} from 'd3'
+import { SimulationNodeDatum, forceSimulation, forceX, forceY, forceCollide } from 'd3-force'
+import { scaleTime, ScaleTime, scaleLinear, ScaleLinear } from 'd3-scale'
 import React, { FunctionComponent as FC, useEffect, useMemo, useRef, useState } from 'react'
-import { compact, groupBy, indexBy, mapValues, take } from 'remeda'
+import { compact, groupBy, indexBy, mapValues, sortBy, take } from 'remeda'
 import styled from 'styled-components'
-import { groupMap, keys, mapEntries, max, minMax, sumBy, values, maxBy, orderBy, flatMap } from '../common/Pipe'
+import { groupMap, keys, mapEntries, max, minMax, sumBy, values, maxBy, flatMap } from '../common/Pipe'
 import { UseTip } from '../components/Tip'
-import { scaleUtc } from '@visx/visx'
 import { addDays, addMonths, differenceInDays, eachMonthOfInterval, endOfMonth, formatISO, parseISO, startOfMonth, startOfWeek } from 'date-fns'
 import { assign, dateFormat, delay, toJson } from '../common/Utils'
 import { Spinner } from './Spinner'
@@ -50,7 +48,7 @@ export const BeeChart = <T,>({ nodes, animate, onSelect, ticks, ...props }: {
   ticks ??= 180
   const { gNodes, dNodes, gBars } = useMemo(() => {
     const gNodes = nodes && mapValues(groupBy(nodes.filter(n => n.date), n => n.group ?? '_'),
-      g => orderBy(g, n => n.value, 'desc').map((b, i) => ({ ...b, visible: i < (props.maxBubbles ?? 2000) })))
+      g => sortBy(g, [n => n.value, 'desc']).map((b, i) => ({ ...b, visible: i < (props.maxBubbles ?? 2000) })))
     const dNodes = gNodes && flatMap(values(gNodes), g => g)
     //const dNodes = gNodes && indexBy(flatMap(values(gNodes), g => g), n => n.id)
     const gBars = gNodes && mapValues(gNodes, g => groupMap(g,
@@ -233,10 +231,7 @@ const dateAxisLayout = <T,>(nodes: BeehiveNode<T>[], width: number): AxisLayout 
     interval = { start: startOfMonth(min), end: endOfMonth(max) }
   const monthTicks = eachMonthOfInterval(interval)
   return {
-    scale: scaleUtc({
-      domain: [min, max],
-      range: [0, width],
-    }),
+    scale: scaleTime([min, max], [0, width]),
     ticks: monthTicks,
     tickFormat: (v: Date, i: number) =>
       v.getMonth() == 0 || i == 0 ? dateFormat(v, null, 'MMM yyyy') : dateFormat(v, null, 'MMM'),

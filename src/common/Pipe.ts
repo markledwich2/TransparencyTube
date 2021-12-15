@@ -1,15 +1,8 @@
 import { groupBy, mapToObj, purry, take } from 'remeda'
-import _orderBy from 'lodash.orderby'
 import { shuffle } from 'd3'
 
 type Many<T> = T | readonly T[]
 export type Dir = 'asc' | 'desc'
-
-export function orderBy<T>(collection: T[], by?: Many<(item: T) => any>, orders?: Many<Dir>): T[]
-export function orderBy<T>(by?: Many<(item: T) => any>, orders?: Many<Dir>): (array: readonly T[]) => T[]
-export function orderBy() { return purry(innerOrderBy, arguments) }
-const innerOrderBy = <T>(collection: T[], by?: Many<(item: T) => any>, orders?: Many<Dir>): T[] =>
-  _orderBy(collection, by, orders)
 
 
 /* Below I haven't done the purry yet, so you can't pipe */

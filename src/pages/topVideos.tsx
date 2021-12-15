@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { indexBy } from 'remeda'
+import { indexBy, sortBy } from 'remeda'
 import { blobIndex, BlobIndex } from '../common/BlobIndex'
 import { Channel, getChannels, md } from '../common/Channel'
 import { useQuery } from '../common/QueryString'
@@ -15,7 +15,6 @@ import { ChannelDetails } from '../components/Channel'
 import { filterFromQuery, filterIncludes, FilterState, filterToQuery, InlineValueFilter } from '../components/ValueFilter'
 import { videoWithEx } from '../common/Video'
 import PurposeBanner from '../components/PurposeBanner'
-import { orderBy } from '../common/Pipe'
 
 interface QueryState extends Record<string, string> {
   period?: string
@@ -50,9 +49,9 @@ const TopVideosPage = () => {
     if (!videoIdx || !channels) return
     setLoading(true)
     videoIdx.rows({ period: periodString(period) }).then(vids => {
-      const vidsEx = orderBy(
+      const vidsEx = sortBy(
         vids.map(v => videoWithEx(v, channels)).filter(v => filterIncludes(videoFilter, v)),
-        v => v.rank, 'asc')
+        [v => v.rank, 'asc'])
       setVideos(vidsEx)
       setLoading(false)
     })

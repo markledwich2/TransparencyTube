@@ -1,5 +1,5 @@
 import React, { CSSProperties, FunctionComponent as FC, ReactNode } from 'react'
-import ContainerDimensions from 'react-container-dimensions'
+import ReactResizeDetector from 'react-resize-detector'
 import styled from 'styled-components'
 import { Tag } from '../Channel'
 import { FlexCol, FlexRow, StyleProps, styles } from '../Style'
@@ -17,7 +17,7 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
     const { cfg, stats, statsFiltered } = usePersonaBar(filter, noLoad)
 
     return <div className='bar' style={{ font: cfg.font, ...style }}>
-      <ContainerDimensions >
+      <ReactResizeDetector >
         {({ width }) => {
           const charts = stats && layoutCharts(stats, statsFiltered, { width, font: cfg.font })
           return <div>
@@ -68,7 +68,7 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
             })}
           </div>
         }}
-      </ContainerDimensions>
+      </ReactResizeDetector>
     </div>
   }
 export default PersonaBar

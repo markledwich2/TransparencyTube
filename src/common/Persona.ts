@@ -1,13 +1,13 @@
 import { shuffle } from 'd3'
 import { parseISO } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
-import { first, flatMap, groupBy, indexBy, pick, pipe, range, uniq } from 'remeda'
+import { first, flatMap, groupBy, indexBy, pick, pipe, range, sortBy, uniq } from 'remeda'
 import { UseSeen, useSeen } from '../components/persona/PersonaSeen'
 import { RecVennKey } from '../components/persona/PersonaVenn'
 import { blobIndex, BlobIndex } from './BlobIndex'
 import { Channel, getChannels, md } from './Channel'
 import { ColumnMdRun, tableMd } from './Metadata'
-import { mapEntries, orderBy, entries, takeSample, values } from './Pipe'
+import { mapEntries, entries, takeSample, values } from './Pipe'
 import { VideoCommon } from './RecfluenceApi'
 import { dateFormat, delay, toJson } from './Utils'
 import { VennSet, vennSets } from './Venn'
@@ -180,15 +180,13 @@ export const loadRecData = async (recIdx: BlobIndex<Rec, Pick<Rec, never>>, filt
 
   let rawRecs = await recIdx.rowsWith(blobFilter, { andOr: 'or' })
 
-  const availableDaysWorking = pipe(
-    mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
-    ({
-      day, videos: uniq(g.filter(r => accountFilter(r.accounts).length == filter.vennAccounts.length)
-        .map(r => r.fromVideoId)).length
-    })),
-    orderBy(v => [v.videos, v.day], ['desc', 'desc'])
-  )
-  const availableDays = availableDaysWorking.map(v => v.day)
+  const availableDaysWorking = mapEntries(groupBy(rawRecs, r => r.day), (g, day) =>
+  ({
+    day, videos: uniq(g.filter(r => accountFilter(r.accounts).length == filter.vennAccounts.length)
+      .map(r => r.fromVideoId)).length
+  }))
+
+  const availableDays = sortBy(availableDaysWorking, [v => v.videos, 'desc'], [v => v.day, 'desc']).map(v => v.day)
   // const dayExists = filter.vennDay && availableDays.includes(filter.vennDay)
   // // vennDay: null -> All, undefined or no overlap -> first, date > videos with that date
   // const vennDay = dayExists
