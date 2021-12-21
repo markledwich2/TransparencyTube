@@ -39,7 +39,7 @@ interface CaptionData {
 
 const searchIncludes = (search: string, v: VideoRemoved) => {
   if (!search) return true
-  const re = new RegExp(`${search}`, 'i')
+  const re = new RegExp(search.replace(/[^\w\s]/gi, ''), 'i')
   return v.videoTitle?.search(re) >= 0 || v.channelTitle?.search(re) >= 0
 }
 

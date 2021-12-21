@@ -5,7 +5,6 @@ import { GroupedNodes, BubblesSelectionState, getZoomToFit, BubbleNode, buildBub
 import { sumBy } from '../common/Pipe'
 import { Fullscreen } from '@styled-icons/boxicons-regular'
 import { Popup } from './Popup'
-import ReactResizeDetector from 'react-resize-detector'
 import { HierarchyCircularNode } from 'd3'
 import { toJson } from '../common/Utils'
 import { loadingFilter, NormalFont, StyleProps, styles } from './Style'
@@ -13,6 +12,8 @@ import { compact, pick } from 'remeda'
 import { HelpOutline } from 'styled-icons/material'
 import { TableMdRun } from '../common/Metadata'
 import { Tip, UseTip, useTip } from './Tip'
+import { Dim } from '../common/Draw'
+import { useWindowDim } from '../common/Window'
 
 
 const FullscreenIcon = styled(Fullscreen)`
@@ -72,6 +73,7 @@ interface GroupData<T> {
 export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup, onSelect, bubbleWidth, loading, groupRender, titleSuffixRender, tipContent, dataCfg, style }: BubbleChartsProps<T> & StyleProps) => {
   const bubbleTip = useTip<T>()
   const groupTip = useTip<GroupData<T>>()
+  const windowDim = useWindowDim()
 
   const d = useMemo(() => {
     const { groupedNodes, zoom, packSize } = rows ? buildBubbleNodes(rows, selections, dataCfg, bubbleWidth) : { groupedNodes: [] as GroupedNodes<T>[], zoom: 1, packSize: 1 }
@@ -87,9 +89,9 @@ export const BubbleCharts = <T extends object,>({ selections, rows, onOpenGroup,
     {useMemo(() => {
       return <div className="bubbles-container" style={{ display: 'flex', flexDirection: 'row', flexFlow: 'wrap', filter: loading ? loadingFilter : null, ...style }}>
         {d.groupedNodes && d.groupedNodes.map(t => <BubbleChart key={t.group.value} groupNodes={t} {...d.commonProps} />)}
-        {openNodes && <BubbleChart groupNodes={openNodes} {...d.commonProps} isOpen />}
+        {openNodes && <BubbleChart groupNodes={openNodes} {...d.commonProps} isOpen windowDim={windowDim} />}
       </div>
-    }, [d, openNodes, onSelect])}
+    }, [d, openNodes, onSelect, windowDim])}
     <Tip {...bubbleTip.tipProps}>{bubbleTip.data && tipContent(bubbleTip.data)}</Tip>
     {groupRender && <Tip {...groupTip.tipProps}>{groupTip.data && groupRender(groupTip.data.group, groupTip.data.rows)}</Tip>}
   </>
@@ -105,14 +107,16 @@ interface BubbleChartProps<T> extends BubbleChartPropsCommon<T> {
   pack: BubblePackProps,
   isOpen?: boolean,
   groupTip?: UseTip<GroupData<T>>
-  bubbleTip?: UseTip<T>
+  bubbleTip?: UseTip<T>,
+  windowDim?: Dim
 }
 
-const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, groupRender, titleSuffixRender, dataCfg, onSelect, groupTip, bubbleTip }: BubbleChartProps<T>) => {
+const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, groupRender, titleSuffixRender, dataCfg, onSelect, groupTip, bubbleTip, windowDim }: BubbleChartProps<T>) => {
   const group = groupNodes.group.value
   const measureFmt = measureFormat(selections.measure)
   const fMeasure = measureFmt(sumBy(groupNodes.nodes, n => n.data.val ?? 0))
   const rows = groupNodes.rows
+  windowDim = windowDim ?? { w: 200, h: 200 }
 
   const info = <div style={{ padding: '2px' }}>
     <h4>
@@ -136,9 +140,9 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
 
   const onDeselect = useCallback(() => onSelect(null), [onSelect])
 
-
+  console.log('bubble render', { windowDim })
   return useMemo(() => <>
-    <BubbleDiv className='inline' onClick={onDeselect}>
+    <BubbleDiv className='inline' onClick={onDeselect} style={{ border: 'solid 1px green' }}>
       {info}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
         <BubbleSvg {...svgProps} />
@@ -149,18 +153,16 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
       }} />
     </BubbleDiv>
 
-    {isOpen && <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
-      <ReactResizeDetector  >
-        {({ width, height }) => <BubbleDiv key={group} onClick={onDeselect}>
-          <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
-            {info}
-            <BubbleSvg {...svgProps} zoom={getZoomToFit(groupNodes, Math.min(width, height) - 20)} />
-          </div>
-          {!isOpen && <FullscreenIcon onClick={() => onOpenGroup(group)} />}
-        </BubbleDiv>}
-      </ReactResizeDetector>
-    </Popup>}
-  </>, [isOpen, svgProps.nodes])
+    <Popup isOpen={isOpen} onRequestClose={() => onOpenGroup(null)}>
+      <BubbleDiv key={group} onClick={onDeselect} style={{}}>
+        <div style={{ display: 'flex', flexFlow: 'wrap', flexDirection: 'row' }}>
+          {info}
+          {<BubbleSvg {...svgProps} zoom={getZoomToFit(groupNodes, Math.min(windowDim.h, windowDim.w) * 0.8)} />}
+        </div>
+        {!isOpen && <FullscreenIcon onClick={() => onOpenGroup(group)} />}
+      </BubbleDiv>
+    </Popup>
+  </>, [isOpen, svgProps.nodes, windowDim])
 }
 
 const SVGStyle = styled.svg`

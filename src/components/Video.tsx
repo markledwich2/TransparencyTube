@@ -1,5 +1,5 @@
 import React, { useState, FunctionComponent as FC, PropsWithChildren, useEffect, CSSProperties, useMemo } from 'react'
-import { dateFormat, hoursFormat, numFormat, secondsFormat } from '../common/Utils'
+import { dateFormat, hoursFormat, merge, numFormat, secondsFormat } from '../common/Utils'
 import { videoThumb, videoUrl } from '../common/Video'
 import { Spinner } from './Spinner'
 import { FlexCol, FlexRow, loadingFilter, StyleProps } from './Style'
@@ -9,7 +9,7 @@ import { ChannelWithStats, VideoViews, VideoCommon, VideoRemoved, isVideoViews, 
 import { Channel, channelUrl, md, PlatformName } from '../common/Channel'
 import { flatMap, groupBy, indexBy, map, pipe, sortBy, take } from 'remeda'
 import { entries, minBy, sumBy } from '../common/Pipe'
-import ReactResizeDetector from 'react-resize-detector'
+import { useResizeDetector } from 'react-resize-detector'
 import { colMd } from '../common/Metadata'
 import Highlighter from "react-highlight-words"
 import { Tip, useTip, UseTip } from './Tip'
@@ -108,64 +108,62 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
       })
   }, [videos?.length, limit, showAlls])
 
+  const { width, ref } = merge({ width: 200 }, useResizeDetector({ skipOnMount: true }))
+
   return <div className="videos-container" style={style}> {useMemo(() => {
-    if (!videos) return <Spinner />
+
     const showMore = (groupedVidsTotal ?? videos?.length) > limit
-    return <><div style={{
+    const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
+    const videoWidth = width / numCols - videoPadding * numCols
+    // flex doesn't do a column wrap. Se we do this ourselves
+
+    var colGroups: VideoGroup<T, TExtra>[][] = [...Array(numCols)].map(_ => [...new Array(0)])
+    groupedVids?.forEach(g => {
+      var colG = minBy(colGroups, cg => sumBy(cg, g => g.vidsToShow.length))
+      colG.push(g)
+    })
+
+    return <><div ref={ref} style={{
       filter: loading ? loadingFilter : null,
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
       width: '100%'
     }}>
+      {!videos && <Spinner />}
       {videos?.length === 0 && <p style={{ margin: '3em 0', textAlign: 'center', color: 'var(--fg3)' }}>No videos</p>}
-      {groupedVids &&
-        <ReactResizeDetector>
-          {({ width }) => {
-            const numCols = Math.max(Math.floor(width / multiColumnVideoWidth), 1)
-            const videoWidth = width / numCols - videoPadding * numCols
-            // flex doesn't do a column wrap. Se we do this ourselves
-            var colGroups: VideoGroup<T, TExtra>[][] = [...Array(numCols)].map(_ => [...new Array(0)])
-
-            groupedVids.forEach(g => {
-              var colG = minBy(colGroups, cg => sumBy(cg, g => g.vidsToShow.length))
-              colG.push(g)
-            })
-
-            return <FlexRow space={numCols == 1 ? '0' : '1em'}>
-              {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
-                const { vidsToShow, channelId, channel, showAll, showAllVisible, showLessVisible, totalVids, showChannel } = g
-                return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
-                  {i == 0 && showChannel && <VideoChannel
-                    c={channel}
-                    onOpenChannel={onOpenChannel}
-                    v={v}
-                    highlightWords={highlightWords}
-                    showTags={showTags}
-                    showPlatform={showPlatform}
-                    useTip={chanTip} />}
-                  <Video
-                    key={v.videoId}
-                    onOpenChannel={onOpenChannel}
-                    showThumb={showThumb}
-                    v={v}
-                    style={{ width: (videoWidth), ...videoStyle }}
-                    highlightWords={highlightWords}
-                    loadCaptions={loadCaptions}
-                    scrollCaptions={scrollCaptions}
-                    contentSubTitle={contentSubTitle}
-                    children={contentBottom?.(v)} />
-                  {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
-                    <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
-                      {showLessVisible ? `show less videos` : `show all ${totalVids} videos`}
-                    </a>}
-                </div>)
-              })}
-              </FlexCol>
-              )}
-            </FlexRow>
-          }}
-        </ReactResizeDetector>}
+      {videos && <FlexRow space={numCols == 1 ? '0' : '1em'}>
+        {colGroups.map((colGroup, i) => <FlexCol key={i}>{colGroup.map(g => {
+          const { vidsToShow, channelId, channel, showAll, showAllVisible, showLessVisible, totalVids, showChannel } = g
+          return vidsToShow.map((v, i) => <div key={`${channelId}|${i}`}>
+            {i == 0 && showChannel && <VideoChannel
+              c={channel}
+              onOpenChannel={onOpenChannel}
+              v={v}
+              highlightWords={highlightWords}
+              showTags={showTags}
+              showPlatform={showPlatform}
+              useTip={chanTip} />}
+            <Video
+              key={v.videoId}
+              onOpenChannel={onOpenChannel}
+              showThumb={showThumb}
+              v={v}
+              style={{ width: (videoWidth), ...videoStyle }}
+              highlightWords={highlightWords}
+              loadCaptions={loadCaptions}
+              scrollCaptions={scrollCaptions}
+              contentSubTitle={contentSubTitle}
+              children={contentBottom?.(v)} />
+            {i == vidsToShow.length - 1 && (showAllVisible || showLessVisible) &&
+              <a onClick={_ => setShowAlls({ ...showAlls, [channelId]: !showAll })}>
+                {showLessVisible ? `show less videos` : `show all ${totalVids} videos`}
+              </a>}
+          </div>)
+        })}
+        </FlexCol>
+        )}
+      </FlexRow>}
       {!groupedVids && videos && videos.slice(0, limit).map(v => <Video
         key={v.videoId}
         onOpenChannel={onOpenChannel}
@@ -181,7 +179,7 @@ export const Videos = <T extends VideoCommon, TExtra extends VideoId>({ onOpenCh
         <a onClick={_ => setLimit(limit + 100)}>show more</a>
       </div>}
     </>
-  }, [videos, groupedVids, loading, limit])}
+  }, [videos, groupedVids, loading, limit, width])}
     {showChannels && <Tip {...chanTip.tipProps}>{chanTip.data && <ChannelDetails channel={chanTip.data as ChannelWithStats} mode='min' />}</Tip>}
   </div>
 }
