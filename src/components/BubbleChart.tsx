@@ -142,7 +142,7 @@ const BubbleChart = <T,>({ groupNodes, selections, pack, onOpenGroup, isOpen, gr
 
   console.log('bubble render', { windowDim })
   return useMemo(() => <>
-    <BubbleDiv className='inline' onClick={onDeselect} style={{ border: 'solid 1px green' }}>
+    <BubbleDiv className='inline' onClick={onDeselect}>
       {info}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
         <BubbleSvg {...svgProps} />
