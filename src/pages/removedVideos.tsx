@@ -139,7 +139,7 @@ const RemovedVideosPage = () => {
         </FilterPart>
       </FilterHeader>
 
-      <Videos<VideoRemoved, OdyseeYtVideo>
+      <Videos
         channels={channels}
         onOpenChannel={onOpenChannel}
         loadCaptions={videoId => {
@@ -152,16 +152,6 @@ const RemovedVideosPage = () => {
         loading={loading}
         defaultLimit={30}
         highlightWords={q.search ? [q.search] : null}
-        loadExtraOnVisible={async (vids) => {
-          const res = await odyseeYtVideos(vids.map(v => v.videoId))
-          return res
-        }}
-        contentBottom={(v) => v.odyseePath && <span>
-          <span style={{ position: 'relative', top: '-7px', paddingRight: '0.5em' }}>available on:</span>
-          <a href={odyseeVideoUrl(v.odyseePath)} target='_odysee' style={{ paddingTop: '0.2em' }}>
-            <OdyseeLogo style={{ height: '25px' }} />
-          </a>
-        </span>}
       />
     </MinimalPage>
     <Popup isOpen={openChannel != null} onRequestClose={() => setQuery({ openChannelId: null })}>
