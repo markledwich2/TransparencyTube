@@ -8,7 +8,7 @@
 ## Download Data
 Data is collected by [recfluence](https://github.com/markledwich2/Recfluence).
 
-Download latest classified [channels](https://pyt.blob.core.windows.net/data/results/ttube_channels.jsonl.gz)
+Download latest classified [channels](https://ttube.azureedge.net/public/results/ttube_channels.jsonl.gz)
 
 For video statistics, captions and other larger please contact mark@ledwich.com.au to arrange at-cost access to the database.
 
