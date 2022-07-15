@@ -51,8 +51,8 @@ const PersonaStory = () => {
   const storyPersona = usePersona({
     filter: venn?.filter,
     channelSample: venn?.sample,
-    sampleFilter: venn?.sampleFilter,
-    preLoadSamples: story?.vennExplore.preLoad ? story.venn.samples : null
+    sampleFilter: venn?.sampleFilter
+    // preLoadSamples: story?.vennExplore.preLoad ? story.venn.samples : null
   })
   const exploreRecState = usePersonaRecs(
     storyPersona.recIdx, storyPersona.chans, // use the index and channels form story
@@ -97,10 +97,11 @@ const PersonaStory = () => {
         {...commonStepProps}
       >
         <TransitionSvgStyle>
-          {useMemo(() => <PersonaStoryVenn {...commonVennProps} recState={storyPersona?.recState} hideFilters />
-            , [storyPersona?.recState, storyPersona?.chans, storyPersona?.personaMd])}
+          <PersonaStoryVenn {...commonVennProps} recState={storyPersona?.recState} hideFilters />
         </TransitionSvgStyle>
       </ChartWithSteps>
+
+
       <InlineSteps steps={sections.vennExplore} {...commonStepProps} />
       <TransitionSvgStyle>
         {useMemo(() =>

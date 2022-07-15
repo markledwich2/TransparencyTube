@@ -37,16 +37,16 @@ const copySections: { title: string, md: string, open?: boolean }[] = [
   {
     title: `Key Findings`,
     md: `
-*   YouTube’s is correct that videos “disputing” “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 137M views and 34% of all traffic to videos discussing “election fraud”.**
+*   YouTube's is correct that videos “disputing” “election fraud” have received more views than those “supporting” the claim of widespread “election fraud”. However, our analysis shows that videos “supporting” the claim still account for a significant amount of traffic. **In particular, between 11/3 and 11/10, they accounted for 137M views and 34% of all traffic to videos discussing “election fraud”.**
 *   Despite being the largest “partisan right” channel by far, FoxNews has received less traffic on videos discussing “election fraud” than other news outlets. They are also one of the few “partisan right” channels to regularly “dispute” claims of widespread “election fraud” and videos “supporting” such claims have been limited to interviews of the president and his campaign staff.
 *   ${findings.rec}.`
   },
   {
     title: `Important Notes`,
     md: `
-*   Due to issues with YouTube’s default transcripts, a small percentage of the video links go to a portion of the video that is not aligned with the section of the transcript displayed on this page. You may have to manually select an earlier spot in the video in order to watch the portion the snippet should be aligned with.
+*   Due to issues with YouTube's default transcripts, a small percentage of the video links go to a portion of the video that is not aligned with the section of the transcript displayed on this page. You may have to manually select an earlier spot in the video in order to watch the portion the snippet should be aligned with.
 *   Evidence for whether the video is supporting or disputing claims of “election fraud” may come some time after the specific portion of the video in which “election fraud” is discussed. Such as at the end of a speech.
-*   There are a small number of channels that don’t have transcripts enabled. One prominent example is CNN. Further analysis needs to be done to estimate how including channels with disabled transcripts would increase “supporting” and “disputing” view aggregates.
+*   There are a small number of channels that don't have transcripts enabled. One prominent example is CNN. Further analysis needs to be done to estimate how including channels with disabled transcripts would increase “supporting” and “disputing” view aggregates.
 *   There is some subjectivity involved in the process of manually labeling videos and errors can be made. Please notify us if you find any labels you believe are incorrect.`
   },
   {
@@ -118,7 +118,7 @@ const NarrativesPage = () => {
 
   return <Layout>
     <PurposeBanner>
-      <p>Post election news has been dominated by President Trump’s claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions are <Tag label={supportValues.support.label} color={supportValues.support.color} /> or <Tag label={supportValues.dispute.label} color={supportValues.dispute.color} /> the president’s claim. These experiments use videos uploaded between the 3rd and 10th November 2020, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 27th October and 15th November 2020. As of 16th November these videos have generated 680M views combined. Data and more detailed documentation can be found <a href="https://github.com/markledwich2/TransparencyTube/tree/master/research/us_2020_election_fraud_narrative">here</a>.</p>
+      <p>Post election news has been dominated by President Trump's claim that he lost due to significant “voter fraud”. In this analysis we share preliminary results from our attempt to measure how this narrative is being discussed on political and cultural YouTube. Specifically, we’ve developed a method to identify videos discussing “election fraud” and label whether the discussions are <Tag label={supportValues.support.label} color={supportValues.support.color} /> or <Tag label={supportValues.dispute.label} color={supportValues.dispute.color} /> the president’s claim. These experiments use videos uploaded between the 3rd and 10th November 2020, but on this page we make it possible to view “election fraud” discussions in 7,896 videos uploaded by 1,458 channels between 27th October and 15th November 2020. As of 16th November these videos have generated 680M views combined. Data and more detailed documentation can be found <a href="https://github.com/markledwich2/TransparencyTube/tree/master/research/us_2020_election_fraud_narrative">here</a>.</p>
       {copySections.map((s, i) => {
         const open = copyOpen.includes(s.title)
         return <p key={i}>

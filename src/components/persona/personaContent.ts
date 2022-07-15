@@ -19,15 +19,22 @@ const electionDefaultFilter = { vennLabel: '1st Presidential Debate 2020', vennA
 const sectionCfg = {
   watch: {
     intro: {
-      txt: `The video's YouTube recommends to you are personalized. \nWe created 15 personas, each with their own watch history to see how this changes the recommendations.`,
+      txt: dedent`YouTube influences your video-watching behaviur by selecting which to display on your home page, and next to other video's. 
+      We created 15 personas — each with their own watch history — to see how YouTube tailors their recommendations.`,
       style: { fontSize: '1.2em' }
     },
     watched: `We forced each of our 14 persona's to log in and watch videos exclusive to political category.\nEach day we chose videos at random (proportional to views) to build a persona that was currently watching within their "bubble". Here are a sample of the video's watched - click *show all* to see a persona's full watch history.`
   },
   vennIntro: {
-    intro1: `We then subjected them to a shared sample of videos so we could compare them directly. For comparison, we also viewed the same videos anonymously`,
+    intro1: {
+      txt: `We then subjected them to a shared sample of videos so we could compare them directly. For comparison, we also viewed the same videos anonymously`,
+      style: { paddingTop: '10em' }
+    },
     intro2: {
-      txt: `Before showing a full analysis of the results, let's explore some examples. First up are the recommendations shown to the *Partisan Left*, *Partisan Right* and an Anonymous persona's when watching the **1st Presidential Debate 2020**. You can easily see how much overlap there is between the personas - both their history and the video being watched influences the recommendations`
+      txt: dedent`Before showing a full analysis of the results, let's explore some examples. First up are the recommendations shown to the *Partisan Left*, *Partisan Right* and an Anonymous persona's when watching the **1st Presidential Debate 2020**. In this venn diagram, you can easily see how much overlap there is between the personas - both their history and the video being watched influences the recommendations.
+      
+      *NOTE: each dot is a video *
+      `
     }
   },
   venn: {
@@ -43,19 +50,19 @@ const sectionCfg = {
     election4: {
       txt: `Now *Lat Night Talk Show* and *Manosphere* personas. These are the most "bubbled" groups of our persona's.`,
       vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
-    },
-    randomIntro: {
-      txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
-      // vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
-      style: { paddingBottom: '35vh' }
-    },
-    ...mapToObj(range(1, randomVideos + 1), i => [`random${i}`, {
-      txt: `**${i}** / ${randomVideos}`,
-      style: { paddingBottom: '40vh', width: 'fit-content' },
-      textStyle: minStepTextStyle,
-      vennFilter: { vennLabel: 'Other', vennAccounts: ['PartisanLeft', 'PartisanRight', 'Fresh'] },
-      vennSample: i
-    }])
+    }
+    // randomIntro: {
+    //   txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
+    //   // vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
+    //   style: { paddingBottom: '35vh' }
+    // },
+    // ...mapToObj(range(1, randomVideos + 1), i => [`random${i}`, {
+    //   txt: `**${i}** / ${randomVideos}`,
+    //   style: { paddingBottom: '40vh', width: 'fit-content' },
+    //   textStyle: minStepTextStyle,
+    //   vennFilter: { vennLabel: 'Other', vennAccounts: ['PartisanLeft', 'PartisanRight', 'Fresh'] },
+    //   vennSample: i
+    // }])
   },
   vennExplore: {
     explore: {

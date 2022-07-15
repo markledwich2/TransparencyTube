@@ -2,7 +2,7 @@ import React, { PropsWithChildren, useRef, useState } from 'react'
 import { StyleProps, styles } from './Style'
 import { usePopper } from 'react-popper'
 import styled from 'styled-components'
-import { isMobile } from "react-device-detect"
+import { isMobile } from 'react-device-detect'
 
 interface TipState {
   open: boolean,
@@ -16,12 +16,16 @@ export interface UseTip<T> {
   /**
    * Returns attributes to add to data elements that respond to mouse events to create tooltips
    */
-  eventProps: (data: T) => {
+  eventProps: (data: T, touchShows: boolean) => {
     onMouseEnter: (e: React.MouseEvent<Element, MouseEvent>) => void
     onMouseLeave: (e: React.MouseEvent<Element, MouseEvent>) => void
   }
   setTip: (state: TipState) => void
-  data: T
+  data: T,
+  /**
+   * true if mobile is detected. On mobile touch will open the tooltip (if touchShows = true), you may need to change what click does depending
+   */
+  isMobile: boolean
 }
 
 export const useTip = <T,>(): UseTip<T> => {
@@ -37,7 +41,7 @@ export const useTip = <T,>(): UseTip<T> => {
     onMouseLeave: () => { hideTip() },
   })
 
-  return { tipProps: { ...tip, setTip }, showTip, hideTip, eventProps: eventProps, data: tip.data, setTip }
+  return { tipProps: { ...tip, setTip }, showTip, hideTip, eventProps: eventProps, data: tip.data, setTip, isMobile }
 }
 
 const TipStyle = styled.div`
