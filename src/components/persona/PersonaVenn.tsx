@@ -61,10 +61,9 @@ export const PersonaVenn: FC<RecVennProps> = ({ width, height, sets, channels, v
               const toChan = channels?.[r.data.toChannelId]
 
               const v = isRecVideo(r.data) && videos[id]
-              const circleProps = isRecVideo(r.data) && {
-                ...videoTip.eventProps(v),
-                onClick: () => window.open(videoUrl(v.toVideoId), 'yt')
-              }
+              let circleProps = isRecVideo(r.data) ? videoTip.eventProps(v, true) : {}
+              if (!videoTip.isMobile)
+                circleProps = { ...circleProps, onClick: () => window.open(videoUrl(v.toVideoId), 'yt') }
 
               return <g key={id} transform={`translate(${r.cx}, ${r.cy})`}>
                 {isRecGroup(r.data) && toChan?.logoUrl &&
