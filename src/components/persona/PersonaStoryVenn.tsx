@@ -64,7 +64,7 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
               if (!v)
                 return
               const c = chans?.[v.channelId] ?? { channelId: v.channelId, channelTitle: v.channelTitle }
-              return <Video v={v} c={c} showThumb showChannel useTip={chanTip} thumbStyle={{ height: '8em', width: '14em', objectFit: 'cover' }} />
+              return <Video v={v} c={c} showThumb showChannel useTip={chanTip} thumbStyle={{ height: '8em', width: '14em', objectFit: 'cover' }} style={{ minWidth: '43em' }} />
             }} />
           <p style={{ visibility: fromVideoCount > 1 ? null : 'hidden' }}>recommendations from <b>{numFormat(fromVideoCount)}</b> videos</p>
         </div>
@@ -75,7 +75,7 @@ export const PersonaStoryVenn = ({ chans, recState, personaMd, setQuery, hideFil
           channels={chans}
           sets={recState?.sets}
           width={venWidth ?? 200}
-          height={Math.max(windowDim.h - 250, 400)}
+          height={Math.max(windowDim.h - (hideFilters ? 250 : 450), 400)}
           videos={recState?.byId} />
       </FlexCenter>
     </>

@@ -47,7 +47,7 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
                       </SvgStyle>
                     </Panel>
                     <FlexRow style={{}}>
-                      {charts.map((c, i) => <Panel key={i} title={groupIdx + sourceIdx == 0 ? c.title : null} style={colPanelStyle}>
+                      {charts.map((c, i) => <Panel key={i} title={groupIdx + sourceIdx == 0 ? c.shortTitle : null} style={colPanelStyle}>
                         <SvgStyle height={c.h} width={c.w}>
                           <g style={{ font: legend.cfg.labelFont }} transform={`translate(${c.x}, ${c.y})`} >
                             {c.lines.map((l, i) => <line key={i} {...l} className="tick" />)}
@@ -57,7 +57,9 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
                             {c.labels.map((l, i) => <text key={l.row.toTag}
                               className={`label ${l.inside ? 'inside' : 'outside'}`}
                               data-tag={l.row.toTag}
-                              x={l.x} y={l.y + emInPx * 0.3}>{l.label}</text>)}
+                              x={l.x} y={l.yMiddle}
+                              dominantBaseline='central'
+                            >{l.label}</text>)}
                           </g>
                         </SvgStyle>
                       </Panel>)}

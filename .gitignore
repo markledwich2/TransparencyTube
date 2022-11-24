@@ -70,3 +70,7 @@ yarn-error.log
 
 # ts build cache
 *.tsbuildinfo
+
+
+
+*.data

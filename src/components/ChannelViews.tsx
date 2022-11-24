@@ -38,7 +38,7 @@ export const ChannelViewsPage = () => {
       try {
         setIndexes(idx)
         const periods = idx ? indexPeriods(idx.channelStatsByPeriod) : []
-        setDefaultPeriod(periods.find(p => p.type == 'd7'))
+        setDefaultPeriod(periods.find(p => p.type == 'd30'))
       }
       catch (e) {
         console.error('error getting view indexes', e)

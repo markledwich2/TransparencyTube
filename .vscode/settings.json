@@ -9,26 +9,29 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "Breadtube",
-    "Identitarian",
-    "Jsonl",
-    "Manosphere",
-    "Sankey",
-    "Scrollama",
-    "Swipeable",
-    "Vals",
     "camelcase",
     "chans",
     "deepmerge",
     "endregion",
     "evaicons",
     "heur",
+    "Identitarian",
+    "Jsonl",
     "maccas",
+    "Manosphere",
     "ngraph",
     "odysee",
+    "outro",
+    "Prager",
     "purry",
+    "Regan",
     "remeda",
+    "Sankey",
+    "Scrollama",
     "stardazed",
+    "Swipeable",
     "ttube",
+    "Vals",
     "vids",
     "visx"
   ],
@@ -38,10 +41,10 @@
   "editor.tabSize": 2,
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features",
-    "editor.tabSize": 2,
+    "editor.tabSize": 2
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
@@ -57,8 +60,8 @@
   "svg.preview.background": "transparent",
   "workbench.colorCustomizations": {
     "[Default Dark+]": {
-      "activityBar.background": "#223f3f",
+      "activityBar.background": "#223f3f"
     }
   },
-  "aws.sam.enableCodeLenses": false,
+  "aws.sam.enableCodeLenses": false
 }

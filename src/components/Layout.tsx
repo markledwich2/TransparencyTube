@@ -7,7 +7,7 @@ import { Footer } from './Footer'
 import { GlobalStyle } from './Style'
 
 
-const Layout: FunctionComponent = ({ children }) => {
+const Layout: FunctionComponent<{ noHeader?: boolean }> = ({ children, noHeader }) => {
   const data = useStaticQuery(graphql`
 query SiteTitleQuery {
   site {
@@ -21,11 +21,11 @@ query SiteTitleQuery {
   return (
     <>
       <GlobalStyle />
-      <Header siteTitle={data.site.siteMetadata.title} />
+      {!noHeader && <Header siteTitle={data.site.siteMetadata.title} />}
       <div>
         <main id='main'>{children}</main>
       </div>
-      <Footer />
+      {!noHeader && <Footer />}
     </>
   )
 }

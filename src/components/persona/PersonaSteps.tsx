@@ -110,7 +110,7 @@ export const StepText: FC<StyleProps & { children: string & ReactNode, active?: 
     backgroundColor: 'rgb(var(--bgRgb), 0.8)',
     backdropFilter: 'blur(20px)',
     filter: active ? null : 'opacity(0.6)',
-    pointerEvents: 'none',
+    // pointerEvents: 'none',
     borderRadius: '10px',
     ...style
   }}>

@@ -19,93 +19,99 @@ const electionDefaultFilter = { vennLabel: '1st Presidential Debate 2020', vennA
 const sectionCfg = {
   watch: {
     intro: {
-      txt: dedent`YouTube influences your video-watching behaviur by selecting which to display on your home page, and next to other video's. 
+      txt: dedent`YouTube influences your video-watching behavior by deicing which video's to display when you open YouTube and next to other videos. 
       We created 15 personas — each with their own watch history — to see how YouTube tailors their recommendations.`,
       style: { fontSize: '1.2em' }
     },
-    watched: `We forced each of our 14 persona's to log in and watch videos exclusive to political category.\nEach day we chose videos at random (proportional to views) to build a persona that was currently watching within their "bubble". Here are a sample of the video's watched - click *show all* to see a persona's full watch history.`
+    watched: `From Sep 2020 through to Feb 2021, we forced each of our 14 persona's to log in and watch videos exclusive to political category.\nEach day we chose recent videos from their favorite channels to build a persona that was currently watching within their "bubble". Here are a sample of the video's watched - click *show all* to see a persona's full watch history.`
   },
   vennIntro: {
     intro1: {
-      txt: `We then subjected them to a shared sample of videos so we could compare them directly. For comparison, we also viewed the same videos anonymously`,
+      txt: `We then subjected them to a common sample of videos so we could compare them directly. Video's younger than 7d were chosen at random (proportional to views) from our dataset of news/politics/culture-war channels. We also included an anonymous viewer to compare results like for like.`,
       style: { paddingTop: '10em' }
     },
     intro2: {
-      txt: dedent`Before showing a full analysis of the results, let's explore some examples. First up are the recommendations shown to the *Partisan Left*, *Partisan Right* and an Anonymous persona's when watching the **1st Presidential Debate 2020**. In this venn diagram, you can easily see how much overlap there is between the personas - both their history and the video being watched influences the recommendations.
+      txt: dedent`To help understand personalization, we will show an example video recommendations when persona's watched the **1st Presidential Debate 2020**. 
       
-      *NOTE: each dot is a video *
-      `
+      Here are the recommendations shown to the *Partisan Left*, *Partisan Right* and an Anonymous persona's when watching the **1st Presidential Debate 2020**. In this venn diagram, you can see how much overlap of recommendations there are between the personas. Both their history and the video being watched influences the recommendations.`
     }
   },
   venn: {
     election: {
-      txt: `Recommendations seen on the Presidential Debate video show only a minor influence from personalization. The *Partisan Right* persona saw the most Fox recommendations and is the only persona shown where to see *Sky news* and some other right leaning channels. The *Partisan left* persona saw the most amount of left-new and late night talk shows. Between these two persona's, they shared about half of the recommendations.`,
+      txt: dedent`Recommendations seen on the Presidential Debate video show a gentle influence from personalization. 
+      
+      The **Partisan Right** persona saw the most Fox recommendations and is the only persona here to see Ben Shapiro, PragerU and the Regan foundation. 
+      
+      The **Partisan left** persona saw the most amount of left leaning news like CNN and late night talk shows. Partisan left & right shared about half of their recommendations. 
+      
+      The **Anonymous** persona was shown mostly MSM videos related to the presidential debate, with ABC views featured to the most.`,
       style: { paddingTop: '90vh' },
       vennFilter: electionDefaultFilter,
     },
     election3: {
-      txt: `Here are *Social Justice* and *Anti-Woke* personas watching the same videos.`,
+      txt: `Here are *Social Justice* and *Anti-Woke* personas watching the same videos. There are similar levels of personalization to the previous personas. Most video's shown are related to the debate or the candidates, but there is usually a portion of unrelated videos from a persona's favorite channels.`,
       vennFilter: { ...electionDefaultFilter, vennAccounts: ['AntiSJW', 'SocialJustice', 'Fresh'] },
     },
     election4: {
-      txt: `Now *Lat Night Talk Show* and *Manosphere* personas. These are the most "bubbled" groups of our persona's.`,
+      txt: `Lastly, the *Lat Night Talk Show* and *Manosphere* personas. These are the most "bubbled" groups of our persona's for the presidential debate recommendations (and also in general). I suspect that this is not special to the type of content, but they have less variety of channels to watch and as such they have a stronger signal to the recommendation system.`,
       vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
+    },
+    overrides: {
+      txt: `During this processI noticed that some channels, like *TEDx Talks* and the *The Obama White House*  are given a special status by YouTube and all video recommendations guaranteed to stay within the channel.`,
+      vennFilter: { vennLabel: 'TED', vennAccounts: ['PartisanLeft', 'PartisanRight', 'Fresh'] }
     }
-    // randomIntro: {
-    //   txt: [`So that was just one video. To get a wider perspective on recommendations, here are a selection of random videos`],
-    //   // vennFilter: { ...electionDefaultFilter, vennAccounts: ['MRA', 'LateNightTalkShow', 'Fresh'] },
-    //   style: { paddingBottom: '35vh' }
-    // },
-    // ...mapToObj(range(1, randomVideos + 1), i => [`random${i}`, {
-    //   txt: `**${i}** / ${randomVideos}`,
-    //   style: { paddingBottom: '40vh', width: 'fit-content' },
-    //   textStyle: minStepTextStyle,
-    //   vennFilter: { vennLabel: 'Other', vennAccounts: ['PartisanLeft', 'PartisanRight', 'Fresh'] },
-    //   vennSample: i
-    // }])
   },
   vennExplore: {
     explore: {
-      txt: `Use the filter controls now shown above to explore recommendations shown to any combination of channels and persona's. Lick **RANDOM** to see a random channels recommendations.`,
-      vennFilter: { vennLabel: 'Other' }
+      txt: `If you are interested in exploring, use the filter controls to explore recommendations shown to any combination of channels and persona's. Click **RANDOM** to see a random channels recommendations. Otherwise, just keep scrolling down.`,
+      vennExploreFilter: { vennLabel: 'Other' }
     }
   },
   recsAnalysis: {
-    intro: dedent`## Influence of Personalization
-    
-    Here are some overall measures influence of personalization on YouTube recommendations. We found that on average, when a persona watched the same video in the same week, only **26% of recommendations were repeated**. This is a baseline that we compare the personalization to.
-    
-    **Persona Personalization**
-    When a persona watched the **same video as an anonymous user** within 7 days, only 16% of recommendations were repeated - **10% less repeated recommendations vs watching as the same persona**. 
-    
-    **Influence of video relevance**
-    When a personas watch **different videos** on the same day, only 6% of recommendations were repeated - **20% less repeated recommendations vs watching the same video**.
-    `
+    intro: {
+      txt: dedent`## Overall Influence of Personalization
+
+      #### Home page
+      On the home page, the personas were presented with 34% videos from channels they had watched within their bubble - much more tailored than the up-next recommendations. This might be less than you see in your own experience because out persona's didn't subscribe to any channels which would be featured much more frequently.
+      19% of video's shown to the anonymous user were towards one of the channels in our dataset (i.e. they are mainly focused on news, politics or the culture war). Our persona's were shown 47% - only minimally more than the channels shown that they had previously watched.    
+      #### Up-next Videos
+      When out persona's were presented up-next video recommendations, on average:
+      - 16% were for channels within their bubble, 11% of those channels they had already watched
+      - 16% were back to the same channel they were watching 
+      - 73% were to channels they hadn't seen before
+
+      There was plenty of variety in up-next recommendations, even for the same video. When our anonymous user watched the same video in the same week, only 16% of recommendations were repeated. When our persona's re-watched a video there were 10 percentage points more repeated recommendations - a mildly more consistent influence. When they watched **different videos** on the same day, there were 20 points less repeated recommendations vs watching the same video - showing that **the video is having a larger impact on recommendations than who is watching it**.
+
+
+      `,
+      style: { paddingTop: '5em' }
+    }
   },
   recsIntro: {
     intro: {
-      txt: dedent`Now we'll be looking at the overall recommendations shown broken down by which political leaning they are towards.
+      txt: dedent`## Detailed Influence of Personalization
+      
+      Now we'll be looking at the overall recommendations shown broken down by which political leaning they are towards.
       - **% of persona recommendations**: the percent of all recommendations show to this persona. Note that these add up to more than 100% because recommended video categories overlap with each other (e.g. a video's channel can be bother *MSM* and *Partisan Left*).
       - **vs video views**: \`[% of recommendations] - [% of total video views]\`. This is for comparison vs a simple/neural algorithm which would recommend proportional to views.
       - **vs anonymous**: \`[% of recommendations] - [% equivalent anonymous recommendations]\`. A comparison to a user which is not logged in.
-      We will start with recommendations show to the  *Anonymous* persona then move though a sample of the others.`,
-      style: { paddingTop: '5em' }
+     Here is a comparison of which political categories recommendations led to, starting with what was shown to an *Anonymous* user on the home page and on video recommendations.`,
+      style: { paddingTop: '2em' }
     }
   },
   recs: {
     intro: {
-      txt: `Most **Anonymous** recommendations are towards **Non-Political** and **Mainstream News**. The most favoured category is **Partisan Left** when compared to the views to those videos. With this as a baseline, how does personalization impact this? `,
+      txt: `Most recommendations shown to an **Anonymous** user are towards **Non-Political** and **Mainstream News**. Overall, the recommendation influence is not too far from neutral when compared to the views of the channels being recommended. With this as a baseline, how does personalization impact recommendations? `,
       barFilter: { accounts: ['Fresh'], tags: interestingAccounts },
       style: { paddingTop: '90vh', paddingBottom: '90vh' }
-
     },
     ...mapToObj([
-      [`PartisanLeft`, `Personalization means that *Partisan Left* persona sees their favorite category 21%-points more compared to the anonymous viewer. The other categories are less impacted, surprisingly *Mainstream News* received 12% less despite mainly being left-leaning.`],
-      ['PartisanRight', `*Partisan right* videos are shown their own category of video 11% more than anonymous, with *Mainstream news*, *Partisan left* and *Social Justice* video's being shown less often`],
+      [`PartisanLeft`, `The **Partisan Left** persona saw *partisan left videos* 45 percentage points more compared to an anonymous viewer on their home page, and 16 points more when watching videos. The other categories are less impacted, surprisingly *Mainstream News* received 31 points less home page recommendations despite sharing a lot of ideological overlap in content.`],
+      ['PartisanRight', `The **Partisan right** persona sees *partisan right videos* 34 points more than anonymous on the home page and 9 points more on videos - less personalization than the partisan left persona.  *Mainstream news*, *Partisan left* and *Social Justice* video's are recommended less often which is to be expected.`],
       //['SocialJustice', `*Social Justice* within-bubble recommendations are 18% more than an anonymous viewer`],
       //['AntiSJW', `*Anti-Woke* within-bubble recommendations are 13% more than an anonymous viewer. They receive 16% more to *Non-political* news, which is more than the within-bubble personalization.`],
-      //['LateNightTalkShow', `The *Late night talk show* persona's within-bubble recommendations are 41% more than the anonymous viewer - by far the most dramatic personalization of all the persona's. It's not clear that YouTube is treating this content differently, it could be that because the amount of video's within this bubble is very small, so the algorithm might perceive a stronger signal is what the persona watched compared to the others.`],
-      ['Conspiracy', `*Conspiracy* within-bubble recommendations are only is only 1.9% higher than an anon viewer. They saw 16% more recommendations towards *Non-political* videos.`]
+      ['LateNightTalkShow', `The *Late night talk show* persona's within-bubble recommendations are 41% more than the anonymous viewer - by far the most dramatic personalization of all the persona's. It's not clear that YouTube is treating this content differently, it could be that because the amount of video's within this bubble is very small, so the algorithm might perceive a stronger signal is what the persona watched compared to the others.`],
+      ['Conspiracy', `*Conspiracy* within-bubble recommendations are 17 percentage points higher than an anonymous viewer on the home page and only 1.6 points higher on videos.`]
     ], ([a, txt]) => [a, {
       txt,
       barFilter: { accounts: [a], tags: interestingAccounts }
@@ -125,15 +131,19 @@ const sectionCfg = {
       tableHighlight: null
     },
     recMsm: {
-      txt: `The first thing that stands out is that MSM is dramatically disadvantaged by personalization. The only accounts that receive more MSM recs is the one that watched exclusively MSM. No other type of video received this disadvantage in our same 🤔`,
+      txt: `The first thing that stands out is that MSM is dramatically disadvantaged by personalization. The *MSM* persona is the only one that received more MSM recommendations compared to an anonymous user. The most likely explanation for this is that YouTube has an explicit policy for anonymous users to increase recommendations to this type of channel.`,
       tableHighlight: { toTag: ['Mainstream News'] }
     },
     recSelf: {
-      txt: `Of **self-recommendations**, late night talk show's and partisan left persona's receive receive the highest self-recommending personalization. Late night shows stand out. Potentially they are favoured by the orlgoythm, or perhaps just because there are so few channels, the history for these persona's were more concentrated for the algorithm to pick as a signal.`,
+      txt: `Of **self-recommendations**, late night talk show's and partisan left persona's receive receive the highest self-recommending personalization. Late night shows stand out. Potentially they are favoured by the algorithm, or perhaps just because there are so few channels, the history for these persona's were more concentrated for the algorithm to pick as a signal.`,
       tableHighlight: { self: [true] }
     },
+    recWoke: {
+      txt: `Partisan Left/Right and Woke video's are the most polarizing. Likely because content leaning into either side of the culture war is difficult to watch unless you agree with it - even more so than other types of content`,
+      tableHighlight: { toTag: ['SocialJustice', 'PartisanRight', 'PartisanLeft'] }
+    },
     home1: {
-      txt: `On the **home page**, personalization is increased as there is no context of a video to dilute it. All persona's home page shows more less non-political content vs an anonymous user.`,
+      txt: `On the **home page**, personalization is increased as there is no context of a video to dilute it. All persona's home page shows dramatically more political content compared to an anonymous user.`,
       tableFilter: { source: ['feed'] } as RecStatFilter,
       tableHighlight: { toTag: ['Non-political'] }
     },
@@ -145,6 +155,17 @@ const sectionCfg = {
       txt: `Self recommendations are much stronger on the home-page vs video recommendations. Late night and partisan left are similar to the other persona's, with QAnon and White Identitarian having the lowest impact from personalization.`,
       tableHighlight: { self: [true] }
     },
+  },
+  outro: {
+    outro: {
+      txt: dedent`For details about the process, and the data and code see our [GitHub page](https://github.com/markledwich2/Recfluence/tree/master/UserScrape).
+    Bough to you by:
+    - Anna Zaitsev, *University of California, Berkeley* - Advisor and author of study
+    - Anton Laukemper, *Rijksuniversiteit Groningen* - Original idea and code for personalized data collection
+    - Mark Ledwich, *Unaffiliated* - Code and analysis, data viz, author of this article
+    A published paper will be available soon and this will be updated to link to that when it is ready.`,
+      style: { paddingTop: '20vh', paddingBottom: '10vh' }
+    }
   }
 }
 
@@ -177,9 +198,6 @@ export const getStoryState = (step: StepState) => {
     },
     venn: {
       filter: smear(s => s.vennFilter),
-      sampleFilter: { vennLabel: 'Other' },
-      sample: smear(s => s.vennSample, 'up'), // only smear from above
-      samples: randomVideos
     },
     recs: {
       barFilter: smear(s => s.barFilter) ?? { accounts: ['Fresh'] }

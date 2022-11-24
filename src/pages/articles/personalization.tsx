@@ -1,23 +1,23 @@
 
-import { OnStepProps } from '../components/scrollama/Scrollama'
+import { OnStepProps } from '../../components/scrollama/Scrollama'
 import React, { CSSProperties, useCallback, useMemo } from 'react'
-import Layout from '../components/Layout'
-import { MinimalPage } from '../components/Style'
-import { PersonaSeen, PersonaSeenPopup } from '../components/persona/PersonaSeen'
-import { useQuery } from '../common/QueryString'
-import { PrefixAll } from '../common/Types'
-import { usePersona, usePersonaRecs } from '../common/Persona'
-import PersonaBar, { AccountTip } from '../components/persona/PersonaBar'
-import { PersonaStoryVenn } from '../components/persona/PersonaStoryVenn'
-import { getSectionProgress, getStoryState, sections, StepState, StoryState } from '../components/persona/personaContent'
-import { InlineSteps, ChartWithSteps } from '../components/persona/PersonaSteps'
+import Layout from '../../components/Layout'
+import { MinimalPage } from '../../components/Style'
+import { PersonaSeen, PersonaSeenPopup } from '../../components/persona/PersonaSeen'
+import { useQuery } from '../../common/QueryString'
+import { PrefixAll } from '../../common/Types'
+import { usePersona, usePersonaRecs } from '../../common/Persona'
+import PersonaBar, { AccountTip } from '../../components/persona/PersonaBar'
+import { PersonaStoryVenn } from '../../components/persona/PersonaStoryVenn'
+import { getSectionProgress, getStoryState, sections, StepState, StoryState } from '../../components/persona/personaContent'
+import { InlineSteps, ChartWithSteps } from '../../components/persona/PersonaSteps'
 import { pick } from 'remeda'
 import styled from 'styled-components'
 import { format } from 'd3'
-import { useStateRef } from '../common/Use'
-import { RecStatFilter, tagMd } from '../components/persona/PersonaBarUse'
-import { PersonaTable } from '../components/persona/PersonaTable'
-import { Tip, useTip } from '../components/Tip'
+import { useStateRef } from '../../common/Use'
+import { RecStatFilter, tagMd } from '../../components/persona/PersonaBarUse'
+import { PersonaTable } from '../../components/persona/PersonaTable'
+import { Tip, useTip } from '../../components/Tip'
 
 export type PersonaStoryState = {
   label?: string
@@ -49,9 +49,7 @@ const PersonaStory = () => {
 
   const venn = story?.venn
   const storyPersona = usePersona({
-    filter: venn?.filter,
-    channelSample: venn?.sample,
-    sampleFilter: venn?.sampleFilter
+    filter: venn?.filter
     // preLoadSamples: story?.vennExplore.preLoad ? story.venn.samples : null
   })
   const exploreRecState = usePersonaRecs(
@@ -66,7 +64,7 @@ const PersonaStory = () => {
   const accountTip = useTip<string>()
   const videoTip = useTip<string>()
 
-  return <Layout>
+  return <Layout noHeader>
     <MinimalPage>
       <ChartWithSteps
         name='watch'
@@ -143,6 +141,8 @@ const PersonaStory = () => {
           />
         </ChartStepStyle>
       </ChartWithSteps>
+
+      <InlineSteps steps={sections.outro} {...commonStepProps} />
 
       <PersonaSeenPopup verb='watched' isOpen={q.openWatch != null} onClose={() => setQuery({ openWatch: undefined })}
         account={q.openWatch} channels={storyPersona.chans} useSeen={storyPersona.watch} />

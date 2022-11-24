@@ -19,13 +19,15 @@ export const barMd = {
   },
   measures: {
     pctOfAccountRecs: {
-      title: '% of persona’s recommendations', shortTitle: '% of total', x: { min: 0 }
+      title: '% of persona’s recommendations', shortTitle: '**% of total**', x: { min: 0 }
     } as BarLayout,
     vsPoliticalViewsPp: {
-      title: "percentage point difference between **persona's recommendations** and the portion of views to political videos", shortTitle: '**vs political views**', x: {}
+      title: "percentage point difference between **persona's recommendations** and the portion of views to political videos",
+      shortTitle: '**vs views on target videos** percentage points', x: {}
     } as BarLayout,
     vsFreshPp: {
-      title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**", shortTitle: '**vs anonymous**', x: {}
+      title: "percentage point difference between **persona's recommendations** and an **anonymous viewer**",
+      shortTitle: '**vs anonymous** pertantage points', x: {}
     } as BarLayout
   }
 }
@@ -59,7 +61,10 @@ export const usePersonaBar = (filter: RecStatFilter, noLoad?: boolean) => {
   return { cfg: { font: `${chartFontSize(w)}px sans-serif` }, stats, statsFiltered }
 }
 
-const chartFontSize = (w: number) => w > 1280 ? 14 : (w > 800 ? 12 : 10)
+const chartFontSize = (w: number) =>
+  w > 1280 ? 14
+    : w > 800 ? 12
+      : 10
 
 export const useBarData = (noLoad?: boolean) => {
   const [data, setData] = useState<RecStat[]>(null)
@@ -89,10 +94,10 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
 
   const legendWith = max(values(legendsByGroup).map(l => l.bounds.w))
   const barPaddingX = getTextWidth('000%', cfg.font) // pad enough to fit a label in the gap
-  const barWidth = (cfg.width - legendWith) / keys(barMd.measures).length - 10 // pad a little extra around all the charts
 
   // include measures that have at least one non-null value
-  const measuresDisplayed = entriesToObj(entries(barMd.measures).filter(([m, _]) => statsFiltered.some(r => r[m] != null)))
+  const measuresDisplayed = entriesToObj(entries(barMd.measures).filter(([m, _]) => statsFiltered.some(r => r[m] != null) && !(m == 'vsPoliticalViewsPp' && cfg.width < 600)))
+  const barWidth = (cfg.width - legendWith) / keys(measuresDisplayed).length - 10 // pad a little extra around all the charts
   const measures = mapValues(measuresDisplayed, (c, m) => {
     const all = stats.map(r => r[m] as number) // scale across all data so that filtering between is comparible
     const x = {
@@ -137,7 +142,7 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
         const x = inside
           ? (neg ? b.x + pad : b.x + b.w - textW - pad)
           : (neg ? b.x - pad - textW : b.x + b.w + pad)
-        return { x, y: b.y + b.h - 7, label, inside, row: b.row }
+        return { x, yMiddle: b.y + b.h / 2, label, inside, row: b.row }
       })
 
       const lines = [{ x1: xZero, y1: 0, x2: xZero, y2: legend.bounds.h }]
