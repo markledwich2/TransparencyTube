@@ -65,7 +65,7 @@ const PersonaStory = () => {
   const videoTip = useTip<string>()
 
   return <Layout noHeader>
-    <MinimalPage>
+    <div style={{ height: '100vh', overflowY: 'auto' }}>
       <ChartWithSteps
         name='watch'
         steps={sections.watch}
@@ -150,7 +150,7 @@ const PersonaStory = () => {
         <AccountTip account={accountTip.data} /></Tip>
       <Tip {...videoTip.tipProps}>The channel classification (<b>{tagMd[videoTip.data]?.label}</b>) of the recommended video.<br /><br />
         <AccountTip account={videoTip.data} /></Tip>
-    </MinimalPage>
+    </div>
   </Layout>
 }
 

@@ -97,7 +97,7 @@ export const layoutCharts = (stats: RecStat[], statsFiltered: RecStat[], cfg: { 
 
   // include measures that have at least one non-null value
   const measuresDisplayed = entriesToObj(entries(barMd.measures).filter(([m, _]) => statsFiltered.some(r => r[m] != null) && !(m == 'vsPoliticalViewsPp' && cfg.width < 600)))
-  const barWidth = (cfg.width - legendWith) / keys(measuresDisplayed).length - 10 // pad a little extra around all the charts
+  const barWidth = (cfg.width - legendWith) / keys(measuresDisplayed).length - 50 // pad a little extra around all the charts
   const measures = mapValues(measuresDisplayed, (c, m) => {
     const all = stats.map(r => r[m] as number) // scale across all data so that filtering between is comparible
     const x = {
