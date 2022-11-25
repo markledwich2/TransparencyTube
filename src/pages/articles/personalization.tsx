@@ -37,11 +37,12 @@ const PersonaStory = () => {
   const onStepProgress = useCallback(({ data, progress }: OnStepProps<StepState>) => {
     const prevStory = stepRef.current
     const newStep = { ...data, progress }
+    console.log('step progress a', data, progress)
     //console.log('onStepProgress equals', stepEqualString(prevStory?.step), stepEqualString(newStep))
     if (stepEqualString(prevStory?.step) == stepEqualString(newStep)) return
     const story = getStoryState(newStep)
     setStory(story)
-    console.log('step progress', progFormat(story.sectionProgress), { ...story })
+    console.log('step progress b', progFormat(story.sectionProgress), { ...story })
   }, [])
 
   const [q, setQuery] = useQuery<PersonaStoryState>()
@@ -141,6 +142,8 @@ const PersonaStory = () => {
           />
         </ChartStepStyle>
       </ChartWithSteps>
+
+
 
       <InlineSteps steps={sections.outro} {...commonStepProps} />
 

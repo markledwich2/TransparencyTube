@@ -64,12 +64,13 @@ export const ChartWithSteps =
       <div data-name='ChartWithSteps-ChartDiv' ref={chartRef} style={{ position: 'sticky', top: chartTop ?? 0, ...chartStyle }}>
         {children}
       </div>
-      <div data-name='ChartWithSteps-StepContent' style={{ position: 'relative', top: `${-(chartHeight ?? 0) + textTopPx}px`, pointerEvents: 'none' }}>
+      <div data-name='ChartWithSteps-StepContent' style={{
+        position: 'relative', top: `${-(chartHeight ?? 0) + textTopPx}px`, pointerEvents: 'none',
+      }}>
         {chartHeight && <Scrollama {...props} onStepProgress={onStep} >
           {steps.map((s, i) => <Step key={`${s.name}-${s.stepIndex}`} data={s}>
             <div style={{
-              paddingBottom: i == steps.length - 1 ? null : stepSpace ?? '100vh',
-
+              paddingBottom: i == steps.length - 1 ? '30vh' : stepSpace ?? '100vh',
               ...s.style
             }}>
               <StepText active={stepState && stepId(stepState) == stepId(s)} style={s.textStyle}>{s.txt}</StepText>
@@ -110,7 +111,7 @@ export const StepText: FC<StyleProps & { children: string & ReactNode, active?: 
     backgroundColor: 'rgb(var(--bgRgb), 0.8)',
     backdropFilter: 'blur(20px)',
     filter: active ? null : 'opacity(0.6)',
-    // pointerEvents: 'none',
+    pointerEvents: 'all',
     borderRadius: '10px',
     ...style
   }}>

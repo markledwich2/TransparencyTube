@@ -25,7 +25,7 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
               const multiAccount = charts.length > 1
               return <div key={source ?? '_'}>
                 <h3 style={{ marginTop: '1em' }}>{barMd.source[source].title}</h3>
-                {charts.map(({ legend, charts, account, emInPx }, groupIdx) => <div style={{ marginTop: '1em' }}>
+                {charts.map(({ legend, charts, account, emInPx }, groupIdx) => <div key={account} style={{ marginTop: '1em' }}>
                   <AccountTag account={account} style={{ fontSize: multiAccount ? '1em' : '1.2em' }} accountTip={accountTip} />
                   <FlexRow>
                     <Panel title={groupIdx + sourceIdx == 0 ? 'Recommended video tag' : null}>
@@ -39,7 +39,6 @@ export const PersonaBar: FC<{ filter: RecStatFilter, colPanelStyle?: CSSProperti
                             const r = l.rect
                             return <g transform={`translate(${r.x}, ${r.y})`} key={l.tag}>
                               <rect rx={5} width={r.w ?? 0} height={r.h} style={{ fill: r.fill }} {...videoTip?.eventProps(l.tag)}></rect>
-                              {/* <use xlinkHref='#video-icon' x={r.w - legend.cfg.iconWidth - 3} y={5} /> */}
                               <text className='tag' x={10} y={r.h - emInPx * 0.5} {...videoTip?.eventProps(l.tag)}>{l.label}</text>
                             </g>
                           })}
