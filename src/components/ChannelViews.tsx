@@ -6,7 +6,7 @@ import { BubblesSelectionState } from '../common/Bubble'
 import { getChannels, md, Channel, ColumnMdOpt, getColOptions } from '../common/Channel'
 import { ChannelDetails, ChannelSearch } from './Channel'
 import { values } from '../common/Pipe'
-import { indexBy } from 'remeda'
+import { indexBy, sortBy } from 'remeda'
 import styled from 'styled-components'
 import ReactResizeDetector from 'react-resize-detector'
 import { ChannelStats, ChannelViewIndexes, ChannelWithStats, indexChannelViews, indexPeriods } from '../common/RecfluenceApi'
@@ -29,7 +29,7 @@ interface QueryState extends BubblesSelectionState<Channel> {
 export const ChannelViewsPage = () => {
   const [channels, setChannels] = useState<Record<string, Channel>>()
   const [indexes, setIndexes] = useState<ChannelViewIndexes>(null)
-  const [defaultPeriod, setDefaultPeriod] = useState<Period>(null)
+  const [defaultPeriod, setDefaultPeriod] = useState<Period>()
   const [q, setQuery] = useQuery<QueryState>()
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export const ChannelViewsPage = () => {
     indexChannelViews().then(idx => {
       try {
         setIndexes(idx)
-        const periods = idx ? indexPeriods(idx.channelStatsByPeriod) : []
-        setDefaultPeriod(periods.find(p => p.type == 'd30'))
+        const periods = sortBy(idx ? indexPeriods(idx.channelStatsByPeriod) : [], [p => p.value, 'desc'])
+        setDefaultPeriod(periods.find(p => p.type == 'y'))
       }
       catch (e) {
         console.error('error getting view indexes', e)
